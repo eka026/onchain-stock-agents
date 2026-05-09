@@ -1,0 +1,36 @@
+# Demo Checklist
+
+- [ ] `npm test` passes.
+- [ ] `pytest tests` passes.
+- [ ] `python -m compileall agents` passes.
+- [ ] Local Hardhat node starts with `npm run node`.
+- [ ] Deployment runs with `npm run deploy:local`.
+- [ ] Deployment prints policy, stock token, payment token, exchange, and dividend vault addresses.
+- [ ] `.env` contains local RPC, deployed contract addresses, local demo wallets, and LLM provider configuration.
+- [ ] LLM provider is configured for a low-cost model such as `gpt-4o-mini`.
+- [ ] Unit tests use mock LLM clients and do not call paid APIs.
+- [ ] Firm agent runs as a separate wallet-backed service.
+- [ ] Trader A agent runs as a separate wallet-backed service.
+- [ ] Trader B agent runs as a separate wallet-backed service.
+- [ ] Agent logs show observation summary, structured LLM decision, transaction hash, receipt status, and verified event.
+- [ ] Firm LLM agent issues shares to the market maker.
+- [ ] Firm LLM agent publishes a simulated announcement.
+- [ ] Successful buy emits `TradeSettled`.
+- [ ] Successful buy is based on a structured trader LLM decision.
+- [ ] Successful buy decreases trader cash and increases trader share holdings only after confirmation.
+- [ ] Successful sell emits `TradeSettled`.
+- [ ] Successful sell is based on a structured trader LLM decision.
+- [ ] Successful sell increases trader cash and decreases trader share holdings only after confirmation.
+- [ ] Firm LLM agent deposits dividend reserve.
+- [ ] Dividend distribution emits `DividendPaid`.
+- [ ] Dividend distribution pays eligible holders.
+- [ ] Dividend distribution is based on a structured firm LLM decision.
+- [ ] Oversized LLM trade decision is rejected locally or reverts on-chain.
+- [ ] Oversized LLM trade decision leaves local portfolio state unchanged.
+- [ ] Unauthorized-asset LLM trade decision is rejected locally or reverts on-chain.
+- [ ] Unauthorized-asset LLM trade decision leaves local portfolio state unchanged.
+- [ ] Excessive share mint reverts.
+- [ ] Excessive dividend payout reverts.
+- [ ] Reverted transactions are logged as rejected, not confirmed.
+- [ ] `docs/llm-agent-deployment.md` explains how the deployed agents work.
+- [ ] README explains how to reproduce the local demo from a fresh clone.
