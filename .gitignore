@@ -1,0 +1,25 @@
+# Node
+node_modules/
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json

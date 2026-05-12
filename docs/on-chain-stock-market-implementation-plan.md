@@ -1,7 +1,5 @@
 # On-Chain Stock Market Simulation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Build a reproducible prototype where deployed LLM-based trading and firm agents interact with Solidity smart contracts that enforce stock ownership, approved assets, trade limits, issuance caps, dividends, and receipt-verified local portfolio updates.
 
 **Architecture:** The blockchain is the source of truth for balances, share ownership, approved assets, spending limits, and settlement results. Each LLM agent runs as an off-chain service with its own wallet, observes chain state through RPC, asks a low-cost LLM API for a structured decision, validates that decision locally, submits transactions through Web3, and updates local state only after confirmed receipts and expected events.
