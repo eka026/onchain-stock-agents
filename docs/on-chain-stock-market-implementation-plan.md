@@ -4,7 +4,7 @@
 
 **Architecture:** The blockchain is the source of truth for balances, share ownership, approved assets, spending limits, and settlement results. Each LLM agent runs as an off-chain service with its own wallet, observes chain state through RPC, asks a low-cost LLM API for a structured decision, validates that decision locally, submits transactions through Web3, and updates local state only after confirmed receipts and expected events.
 
-**Tech Stack:** Solidity, Hardhat, TypeScript tests, local Hardhat network, Python 3.12, Web3.py, pytest, Pydantic, python-dotenv, low-cost LLM API provider such as OpenAI `gpt-4o-mini` or Gemini Flash Lite.
+**Tech Stack:** Solidity, Hardhat, TypeScript tests, Hardhat test network, Python 3.12, Web3.py, pytest, Pydantic, python-dotenv, multiple LLM providers (OpenAI, Google Gemini, Groq) with per-trader model assignment. Contracts deployed on Sepolia testnet via Remix IDE.
 
 ---
 
@@ -28,8 +28,11 @@ contracts/
   StockToken.sol
   Exchange.sol
   DividendVault.sol
+  test/
+    MockERC20.sol
 scripts/
-  deploy.ts
+  deploy.ts          (reference only — deploy via Remix IDE)
+  export_abis.ts
 test/
   AgentPolicy.test.ts
   StockToken.test.ts
@@ -37,6 +40,7 @@ test/
   DividendVault.test.ts
   IntegrationMarket.test.ts
 agents/
+  __init__.py
   config.py
   llm.py
   schemas.py
@@ -45,6 +49,11 @@ agents/
   firm_agent.py
   trader_agent.py
   run_demo.py
+  abis/
+    AgentPolicy.json
+    StockToken.json
+    Exchange.json
+    DividendVault.json
 tests/
   test_portfolio.py
   test_schemas.py
@@ -83,7 +92,8 @@ README.md
     "compile": "hardhat compile",
     "test": "hardhat test",
     "node": "hardhat node",
-    "deploy:local": "hardhat run scripts/deploy.ts --network localhost"
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "export:abis": "hardhat compile && hardhat run scripts/export_abis.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
@@ -126,6 +136,8 @@ pytest==8.2.2
 python-dotenv==1.0.1
 pydantic==2.8.2
 openai==1.40.0
+google-generativeai==0.8.3
+groq==0.11.0
 ```
 
 - [ ] Install dependencies:
@@ -339,19 +351,21 @@ npm test -- test/DividendVault.test.ts
 ### Task 6: Add Local Deployment Script
 
 **Files:**
-- Create: `scripts/deploy.ts`
+- Create: `scripts/deploy.ts` (reference only)
+- Create: `scripts/export_abis.ts`
 - Modify: `README.md`
 
 - [ ] Deploy payment token, stock token, policy, exchange, and dividend vault.
 - [ ] Configure approved stock token.
 - [ ] Configure trader max trade size and spending limit.
 - [ ] Configure firm dividend budget.
-- [ ] Authorize the exchange as a spending recorder.
+- [ ] Authorize the exchange and dividend vault as spending recorders.
 - [ ] Print deployed addresses as JSON so Python agents can consume them.
+- [ ] Implement `scripts/export_abis.ts` to extract ABIs from Hardhat artifacts into `agents/abis/*.json`.
 
 Verification:
 
-Contracts are deployed manually via Remix IDE. Contract addresses will be put into .env. scripts/deploy.ts is kept as reference only.
+Contracts are deployed manually via Remix IDE on Sepolia testnet in this order: `MockERC20` → `AgentPolicy` → `StockToken` → `Exchange` → `DividendVault`. After deployment, call the policy setup functions (`setTokenPolicy`, `setTraderPolicy`, `setDividendPolicy`, `setRecorder`) from the firm wallet. Copy all deployed addresses into `.env` (use `.env.example` as the template). Run `npm run export:abis` once after compile to generate `agents/abis/*.json` for Python agents to load. `scripts/deploy.ts` is kept as reference only.
 
 ### Task 7: Add Full Solidity Integration Test
 
@@ -427,16 +441,57 @@ pytest tests/test_portfolio.py
 - Create: `tests/test_schemas.py`
 
 **Behavior:**
-- `config.py` loads RPC URL, contract addresses, wallet keys, LLM provider settings, and demo constants from `.env`.
-- `llm.py` wraps the configured LLM provider and supports a mock mode for tests and offline demos.
+- `config.py` loads Sepolia RPC URL, contract addresses, wallet keys, and per-trader LLM model assignments from `.env`. Each trader has its own private key and LLM model, paired by index via `TRADER_PRIVATE_KEYS` and `TRADER_MODELS` (comma-separated, same length). Three provider API keys are loaded optionally: `GOOGLE_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`.
+- `llm.py` wraps multiple LLM providers (OpenAI, Google Gemini, Groq) and routes each call to the correct provider based on the trader's assigned model name. Supports a mock mode for tests and offline demos.
 - `schemas.py` stores the Pydantic decision models and simple validation helpers.
 - Prompts can live in `llm.py` as small constants or helper functions; a separate prompt module is unnecessary for this prototype.
-- The default demo model should be a low-cost model such as `gpt-4o-mini`.
 - Agent prompts must request compact structured JSON decisions only.
 - Trader decisions support `BUY`, `SELL`, and `HOLD`.
 - Firm decisions support `ANNOUNCE`, `ISSUE_SHARES`, `DEPOSIT_DIVIDEND_RESERVE`, `PAY_DIVIDEND`, and `HOLD`.
 - Invalid JSON, missing fields, unknown actions, negative amounts, or invented symbols are rejected before transaction submission.
 - Unit tests use mock LLM responses and never call paid APIs.
+
+`.env` keys for this task:
+
+```text
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+FIRM_PRIVATE_KEY=0x...
+TRADER_PRIVATE_KEYS=0x...,0x...,0x...,0x...,0x...
+TRADER_MODELS=gemini-2.0-flash-lite,llama-3.1-8b-instant,gpt-4o-mini,gemini-2.0-flash-lite,llama-3.3-70b-versatile
+PAYMENT_TOKEN_ADDRESS=0x...
+STOCK_TOKEN_ADDRESS=0x...
+POLICY_ADDRESS=0x...
+EXCHANGE_ADDRESS=0x...
+VAULT_ADDRESS=0x...
+GOOGLE_API_KEY=...
+GROQ_API_KEY=...
+OPENAI_API_KEY=...
+```
+
+Core config models:
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class TraderConfig:
+    private_key: str
+    model: str          # e.g. "gemini-2.0-flash-lite", "llama-3.1-8b-instant", "gpt-4o-mini"
+
+@dataclass(frozen=True)
+class Config:
+    rpc_url: str
+    payment_token: str
+    stock_token: str
+    policy: str
+    exchange: str
+    vault: str
+    firm_private_key: str
+    traders: list[TraderConfig]   # paired by index from TRADER_PRIVATE_KEYS / TRADER_MODELS
+    google_api_key: str | None
+    groq_api_key: str | None
+    openai_api_key: str | None
+```
 
 Core decision models:
 
@@ -528,10 +583,12 @@ verify(tx_hash: str, expected_event_name: str) -> ExecutionResult
 Services:
 
 ```text
-python -m agents.firm_agent --agent firm-a --once
-python -m agents.trader_agent --agent trader-a --once
-python -m agents.trader_agent --agent trader-b --interval 15
+python -m agents.firm_agent --once
+python -m agents.trader_agent --index 0 --once
+python -m agents.trader_agent --index 1 --interval 15
 ```
+
+`--index` selects the trader by position in `config.traders` (paired from `TRADER_PRIVATE_KEYS` / `TRADER_MODELS`). Each process uses the wallet and LLM model at that index.
 
 Verification:
 
@@ -556,12 +613,12 @@ Expected: All agent modules compile.
 Demo sequence:
 
 ```text
-1. Load deployed contract addresses.
-2. Start one firm LLM agent service and two trader LLM agent services with distinct wallets.
+1. Load Sepolia contract addresses and per-trader wallet/model pairs from .env.
+2. Start firm agent and two trader agents (each with its own wallet and LLM model).
 3. Firm LLM agent observes market state and issues shares to the market maker.
 4. Firm LLM agent publishes a simulated announcement.
-5. Trader LLM agent observes chain state and announcement, then decides a successful buy.
-6. Trader LLM agent later decides a successful sell.
+5. Trader 0 (e.g. Gemini Flash) observes chain state and decides a successful buy.
+6. Trader 1 (e.g. Llama via Groq) observes chain state and decides a successful sell.
 7. Firm LLM agent deposits reserve and pays dividend.
 8. Oversized trade is proposed by an LLM decision and rejected locally or on-chain.
 9. Unauthorized asset trade is proposed by an LLM decision and rejected locally or on-chain.
@@ -578,9 +635,9 @@ Demo sequence:
 - [ ] `npm test` passes.
 - [ ] `pytest tests` passes.
 - [ ] `python -m compileall agents` passes.
-- [ ] Local Hardhat node starts with `npm run node`.
-- [ ] Deployment prints all required contract addresses.
-- [ ] LLM provider configuration is read from `.env`.
+- [ ] Contracts deployed on Sepolia via Remix IDE and addresses recorded in `.env`.
+- [ ] `npm run export:abis` generates `agents/abis/*.json` from compiled artifacts.
+- [ ] LLM provider API keys (`GOOGLE_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`) and per-trader models (`TRADER_MODELS`) are read from `.env`.
 - [ ] Firm and trader agents run as separate wallet-backed services.
 - [ ] Agent logs show observation summary, LLM decision, transaction hash, receipt status, and verified event.
 - [ ] Successful buy shows `TradeSettled` and portfolio cash decreases.
