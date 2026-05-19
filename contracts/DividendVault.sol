@@ -55,6 +55,10 @@ contract DividendVault {
         uint256[] memory payouts = new uint256[](holders.length);
         for (uint256 i = 0; i < holders.length; i++) {
             require(holders[i] != address(0), "DIVIDEND_ZERO_HOLDER");
+            for (uint256 j = 0; j < i; j++) {
+                require(holders[i] != holders[j], "DIVIDEND_DUPLICATE_HOLDER");
+            }
+
             uint256 holderBalance = stock.balanceOf(holders[i]);
             require(holderBalance > 0, "DIVIDEND_HOLDER_NOT_ELIGIBLE");
 
@@ -63,6 +67,7 @@ contract DividendVault {
             paid += payout;
         }
 
+        require(paid == totalAmount, "DIVIDEND_INCOMPLETE_DISTRIBUTION");
         policy.validateDividend(msg.sender, paid);
         require(paid <= firmReserve[msg.sender], "DIVIDEND_RESERVE_EXCEEDED");
 

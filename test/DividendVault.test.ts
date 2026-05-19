@@ -121,4 +121,24 @@ describe("DividendVault", function () {
       vault.connect(firm).distribute(await stockToken.getAddress(), [outsider.address], 100)
     ).to.be.revertedWith("DIVIDEND_HOLDER_NOT_ELIGIBLE");
   });
+
+  it("reverts when the dividend holder list contains duplicates", async function () {
+    const { stockToken, vault, firm, holderA } = await deploy();
+
+    await vault.connect(firm).deposit(1_000);
+
+    await expect(
+      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address, holderA.address], 500)
+    ).to.be.revertedWith("DIVIDEND_DUPLICATE_HOLDER");
+  });
+
+  it("reverts when listed holders do not receive the full dividend amount", async function () {
+    const { stockToken, vault, firm, holderA } = await deploy();
+
+    await vault.connect(firm).deposit(1_000);
+
+    await expect(
+      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address], 500)
+    ).to.be.revertedWith("DIVIDEND_INCOMPLETE_DISTRIBUTION");
+  });
 });
