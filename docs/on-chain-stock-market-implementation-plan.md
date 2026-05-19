@@ -351,12 +351,7 @@ npm test -- test/DividendVault.test.ts
 
 Verification:
 
-```powershell
-npm run node
-npm run deploy:local
-```
-
-Expected: Deployment prints addresses for all contracts and configured actor accounts.
+Contracts are deployed manually via Remix IDE. Contract addresses will be put into .env. scripts/deploy.ts is kept as reference only.
 
 ### Task 7: Add Full Solidity Integration Test
 
@@ -630,7 +625,7 @@ The project is complete when:
 - LLM intent is never compliance. Smart contracts must remain the final authority.
 - Keep prompts short, use structured JSON outputs, cap output tokens, and prefer low-cost models for routine agent decisions.
 - Never run paid LLM calls in unit tests; inject mock LLM clients.
-- Use a local Hardhat chain first. Sepolia deployment is optional after the local demo is stable.
+- Contracts are deployed manually via Remix IDE on Sepolia testnet. Do not use scripts/deploy.ts for deployment. After deployment, contract addresses are provided manually and loaded from .env.
 - Keep trading behavior simple. The project is about deployed LLM agents, enforceable payment rules, and auditability, not financial realism.
 - Emit events for every important state transition so agents can verify outcomes.
 - Prefer small contracts and direct tests over broad abstractions.
