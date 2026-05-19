@@ -42,15 +42,16 @@ describe("DividendVault", function () {
     expect(await paymentToken.balanceOf(await vault.getAddress())).to.equal(1_500);
   });
 
-  it("distributes dividends and updates reserves and holder balances", async function () {
+  it("distributes dividends proportionally from holder balances", async function () {
     const { paymentToken, stockToken, vault, firm, holderA, holderB } = await deploy();
     const stockAddr = await stockToken.getAddress();
 
+    await stockToken.connect(firm).mint(holderA.address, 100);
     await vault.connect(firm).deposit(1_000);
-    await vault.connect(firm).distribute(stockAddr, [holderA.address, holderB.address], [300, 200]);
+    await vault.connect(firm).distribute(stockAddr, [holderA.address, holderB.address], 600);
 
-    expect(await vault.firmReserve(firm.address)).to.equal(500);
-    expect(await paymentToken.balanceOf(holderA.address)).to.equal(300);
+    expect(await vault.firmReserve(firm.address)).to.equal(400);
+    expect(await paymentToken.balanceOf(holderA.address)).to.equal(400);
     expect(await paymentToken.balanceOf(holderB.address)).to.equal(200);
   });
 
@@ -60,41 +61,55 @@ describe("DividendVault", function () {
 
     await vault.connect(firm).deposit(1_000);
 
-    await expect(vault.connect(firm).distribute(stockAddr, [holderA.address, holderB.address], [300, 200]))
+    await expect(vault.connect(firm).distribute(stockAddr, [holderA.address, holderB.address], 500))
       .to.emit(vault, "DividendPaid")
-      .withArgs(firm.address, stockAddr, holderA.address, 300)
+      .withArgs(firm.address, stockAddr, holderA.address, 250)
       .and.to.emit(vault, "DividendPaid")
-      .withArgs(firm.address, stockAddr, holderB.address, 200);
+      .withArgs(firm.address, stockAddr, holderB.address, 250);
   });
 
-  it("reverts when the payout exceeds the dividend budget", async function () {
-    const { stockToken, vault, firm, holderA } = await deploy();
+  it("reverts when the stock token does not belong to the dividend firm", async function () {
+    const { vault, firm, holderA, outsider } = await deploy();
 
-    await vault.connect(firm).deposit(2_000);
-
-    await expect(
-      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address], [1_001])
-    ).to.be.revertedWith("POLICY_DIVIDEND_BUDGET");
-  });
-
-  it("reverts when the payout exceeds the firm reserve", async function () {
-    const { stockToken, vault, firm, holderA } = await deploy();
-
-    await vault.connect(firm).deposit(300);
-
-    await expect(
-      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address], [301])
-    ).to.be.revertedWith("DIVIDEND_RESERVE_EXCEEDED");
-  });
-
-  it("reverts when holder and amount lengths differ", async function () {
-    const { stockToken, vault, firm, holderA, holderB } = await deploy();
+    const StockToken = await ethers.getContractFactory("StockToken");
+    const outsiderStockToken = await StockToken.deploy("Other Corp", "OTHR", outsider.address, 500_000);
+    await outsiderStockToken.connect(outsider).mint(holderA.address, 100);
 
     await vault.connect(firm).deposit(1_000);
 
     await expect(
-      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address, holderB.address], [100])
-    ).to.be.revertedWith("DIVIDEND_LENGTH_MISMATCH");
+      vault.connect(firm).distribute(await outsiderStockToken.getAddress(), [holderA.address], 100)
+    ).to.be.revertedWith("DIVIDEND_NOT_TOKEN_FIRM");
+  });
+
+  it("reverts when the payout exceeds the dividend budget", async function () {
+    const { stockToken, vault, firm, holderA, holderB } = await deploy();
+
+    await vault.connect(firm).deposit(2_000);
+
+    await expect(
+      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address, holderB.address], 1_002)
+    ).to.be.revertedWith("POLICY_DIVIDEND_BUDGET");
+  });
+
+  it("reverts when the payout exceeds the firm reserve", async function () {
+    const { stockToken, vault, firm, holderA, holderB } = await deploy();
+
+    await vault.connect(firm).deposit(300);
+
+    await expect(
+      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address, holderB.address], 302)
+    ).to.be.revertedWith("DIVIDEND_RESERVE_EXCEEDED");
+  });
+
+  it("reverts when the total dividend amount is zero", async function () {
+    const { stockToken, vault, firm, holderA } = await deploy();
+
+    await vault.connect(firm).deposit(1_000);
+
+    await expect(
+      vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address], 0)
+    ).to.be.revertedWith("DIVIDEND_ZERO_AMOUNT");
   });
 
   it("reverts when a dividend recipient does not hold the stock token", async function () {
@@ -103,7 +118,7 @@ describe("DividendVault", function () {
     await vault.connect(firm).deposit(1_000);
 
     await expect(
-      vault.connect(firm).distribute(await stockToken.getAddress(), [outsider.address], [100])
+      vault.connect(firm).distribute(await stockToken.getAddress(), [outsider.address], 100)
     ).to.be.revertedWith("DIVIDEND_HOLDER_NOT_ELIGIBLE");
   });
 });

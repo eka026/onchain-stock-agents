@@ -4,6 +4,10 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./AgentPolicy.sol";
 
+interface IFirmStockToken is IERC20 {
+    function firm() external view returns (address);
+}
+
 contract DividendVault {
     AgentPolicy public immutable policy;
     IERC20 public immutable paymentToken;
@@ -36,28 +40,38 @@ contract DividendVault {
     function distribute(
         address stockToken,
         address[] calldata holders,
-        uint256[] calldata amounts
+        uint256 totalAmount
     ) external {
         require(stockToken != address(0), "DIVIDEND_ZERO_STOCK");
-        require(holders.length == amounts.length, "DIVIDEND_LENGTH_MISMATCH");
+        require(totalAmount > 0, "DIVIDEND_ZERO_AMOUNT");
 
-        uint256 total;
-        for (uint256 i = 0; i < amounts.length; i++) {
+        IFirmStockToken stock = IFirmStockToken(stockToken);
+        require(stock.firm() == msg.sender, "DIVIDEND_NOT_TOKEN_FIRM");
+
+        uint256 totalSupply = stock.totalSupply();
+        require(totalSupply > 0, "DIVIDEND_ZERO_SUPPLY");
+
+        uint256 paid;
+        uint256[] memory payouts = new uint256[](holders.length);
+        for (uint256 i = 0; i < holders.length; i++) {
             require(holders[i] != address(0), "DIVIDEND_ZERO_HOLDER");
-            require(amounts[i] > 0, "DIVIDEND_ZERO_AMOUNT");
-            require(IERC20(stockToken).balanceOf(holders[i]) > 0, "DIVIDEND_HOLDER_NOT_ELIGIBLE");
-            total += amounts[i];
+            uint256 holderBalance = stock.balanceOf(holders[i]);
+            require(holderBalance > 0, "DIVIDEND_HOLDER_NOT_ELIGIBLE");
+
+            uint256 payout = (totalAmount * holderBalance) / totalSupply;
+            payouts[i] = payout;
+            paid += payout;
         }
 
-        policy.validateDividend(msg.sender, total);
-        require(total <= firmReserve[msg.sender], "DIVIDEND_RESERVE_EXCEEDED");
+        policy.validateDividend(msg.sender, paid);
+        require(paid <= firmReserve[msg.sender], "DIVIDEND_RESERVE_EXCEEDED");
 
-        firmReserve[msg.sender] -= total;
-        policy.recordDividend(msg.sender, total);
+        firmReserve[msg.sender] -= paid;
+        policy.recordDividend(msg.sender, paid);
 
         for (uint256 i = 0; i < holders.length; i++) {
-            require(paymentToken.transfer(holders[i], amounts[i]), "DIVIDEND_PAYMENT_FAILED");
-            emit DividendPaid(msg.sender, stockToken, holders[i], amounts[i]);
+            require(paymentToken.transfer(holders[i], payouts[i]), "DIVIDEND_PAYMENT_FAILED");
+            emit DividendPaid(msg.sender, stockToken, holders[i], payouts[i]);
         }
     }
 }
