@@ -23,7 +23,9 @@ describe("Exchange", function () {
     // Exchange must be an approved recorder so it can call policy.recordSpending
     await policy.setRecorder(exchangeAddr, true);
     await policy.setTokenPolicy(stockAddr, true, 500, false);
+    await policy.setTraderPolicy(firm.address, true, 500, 100_000, 3_600);
     await policy.setTraderPolicy(trader.address, true, 500, 100_000, 3_600);
+    await policy.setTraderPolicy(buyer.address, true, 500, 100_000, 3_600);
 
     // Mint stock tokens: firm holds shares for buy-flow, trader holds shares for sell-flow
     await stockToken.connect(firm).mint(firm.address, 10_000);
@@ -46,6 +48,7 @@ describe("Exchange", function () {
     const { paymentToken, stockToken, exchange, trader, firm } = await deploy();
     const stockAddr = await stockToken.getAddress();
 
+    await exchange.connect(firm).createSellOrder(stockAddr, 100, 500);
     await exchange.connect(trader).buy(stockAddr, firm.address, 100, 500);
 
     expect(await paymentToken.balanceOf(trader.address)).to.equal(50_000 - 500);
@@ -58,6 +61,7 @@ describe("Exchange", function () {
     const { paymentToken, stockToken, exchange, trader, buyer } = await deploy();
     const stockAddr = await stockToken.getAddress();
 
+    await exchange.connect(buyer).createBuyOrder(stockAddr, 100, 500);
     await exchange.connect(trader).sell(stockAddr, buyer.address, 100, 500);
 
     expect(await stockToken.balanceOf(trader.address)).to.equal(10_000 - 100);
@@ -100,6 +104,7 @@ describe("Exchange", function () {
     // Tighten the spending window to 1 000
     await policy.setTraderPolicy(trader.address, true, 500, 1_000, 3_600);
 
+    await exchange.connect(firm).createSellOrder(stockAddr, 100, 800);
     await exchange.connect(trader).buy(stockAddr, firm.address, 100, 800);
 
     // 800 already spent; 201 more would exceed the 1 000 limit
@@ -108,14 +113,72 @@ describe("Exchange", function () {
     ).to.be.revertedWith("POLICY_SPENDING_LIMIT");
   });
 
+  it("requires a sell order before a buyer can pull seller shares", async function () {
+    const { stockToken, exchange, trader, firm } = await deploy();
+
+    await expect(
+      exchange.connect(trader).buy(await stockToken.getAddress(), firm.address, 100, 500)
+    ).to.be.revertedWith("EXCHANGE_SELL_ORDER_NOT_OPEN");
+  });
+
+  it("requires a buy order before a seller can pull buyer payment", async function () {
+    const { stockToken, exchange, trader, buyer } = await deploy();
+
+    await expect(
+      exchange.connect(trader).sell(await stockToken.getAddress(), buyer.address, 100, 500)
+    ).to.be.revertedWith("EXCHANGE_BUY_ORDER_NOT_OPEN");
+  });
+
+  it("rejects zero-share or zero-payment orders", async function () {
+    const { stockToken, exchange, trader, firm, buyer } = await deploy();
+    const stockAddr = await stockToken.getAddress();
+
+    await expect(exchange.connect(firm).createSellOrder(stockAddr, 0, 500)).to.be.revertedWith(
+      "EXCHANGE_ZERO_SHARES"
+    );
+    await expect(exchange.connect(firm).createSellOrder(stockAddr, 100, 0)).to.be.revertedWith(
+      "EXCHANGE_ZERO_PAYMENT"
+    );
+    await expect(exchange.connect(buyer).createBuyOrder(stockAddr, 0, 500)).to.be.revertedWith(
+      "EXCHANGE_ZERO_SHARES"
+    );
+    await expect(exchange.connect(trader).sell(stockAddr, buyer.address, 100, 0)).to.be.revertedWith(
+      "EXCHANGE_ZERO_PAYMENT"
+    );
+  });
+
+  it("reverts sell orders when the buyer agent is disabled", async function () {
+    const { policy, stockToken, exchange, trader, buyer } = await deploy();
+    const stockAddr = await stockToken.getAddress();
+
+    await exchange.connect(buyer).createBuyOrder(stockAddr, 100, 500);
+    await policy.setTraderPolicy(buyer.address, false, 500, 100_000, 3_600);
+
+    await expect(exchange.connect(trader).sell(stockAddr, buyer.address, 100, 500)).to.be.revertedWith(
+      "POLICY_TRADER_DISABLED"
+    );
+  });
+
+  it("records buyer spending when a sell order settles", async function () {
+    const { policy, stockToken, exchange, trader, buyer } = await deploy();
+    const stockAddr = await stockToken.getAddress();
+
+    await exchange.connect(buyer).createBuyOrder(stockAddr, 100, 500);
+    await exchange.connect(trader).sell(stockAddr, buyer.address, 100, 500);
+
+    expect(await policy.currentSpentAmount(buyer.address)).to.equal(500);
+  });
+
   it("emits TradeSettled for successful buy and sell", async function () {
     const { stockToken, exchange, trader, firm, buyer } = await deploy();
     const stockAddr = await stockToken.getAddress();
 
+    await exchange.connect(firm).createSellOrder(stockAddr, 50, 250);
     await expect(exchange.connect(trader).buy(stockAddr, firm.address, 50, 250))
       .to.emit(exchange, "TradeSettled")
       .withArgs(trader.address, stockAddr, firm.address, 50, 250, true);
 
+    await exchange.connect(buyer).createBuyOrder(stockAddr, 50, 250);
     await expect(exchange.connect(trader).sell(stockAddr, buyer.address, 50, 250))
       .to.emit(exchange, "TradeSettled")
       .withArgs(trader.address, stockAddr, buyer.address, 50, 250, false);

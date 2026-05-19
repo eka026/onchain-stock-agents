@@ -21,6 +21,8 @@ describe("DividendVault", function () {
 
     await policy.setRecorder(vaultAddr, true);
     await policy.setDividendPolicy(firm.address, true, 1_000, 3_600);
+    await stockToken.connect(firm).mint(holderA.address, 100);
+    await stockToken.connect(firm).mint(holderB.address, 100);
 
     await paymentToken.transfer(firm.address, 5_000);
     await paymentToken.connect(firm).approve(vaultAddr, ethers.MaxUint256);
@@ -93,5 +95,15 @@ describe("DividendVault", function () {
     await expect(
       vault.connect(firm).distribute(await stockToken.getAddress(), [holderA.address, holderB.address], [100])
     ).to.be.revertedWith("DIVIDEND_LENGTH_MISMATCH");
+  });
+
+  it("reverts when a dividend recipient does not hold the stock token", async function () {
+    const { stockToken, vault, firm, outsider } = await deploy();
+
+    await vault.connect(firm).deposit(1_000);
+
+    await expect(
+      vault.connect(firm).distribute(await stockToken.getAddress(), [outsider.address], [100])
+    ).to.be.revertedWith("DIVIDEND_HOLDER_NOT_ELIGIBLE");
   });
 });

@@ -38,10 +38,14 @@ contract DividendVault {
         address[] calldata holders,
         uint256[] calldata amounts
     ) external {
+        require(stockToken != address(0), "DIVIDEND_ZERO_STOCK");
         require(holders.length == amounts.length, "DIVIDEND_LENGTH_MISMATCH");
 
         uint256 total;
         for (uint256 i = 0; i < amounts.length; i++) {
+            require(holders[i] != address(0), "DIVIDEND_ZERO_HOLDER");
+            require(amounts[i] > 0, "DIVIDEND_ZERO_AMOUNT");
+            require(IERC20(stockToken).balanceOf(holders[i]) > 0, "DIVIDEND_HOLDER_NOT_ELIGIBLE");
             total += amounts[i];
         }
 
