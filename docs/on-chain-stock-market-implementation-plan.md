@@ -81,7 +81,7 @@ README.md
 - Create: `requirements.txt`
 - Modify: `README.md`
 
-- [ ] Create `package.json` with scripts:
+- [x] Create `package.json` with scripts:
 
 ```json
 {
@@ -107,7 +107,7 @@ README.md
 }
 ```
 
-- [ ] Create `hardhat.config.ts`:
+- [x] Create `hardhat.config.ts`:
 
 ```ts
 import { HardhatUserConfig } from "hardhat/config";
@@ -133,7 +133,7 @@ const config: HardhatUserConfig = {
 export default config;
 ```
 
-- [ ] Create `requirements.txt`:
+- [x] Create `requirements.txt`:
 
 ```text
 web3==6.20.1
@@ -145,14 +145,14 @@ google-generativeai==0.8.3
 groq==0.11.0
 ```
 
-- [ ] Install dependencies:
+- [x] Install dependencies:
 
 ```powershell
 npm install
 python -m pip install -r requirements.txt
 ```
 
-- [ ] Verify scaffolding:
+- [x] Verify scaffolding:
 
 ```powershell
 npm run compile
@@ -172,9 +172,9 @@ Expected: Hardhat compiles successfully or reports nothing to compile.
 - Create: `contracts/AgentPolicy.sol`
 - Create: `test/AgentPolicy.test.ts`
 
-- [ ] Write tests for approved-token storage, trader limit storage, dividend budget storage, unauthorized owner calls, and unauthorized spending recorder calls.
+- [x] Write tests for approved-token storage, trader limit storage, dividend budget storage, unauthorized owner calls, and unauthorized spending recorder calls.
 
-- [ ] Implement policy state and events:
+- [x] Implement policy state and events:
 
 ```solidity
 mapping(address => bool) public isTokenApproved;
@@ -185,7 +185,7 @@ mapping(address => uint256) public dividendBudget;
 mapping(address => bool) public isSpendingRecorder;
 ```
 
-- [ ] Implement owner-only configuration:
+- [x] Implement owner-only configuration:
 
 ```solidity
 function setTokenApproved(address token, bool approved) external onlyOwner;
@@ -194,7 +194,7 @@ function setDividendBudget(address firm, uint256 budget) external onlyOwner;
 function setSpendingRecorder(address recorder, bool approved) external onlyOwner;
 ```
 
-- [ ] Implement trade validation:
+- [x] Implement trade validation:
 
 ```solidity
 function validateTrade(address trader, address token, uint256 shareAmount, uint256 paymentAmount) external view {
@@ -204,7 +204,7 @@ function validateTrade(address trader, address token, uint256 shareAmount, uint2
 }
 ```
 
-- [ ] Implement spending recording:
+- [x] Implement spending recording:
 
 ```solidity
 function recordSpending(address trader, uint256 amount) external {
@@ -213,7 +213,7 @@ function recordSpending(address trader, uint256 amount) external {
 }
 ```
 
-- [ ] Verify:
+- [x] Verify:
 
 ```powershell
 npm test -- test/AgentPolicy.test.ts
@@ -227,15 +227,15 @@ npm test -- test/AgentPolicy.test.ts
 - Create: `contracts/StockToken.sol`
 - Create: `test/StockToken.test.ts`
 
-- [ ] Write tests for authorized minting, unauthorized minting rejection, and cap-exceeded rejection.
+- [x] Write tests for authorized minting, unauthorized minting rejection, and cap-exceeded rejection.
 
-- [ ] Implement constructor:
+- [x] Implement constructor:
 
 ```solidity
 constructor(string memory name_, string memory symbol_, address firm_, uint256 maxSupply_) ERC20(name_, symbol_)
 ```
 
-- [ ] Implement minting rule:
+- [x] Implement minting rule:
 
 ```solidity
 function mint(address to, uint256 amount) external {
@@ -245,7 +245,7 @@ function mint(address to, uint256 amount) external {
 }
 ```
 
-- [ ] Verify:
+- [x] Verify:
 
 ```powershell
 npm test -- test/StockToken.test.ts
@@ -263,14 +263,14 @@ npm test -- test/StockToken.test.ts
 - Create: `contracts/Exchange.sol`
 - Create: `test/Exchange.test.ts`
 
-- [ ] Write tests for successful buy settlement.
-- [ ] Write tests for successful sell settlement.
-- [ ] Write tests that oversized trades revert.
-- [ ] Write tests that unauthorized token trades revert.
-- [ ] Write tests that spending-limit violations revert.
-- [ ] Write tests that `TradeSettled` is emitted for successful trades.
+- [x] Write tests for successful buy settlement.
+- [x] Write tests for successful sell settlement.
+- [x] Write tests that oversized trades revert.
+- [x] Write tests that unauthorized token trades revert.
+- [x] Write tests that spending-limit violations revert.
+- [x] Write tests that `TradeSettled` is emitted for successful trades.
 
-- [ ] Implement buy flow:
+- [x] Implement buy flow:
 
 ```solidity
 function buy(address stockToken, address seller, uint256 shareAmount, uint256 paymentAmount) external {
@@ -282,7 +282,7 @@ function buy(address stockToken, address seller, uint256 shareAmount, uint256 pa
 }
 ```
 
-- [ ] Implement sell flow:
+- [x] Implement sell flow:
 
 ```solidity
 function sell(address stockToken, address buyer, uint256 shareAmount, uint256 paymentAmount) external {
@@ -293,7 +293,7 @@ function sell(address stockToken, address buyer, uint256 shareAmount, uint256 pa
 }
 ```
 
-- [ ] Verify:
+- [x] Verify:
 
 ```powershell
 npm test -- test/Exchange.test.ts
@@ -307,14 +307,14 @@ npm test -- test/Exchange.test.ts
 - Create: `contracts/DividendVault.sol`
 - Create: `test/DividendVault.test.ts`
 
-- [ ] Write tests for reserve deposit.
-- [ ] Write tests for successful dividend distribution.
-- [ ] Write tests for `DividendPaid` events.
-- [ ] Write tests for payout above budget rejection.
-- [ ] Write tests for payout above reserve rejection.
-- [ ] Write tests for holder/amount length mismatch rejection.
+- [x] Write tests for reserve deposit.
+- [x] Write tests for successful dividend distribution.
+- [x] Write tests for `DividendPaid` events.
+- [x] Write tests for payout above budget rejection.
+- [x] Write tests for payout above reserve rejection.
+- [x] Write tests for holder/amount length mismatch rejection.
 
-- [ ] Implement deposit:
+- [x] Implement deposit:
 
 ```solidity
 function deposit(uint256 amount) external {
@@ -324,7 +324,7 @@ function deposit(uint256 amount) external {
 }
 ```
 
-- [ ] Implement distribution:
+- [x] Implement distribution:
 
 ```solidity
 function distribute(address stockToken, address[] calldata holders, uint256[] calldata amounts) external {
@@ -343,7 +343,7 @@ function distribute(address stockToken, address[] calldata holders, uint256[] ca
 }
 ```
 
-- [ ] Verify:
+- [x] Verify:
 
 ```powershell
 npm test -- test/DividendVault.test.ts
@@ -360,13 +360,13 @@ npm test -- test/DividendVault.test.ts
 - Create: `scripts/export_abis.ts`
 - Modify: `README.md`
 
-- [ ] Deploy payment token, stock token, policy, exchange, and dividend vault.
-- [ ] Configure approved stock token.
-- [ ] Configure trader max trade size and spending limit.
-- [ ] Configure firm dividend budget.
-- [ ] Authorize the exchange and dividend vault as spending recorders.
-- [ ] Print deployed addresses as JSON so Python agents can consume them.
-- [ ] Implement `scripts/export_abis.ts` to extract ABIs from Hardhat artifacts into `agents/abis/*.json`.
+- [x] Deploy payment token, stock token, policy, exchange, and dividend vault.
+- [x] Configure approved stock token.
+- [x] Configure trader max trade size and spending limit.
+- [x] Configure firm dividend budget.
+- [x] Authorize the exchange and dividend vault as spending recorders.
+- [x] Print deployed addresses as JSON so Python agents can consume them.
+- [x] Implement `scripts/export_abis.ts` to extract ABIs from Hardhat artifacts into `agents/abis/*.json`.
 
 Verification:
 
@@ -377,16 +377,16 @@ Contracts are deployed manually via Remix IDE on Sepolia testnet in this order: 
 **Files:**
 - Create: `test/IntegrationMarket.test.ts`
 
-- [ ] Deploy all contracts.
-- [ ] Mint payment tokens and shares to test actors.
-- [ ] Approve exchange and dividend vault transfers.
-- [ ] Execute successful buy.
-- [ ] Execute successful sell.
-- [ ] Execute successful dividend distribution.
-- [ ] Assert oversized trade reverts.
-- [ ] Assert unauthorized asset trade reverts.
-- [ ] Assert excessive share mint reverts.
-- [ ] Assert excessive dividend payout reverts.
+- [x] Deploy all contracts.
+- [x] Mint payment tokens and shares to test actors.
+- [x] Approve exchange and dividend vault transfers.
+- [x] Execute successful buy.
+- [x] Execute successful sell.
+- [x] Execute successful dividend distribution.
+- [x] Assert oversized trade reverts.
+- [x] Assert unauthorized asset trade reverts.
+- [x] Assert excessive share mint reverts.
+- [x] Assert excessive dividend payout reverts.
 
 Verification:
 
