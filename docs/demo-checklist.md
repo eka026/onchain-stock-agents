@@ -3,10 +3,10 @@
 - [ ] `npm test` passes.
 - [ ] `pytest tests` passes.
 - [ ] `python -m compileall agents` passes.
-- [ ] Local Hardhat node starts with `npm run node`.
-- [ ] Deployment runs with `npm run deploy:local`.
+- [ ] Contracts compile with `npm run compile`.
+- [ ] Contracts are deployed to Sepolia with Remix IDE or `npm run deploy:sepolia`.
 - [ ] Deployment prints policy, stock token, payment token, exchange, and dividend vault addresses.
-- [ ] `.env` contains local RPC, deployed contract addresses, local demo wallets, and LLM provider configuration.
+- [ ] `.env` contains Sepolia RPC, deployed contract addresses, funded testnet wallets, and LLM provider configuration.
 - [ ] LLM provider is configured for a low-cost model such as `gpt-4o-mini`.
 - [ ] Unit tests use mock LLM clients and do not call paid APIs.
 - [ ] Firm agent runs as a separate wallet-backed service.
@@ -33,4 +33,4 @@
 - [ ] Excessive dividend payout reverts.
 - [ ] Reverted transactions are logged as rejected, not confirmed.
 - [ ] `docs/llm-agent-deployment.md` explains how the deployed agents work.
-- [ ] README explains how to reproduce the local demo from a fresh clone.
+- [ ] README explains how to reproduce the testnet demo from a fresh clone.

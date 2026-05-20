@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 
 const CONFIG = {
   paymentInitialSupply: 1_000_000n,
@@ -22,8 +22,39 @@ function stringifyDeployment(value: unknown) {
   );
 }
 
-export async function deployLocalContracts() {
-  const [deployer, firm, sellerAgent, buyerAgent] = await ethers.getSigners();
+function requireEnv(key: string) {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required env var: ${key}`);
+  }
+  return value;
+}
+
+function getOptionalPrivateKeys(key: string) {
+  return (process.env[key] ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+export async function deployContracts() {
+  const [deployer] = await ethers.getSigners();
+  const isLocalNetwork = network.name === "hardhat" || network.name === "localhost";
+
+  const [, localFirm, localSellerAgent, localBuyerAgent] = await ethers.getSigners();
+  const firm = isLocalNetwork
+    ? localFirm
+    : new ethers.Wallet(requireEnv("FIRM_PRIVATE_KEY"), ethers.provider);
+  const traderWallets = isLocalNetwork
+    ? [localSellerAgent, localBuyerAgent]
+    : getOptionalPrivateKeys("TRADER_PRIVATE_KEYS")
+        .slice(0, 2)
+        .map((key) => new ethers.Wallet(key, ethers.provider));
+  const [sellerAgent, buyerAgent] = traderWallets;
+
+  if (!sellerAgent || !buyerAgent) {
+    throw new Error("TRADER_PRIVATE_KEYS must include at least two private keys for deployment setup");
+  }
 
   const AgentPolicy = await ethers.getContractFactory("AgentPolicy");
   const policy = await AgentPolicy.deploy();
@@ -94,7 +125,7 @@ export async function deployLocalContracts() {
   await paymentToken.connect(firm).approve(contracts.dividendVault, ethers.MaxUint256);
 
   return {
-    network: "localhost",
+    network: network.name,
     contracts,
     actors: {
       deployer: deployer.address,
@@ -113,8 +144,10 @@ export async function deployLocalContracts() {
   };
 }
 
+export const deployLocalContracts = deployContracts;
+
 async function main() {
-  const deployment = await deployLocalContracts();
+  const deployment = await deployContracts();
   const { instances: _instances, ...jsonDeployment } = deployment;
 
   console.log(stringifyDeployment(jsonDeployment));

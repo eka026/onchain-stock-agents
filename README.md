@@ -17,25 +17,73 @@ Verify the Hardhat scaffold:
 npm run compile
 ```
 
-## Local contract deployment
+## Testnet contract deployment
 
-Start a local Hardhat node in one terminal:
+The contracts are intended to run against a public test network such as Sepolia. Hardhat is still used for compilation, tests, ABI export, and optional scripted deployment, but the runtime agents should point at a testnet RPC URL.
 
-```powershell
-npm run node
-```
+### Option A: Deploy with Remix IDE
 
-Deploy and configure the local market contracts in another terminal:
+Compile the contracts locally and export fresh ABIs:
 
 ```powershell
-npm run deploy:local
+npm run compile
+npm run export:abis
 ```
+
+In Remix, deploy the contracts to Sepolia in this order:
+
+1. `AgentPolicy`
+2. `MockERC20` from `contracts/test/MockERC20.sol` for demo payment tokens, unless you already have a Sepolia ERC-20 payment token
+3. `StockToken`, using the firm wallet address as `owner_`
+4. `Exchange`, using the deployed policy and payment token addresses
+5. `DividendVault`, using the deployed policy and payment token addresses
+
+After deployment, paste the resulting addresses into `.env`:
+
+```env
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+FIRM_PRIVATE_KEY=0x...
+TRADER_PRIVATE_KEYS=0x...,0x...
+
+PAYMENT_TOKEN_ADDRESS=0x...
+STOCK_TOKEN_ADDRESS=0x...
+POLICY_ADDRESS=0x...
+EXCHANGE_ADDRESS=0x...
+VAULT_ADDRESS=0x...
+```
+
+Configure the market from Remix by calling:
+
+```text
+AgentPolicy.setTokenPolicy(STOCK_TOKEN_ADDRESS, true, 500, false)
+AgentPolicy.setTraderPolicy(FIRM_ADDRESS, true, 500, 100000, 3600)
+AgentPolicy.setTraderPolicy(TRADER_ADDRESS, true, 500, 100000, 3600)
+AgentPolicy.setDividendPolicy(FIRM_ADDRESS, true, 10000, 3600)
+AgentPolicy.setRecorder(EXCHANGE_ADDRESS, true)
+AgentPolicy.setRecorder(VAULT_ADDRESS, true)
+StockToken.mint(FIRM_ADDRESS, 10000)
+StockToken.mint(TRADER_ADDRESS, 10000)
+MockERC20.transfer(TRADER_ADDRESS, 50000)
+StockToken.approve(EXCHANGE_ADDRESS, MAX_UINT256)
+MockERC20.approve(EXCHANGE_ADDRESS, MAX_UINT256)
+MockERC20.approve(VAULT_ADDRESS, MAX_UINT256)
+```
+
+Approvals must be submitted from the wallet that owns the tokens.
+
+### Option B: Deploy with Hardhat
+
+```powershell
+npm run deploy:sepolia
+```
+
+For scripted deployment, `.env` must include `SEPOLIA_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, `FIRM_PRIVATE_KEY`, and at least two comma-separated `TRADER_PRIVATE_KEYS`. The deployer and setup wallets need Sepolia ETH for gas.
 
 The deploy script prints JSON for Python agents to consume. It includes deployed contract addresses, configured actor accounts, and the policy limits used during setup:
 
 ```json
 {
-  "network": "localhost",
+  "network": "sepolia",
   "contracts": {
     "paymentToken": "0x...",
     "stockToken": "0x...",

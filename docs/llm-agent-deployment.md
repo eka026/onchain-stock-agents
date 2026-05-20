@@ -37,7 +37,7 @@ Trader Agent Service B
   - local portfolio tracker
 ```
 
-Each agent module can run as a real process. For the local demo, all processes connect to the Hardhat RPC endpoint. For a public testnet extension, the same structure can connect to a Sepolia RPC endpoint after replacing local accounts with funded testnet wallets.
+Each agent module can run as a real process. For the testnet demo, all processes connect to a Sepolia RPC endpoint and use funded testnet wallets. Contracts can be deployed from Remix IDE, then the resulting addresses are copied into `.env`.
 
 The Python layer should stay intentionally small:
 
@@ -83,7 +83,7 @@ Local portfolios update only after receipt confirmation and expected event verif
 Use `.env` for local deployment configuration:
 
 ```text
-RPC_URL=http://127.0.0.1:8545
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 CHAIN_ID=31337
 
 LLM_PROVIDER=openai
@@ -283,7 +283,7 @@ Recommended local commands:
 
 ```powershell
 npm run node
-npm run deploy:local
+npm run deploy:sepolia
 python -m agents.firm_agent --agent firm-a --once
 python -m agents.trader_agent --agent trader-a --once
 python -m agents.trader_agent --agent trader-b --once
@@ -319,8 +319,8 @@ Integration tests should show that even if the mock LLM proposes a non-compliant
 ## Security and Safety Notes
 
 - Never commit real private keys or API keys.
-- Use local Hardhat accounts for the main demo.
+- Use funded Sepolia testnet wallets for the main demo.
 - Treat LLM output as untrusted input.
 - Keep contract checks complete even if Python validation already checks the same rule.
 - Log enough data to audit each agent action: observation summary, decision JSON, transaction hash, receipt status, and event verification.
-- Keep Sepolia or public testnet deployment optional until the local demo is stable.
+- Use Hardhat local accounts only for unit tests and development dry runs.

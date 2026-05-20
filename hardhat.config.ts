@@ -1,5 +1,34 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import fs from "fs";
+import path from "path";
+
+function loadDotEnv() {
+  const envPath = path.join(__dirname, ".env");
+  if (!fs.existsSync(envPath)) {
+    return;
+  }
+
+  for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separator).trim();
+    const value = trimmed.slice(separator + 1).trim().replace(/^['"]|['"]$/g, "");
+    process.env[key] ??= value;
+  }
+}
+
+loadDotEnv();
+
+const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -10,7 +39,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    localhost: { url: "http://127.0.0.1:8545" }
+    localhost: { url: "http://127.0.0.1:8545" },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL ?? "",
+      accounts: deployerPrivateKey ? [deployerPrivateKey] : []
+    }
   }
 };
 
