@@ -1,22 +1,2502 @@
 [
   {
-    "id": "news-001",
-    "headline": "Apple reports stronger than expected quarterly revenue",
-    "body": "Apple announced quarterly revenue above analyst expectations, citing strong services growth and higher iPhone sales."
+    "id": 1,
+    "headline": "Large companies accelerate cloud migration after budget freeze ends",
+    "body": "Procurement teams reopened infrastructure projects that had been delayed for two quarters, with priority given to data storage, security monitoring, and collaboration tools."
   },
   {
-    "id": "news-002",
-    "headline": "Tesla faces production delay at new facility",
-    "body": "Tesla said deliveries from its new facility will be delayed because of supply chain issues affecting specialized components."
+    "id": 2,
+    "headline": "Chip fabrication suppliers report stronger orders from advanced packaging plants",
+    "body": "Equipment vendors said customers preparing high-performance processors requested more inspection systems, bonding tools, and thermal management machinery."
   },
   {
-    "id": "news-003",
-    "headline": "Nvidia announces new data center chip demand",
-    "body": "Nvidia said cloud providers increased orders for its latest data center chips during the quarter."
+    "id": 3,
+    "headline": "Cybersecurity spending rises after regional hospital network outage",
+    "body": "Executives across several industries approved faster identity management and endpoint protection projects after a vendor incident disrupted patient scheduling systems."
   },
   {
-    "id": "news-004",
-    "headline": "Microsoft expands enterprise AI cloud contracts",
-    "body": "Microsoft announced several large enterprise cloud agreements tied to AI infrastructure and productivity tools."
+    "id": 4,
+    "headline": "Data center developers delay campus opening because of grid interconnection queue",
+    "body": "Local utilities said transmission upgrades will take longer than expected, pushing the first phase of a planned server campus into next year."
+  },
+  {
+    "id": 5,
+    "headline": "Consumer electronics suppliers prepare for larger device refresh cycle",
+    "body": "Component distributors reported higher reservations for displays, memory, and camera modules after device makers finalized autumn production plans."
+  },
+  {
+    "id": 6,
+    "headline": "Enterprise software renewals slow as finance chiefs demand usage audits",
+    "body": "Several buyers asked vendors to justify seat counts and reduce overlapping tools before approving annual subscriptions."
+  },
+  {
+    "id": 7,
+    "headline": "Server manufacturers warn of limited memory availability",
+    "body": "Specialized memory modules remained difficult to source, forcing system builders to prioritize larger customers and adjust delivery schedules."
+  },
+  {
+    "id": 8,
+    "headline": "Regulators examine mobile platform billing rules",
+    "body": "Competition officials requested information about app payment restrictions, developer fees, and whether alternative checkout methods are available."
+  },
+  {
+    "id": 9,
+    "headline": "Back-office automation products gain traction with insurers",
+    "body": "Claims teams expanded document extraction and workflow software after pilot programs reduced manual review times."
+  },
+  {
+    "id": 10,
+    "headline": "Semiconductor distributors say inventory correction is nearly complete",
+    "body": "Customers in industrial electronics and networking hardware began placing smaller but more frequent orders after working through excess stock."
+  },
+  {
+    "id": 11,
+    "headline": "Export licensing review slows shipments of advanced computing systems",
+    "body": "Suppliers said new documentation requirements could delay deliveries for several overseas research and cloud customers."
+  },
+  {
+    "id": 12,
+    "headline": "Regional cloud buildout announced near financial centers",
+    "body": "Operators said new facilities will reduce latency for trading, compliance, and analytics workloads used by enterprise clients."
+  },
+  {
+    "id": 13,
+    "headline": "Open-source database migration pressures legacy software vendors",
+    "body": "Engineering teams at mid-sized firms shifted some workloads to lower-cost platforms as annual licensing negotiations became more difficult."
+  },
+  {
+    "id": 14,
+    "headline": "Factory simulation software wins new contracts from auto suppliers",
+    "body": "Manufacturers producing electric drivetrain parts adopted digital twin tools to reduce scrap and speed equipment changeovers."
+  },
+  {
+    "id": 15,
+    "headline": "Retail checks show weaker demand for laptops and tablets",
+    "body": "Store traffic slowed after households pulled forward purchases during promotional periods earlier in the year."
+  },
+  {
+    "id": 16,
+    "headline": "University network upgrades support campus connectivity projects",
+    "body": "Institutions ordered switches, access points, and monitoring software after several years of deferred maintenance."
+  },
+  {
+    "id": 17,
+    "headline": "Executives question near-term returns from generative tools",
+    "body": "Technology buyers said they remain interested in automation but want clearer productivity metrics before expanding deployments."
+  },
+  {
+    "id": 18,
+    "headline": "Satellite broadband equipment orders increase from maritime operators",
+    "body": "Shipping and offshore service companies purchased compact terminals to improve connectivity for remote crews."
+  },
+  {
+    "id": 19,
+    "headline": "Software configuration error disrupts airline check-in systems",
+    "body": "A widely used vendor said a faulty update caused reservation delays before engineers restored normal service."
+  },
+  {
+    "id": 20,
+    "headline": "Security startups draw acquisition interest from larger platforms",
+    "body": "Companies with tools for secrets management, workload monitoring, and identity verification received approaches from strategic buyers."
+  },
+  {
+    "id": 21,
+    "headline": "Memory contract prices stabilize after prolonged decline",
+    "body": "Procurement managers said quotes stopped falling as device manufacturers resumed measured restocking."
+  },
+  {
+    "id": 22,
+    "headline": "Researchers report progress on quantum error correction",
+    "body": "A university lab demonstrated a control method that could reduce error rates in early-stage quantum processors."
+  },
+  {
+    "id": 23,
+    "headline": "Corporate hardware leasing becomes more common",
+    "body": "Companies moved laptops and servers into leasing arrangements to preserve cash while replacing aging equipment."
+  },
+  {
+    "id": 24,
+    "headline": "Digital advertising tools shift toward privacy-safe measurement",
+    "body": "Marketing platforms released new attribution products after browsers and mobile operating systems tightened tracking policies."
+  },
+  {
+    "id": 25,
+    "headline": "Warehouse robotics software expands beyond pilot programs",
+    "body": "Logistics operators added autonomous picking and inventory tools to more sites after early tests improved order accuracy."
+  },
+  {
+    "id": 26,
+    "headline": "Game development studios reassess engine licensing costs",
+    "body": "Independent studios delayed some production commitments while reviewing changes to pricing terms for widely used development tools."
+  },
+  {
+    "id": 27,
+    "headline": "Edge computing systems tested in quality-control lines",
+    "body": "Manufacturers installed local processing equipment to inspect defects faster and reduce dependence on remote data centers."
+  },
+  {
+    "id": 28,
+    "headline": "Business device refresh cycle shows early recovery",
+    "body": "Resellers reported better order activity as pandemic-era laptops reached replacement age at large employers."
+  },
+  {
+    "id": 29,
+    "headline": "Managed database outage interrupts several online services",
+    "body": "A regional replication failure caused brief downtime for retailers, delivery apps, and internal dashboards."
+  },
+  {
+    "id": 30,
+    "headline": "Chip designers reserve more advanced packaging capacity",
+    "body": "Customers building accelerators and networking processors booked chiplet assembly and testing services earlier than usual."
+  },
+  {
+    "id": 31,
+    "headline": "Authorities review default search placement contracts",
+    "body": "Regulators asked platform companies and browser developers for documents related to distribution agreements."
+  },
+  {
+    "id": 32,
+    "headline": "Consulting firms report slower discretionary technology projects",
+    "body": "Clients continued funding cybersecurity and cloud migration but paused lower-priority analytics and interface redesign work."
+  },
+  {
+    "id": 33,
+    "headline": "Liquid cooling suppliers receive larger data hall orders",
+    "body": "Operators building dense server rooms purchased pumps, cold plates, and monitoring systems to manage heat loads."
+  },
+  {
+    "id": 34,
+    "headline": "Small business software cancellations rise",
+    "body": "Vendors serving restaurants and local retailers said monthly churn increased as customers reviewed operating expenses."
+  },
+  {
+    "id": 35,
+    "headline": "Machine vision suppliers win logistics contracts",
+    "body": "Fleet and warehouse operators added cameras and tracking hardware to reduce theft and improve cargo visibility."
+  },
+  {
+    "id": 36,
+    "headline": "Cloud marketplaces become preferred procurement channel",
+    "body": "Independent vendors said enterprise buyers completed approvals faster when software was purchased through established cloud catalogs."
+  },
+  {
+    "id": 37,
+    "headline": "Banks increase purchases of cryptographic security devices",
+    "body": "Financial institutions ordered more hardware modules for key management after updating internal security standards."
+  },
+  {
+    "id": 38,
+    "headline": "Consumer app installations soften across several categories",
+    "body": "Analytics firms reported weaker download trends for casual gaming, wellness, and photo-editing applications."
+  },
+  {
+    "id": 39,
+    "headline": "Earthquake disrupts specialty wafer material shipments",
+    "body": "Inspection delays and transport restrictions affected several suppliers serving semiconductor plants."
+  },
+  {
+    "id": 40,
+    "headline": "Enterprise messaging tools add compliance archive features",
+    "body": "Vendors introduced retention and monitoring products for customers in regulated industries."
+  },
+  {
+    "id": 41,
+    "headline": "Data analytics vendors face pricing pushback",
+    "body": "Customers requested usage-based billing and clearer savings estimates before expanding platform contracts."
+  },
+  {
+    "id": 42,
+    "headline": "Server rack manufacturers add weekend production shifts",
+    "body": "Equipment makers increased labor hours to meet demand from high-density computing projects."
+  },
+  {
+    "id": 43,
+    "headline": "Right-to-repair proposals advance in several states",
+    "body": "Lawmakers supported rules requiring easier access to parts, diagnostic tools, and repair documentation."
+  },
+  {
+    "id": 44,
+    "headline": "Cloud operators sign long-term renewable power agreements",
+    "body": "Data center companies secured electricity supply to support future computing campuses and internal emissions targets."
+  },
+  {
+    "id": 45,
+    "headline": "Chip design software providers raise sales outlook",
+    "body": "Vendors cited stronger demand from customers working on accelerators, automotive processors, and networking chips."
+  },
+  {
+    "id": 46,
+    "headline": "Corporate identity platforms see higher authentication volumes",
+    "body": "Remote work and vendor access programs increased demand for single sign-on and privileged access tools."
+  },
+  {
+    "id": 47,
+    "headline": "Testing facilities expand near semiconductor assembly hubs",
+    "body": "Outsourced providers added capacity to shorten cycle times for customers moving products into volume production."
+  },
+  {
+    "id": 48,
+    "headline": "Data residency rules complicate software deployments",
+    "body": "Several countries proposed requirements for sensitive customer data to remain on local or approved regional infrastructure."
+  },
+  {
+    "id": 49,
+    "headline": "Lower-power inference hardware gains buyer attention",
+    "body": "Cloud customers requested systems that reduce electricity costs during large-scale model deployment."
+  },
+  {
+    "id": 50,
+    "headline": "Collaboration tools bundle meeting intelligence features",
+    "body": "Vendors added transcription, summarization, and workflow routing to retain customers in a crowded market."
+  },
+  {
+    "id": 51,
+    "headline": "Regional lenders tighten standards for commercial borrowers",
+    "body": "Loan officers reported stricter collateral requirements and lower approval rates as property values and refinancing costs remained under review."
+  },
+  {
+    "id": 52,
+    "headline": "Late payments rise among younger credit card users",
+    "body": "Lenders said delinquencies increased in several customer groups after rent, insurance, and food costs pressured household budgets."
+  },
+  {
+    "id": 53,
+    "headline": "Short-duration bond funds attract new subscriptions",
+    "body": "Investors favored products with lower rate sensitivity while waiting for clearer central bank signals."
+  },
+  {
+    "id": 54,
+    "headline": "Property insurers raise catastrophe loss estimates",
+    "body": "Carriers revised expected claims after storms damaged homes, vehicles, and small businesses across multiple regions."
+  },
+  {
+    "id": 55,
+    "headline": "Travel spending lifts transaction volumes for payment processors",
+    "body": "Cross-border purchases, hotel bookings, and airline transactions improved during the latest reporting period."
+  },
+  {
+    "id": 56,
+    "headline": "Mortgage applications fall after borrowing rates rise",
+    "body": "Brokers said buyers delayed purchases and refinancing plans as monthly payment estimates increased."
+  },
+  {
+    "id": 57,
+    "headline": "Brokerage platforms extend trading hours for selected products",
+    "body": "Retail investing firms added overnight access after customers asked for more flexible trading windows."
+  },
+  {
+    "id": 58,
+    "headline": "Supervisors propose higher liquidity buffers for midsize banks",
+    "body": "Regulators outlined stricter funding rules for institutions with large uninsured deposits and concentrated client bases."
+  },
+  {
+    "id": 59,
+    "headline": "Direct lenders compete for mid-market acquisition financing",
+    "body": "Private credit funds offered faster execution and flexible covenants as banks reduced exposure to leveraged borrowers."
+  },
+  {
+    "id": 60,
+    "headline": "Wealth advisers report demand for tax-loss harvesting",
+    "body": "Households asked advisers to offset gains after volatile moves in equity and fixed-income portfolios."
+  },
+  {
+    "id": 61,
+    "headline": "Commercial property loan reserves increase",
+    "body": "Several lenders added provisions tied to office and retail buildings facing refinancing challenges."
+  },
+  {
+    "id": 62,
+    "headline": "Clearing firms complete tests for faster settlement cycle",
+    "body": "Market infrastructure providers upgraded systems ahead of a shorter post-trade processing deadline."
+  },
+  {
+    "id": 63,
+    "headline": "Online lenders slow expansion into new states",
+    "body": "Executives said higher funding costs and uneven credit performance changed growth plans."
+  },
+  {
+    "id": 64,
+    "headline": "Pension funds increase infrastructure debt allocations",
+    "body": "Long-term investors sought stable cash flows from utilities, transport, and digital network projects."
+  },
+  {
+    "id": 65,
+    "headline": "Central bank minutes highlight sticky services inflation",
+    "body": "Officials discussed keeping borrowing costs elevated until wage and price data show clearer cooling."
+  },
+  {
+    "id": 66,
+    "headline": "Large banks invest in fraud detection systems",
+    "body": "Institutions expanded tools to detect account takeover attempts and synthetic identity schemes."
+  },
+  {
+    "id": 67,
+    "headline": "Public listing pipeline shows signs of reopening",
+    "body": "Advisers said several private companies restarted preparations after market volatility eased."
+  },
+  {
+    "id": 68,
+    "headline": "Auto loan losses climb at specialty lenders",
+    "body": "Finance companies reported higher charge-offs among borrowers affected by repair bills and insurance premiums."
+  },
+  {
+    "id": 69,
+    "headline": "Custody banks benefit from higher asset values",
+    "body": "Asset servicing revenue improved as client portfolios recovered and transaction activity picked up."
+  },
+  {
+    "id": 70,
+    "headline": "Buy-now-pay-later firms face new disclosure proposals",
+    "body": "Consumer protection officials called for clearer fee, refund, and dispute-resolution rules."
+  },
+  {
+    "id": 71,
+    "headline": "Reinsurers seek higher prices for coastal coverage",
+    "body": "Global firms demanded rate increases after years of elevated storm and wildfire claims."
+  },
+  {
+    "id": 72,
+    "headline": "Corporate bond issuance accelerates before policy meeting",
+    "body": "Companies moved to refinance debt ahead of a central bank decision that could affect borrowing costs."
+  },
+  {
+    "id": 73,
+    "headline": "Digital wallet usage grows at grocery chains",
+    "body": "Retailers reported more tap-to-pay and stored-card transactions after checkout system upgrades."
+  },
+  {
+    "id": 74,
+    "headline": "Hedge funds reduce exposure after crowded trade reversal",
+    "body": "Prime brokers said several funds cut gross leverage following sharp moves in rate-sensitive assets."
+  },
+  {
+    "id": 75,
+    "headline": "Branch closures draw scrutiny from local officials",
+    "body": "Community leaders warned reduced physical access could affect small businesses and elderly customers."
+  },
+  {
+    "id": 76,
+    "headline": "High-yield cash accounts attract depositors",
+    "body": "Financial platforms promoted sweep accounts as competition for customer balances remained intense."
+  },
+  {
+    "id": 77,
+    "headline": "Regulators review social media investment promotions",
+    "body": "Enforcement staff examined whether paid posts clearly disclosed compensation and risks."
+  },
+  {
+    "id": 78,
+    "headline": "Life insurers benefit from higher reinvestment yields",
+    "body": "Executives said maturing bond portfolios are being replaced with securities offering better returns."
+  },
+  {
+    "id": 79,
+    "headline": "Currency swings raise hedging costs for exporters",
+    "body": "Corporate treasury teams increased use of forward contracts after sharp moves in major exchange rates."
+  },
+  {
+    "id": 80,
+    "headline": "Small business loan demand softens",
+    "body": "Bankers said owners delayed equipment purchases and expansion plans while monitoring consumer demand."
+  },
+  {
+    "id": 81,
+    "headline": "Municipal bond funds see renewed inflows",
+    "body": "Investors returned to tax-exempt products after yields became more attractive compared with historical averages."
+  },
+  {
+    "id": 82,
+    "headline": "Market data vendors renew exchange licensing deals",
+    "body": "Clients pushed back on rising terminal costs while providers negotiated access agreements."
+  },
+  {
+    "id": 83,
+    "headline": "Debit transaction growth slows at discount retailers",
+    "body": "Payment networks reported weaker low-ticket spending in categories tied to household basics."
+  },
+  {
+    "id": 84,
+    "headline": "Advisory teams rebuild after slow deal period",
+    "body": "Investment banks hired senior staff in healthcare, energy, and software as merger discussions improved."
+  },
+  {
+    "id": 85,
+    "headline": "Court ruling changes overdraft fee practices",
+    "body": "Several institutions said they would update account terms after judges questioned certain disclosures."
+  },
+  {
+    "id": 86,
+    "headline": "Commodity trading houses expand credit lines",
+    "body": "Banks increased financing for firms handling energy, metals, and agricultural shipments."
+  },
+  {
+    "id": 87,
+    "headline": "Risk models updated after bond market volatility",
+    "body": "Financial institutions recalibrated stress tests to reflect larger intraday rate moves."
+  },
+  {
+    "id": 88,
+    "headline": "Credit unions gain younger members",
+    "body": "Lower account fees and local lending programs helped member-owned institutions attract households."
+  },
+  {
+    "id": 89,
+    "headline": "Margin requirements rise for rate futures",
+    "body": "Clearinghouses increased collateral needs after volatility climbed in short-term interest-rate contracts."
+  },
+  {
+    "id": 90,
+    "headline": "Accounting firms warn clients about lease reporting changes",
+    "body": "Finance teams prepared for new disclosure requirements affecting property, vehicle, and equipment leases."
+  },
+  {
+    "id": 91,
+    "headline": "Cyber insurance pricing stabilizes for large companies",
+    "body": "Brokers said clients with stronger security controls are seeing more competition among underwriters."
+  },
+  {
+    "id": 92,
+    "headline": "Bank technology vendors win core modernization deals",
+    "body": "Regional institutions signed contracts to replace older deposit, lending, and fraud systems."
+  },
+  {
+    "id": 93,
+    "headline": "Watchdog reviews medical debt reporting",
+    "body": "Officials considered limits on how unpaid medical bills appear in credit files."
+  },
+  {
+    "id": 94,
+    "headline": "Sovereign wealth funds resume private market commitments",
+    "body": "Large state-backed investors increased allocations to buyout, infrastructure, and credit funds."
+  },
+  {
+    "id": 95,
+    "headline": "Card networks negotiate lower fees with transit agencies",
+    "body": "Public transport operators sought lower processing costs as contactless fare payments expanded."
+  },
+  {
+    "id": 96,
+    "headline": "Analysts question reserves at specialty lenders",
+    "body": "Researchers warned niche finance companies may need higher provisions if unemployment rises."
+  },
+  {
+    "id": 97,
+    "headline": "Foreign exchange brokers report higher corporate hedging",
+    "body": "Companies increased activity after revenue forecasts became more sensitive to currency moves."
+  },
+  {
+    "id": 98,
+    "headline": "Retirement plan providers add emergency savings accounts",
+    "body": "Employers adopted programs that let workers set aside after-tax funds for short-term needs."
+  },
+  {
+    "id": 99,
+    "headline": "Market makers prepare for volatility around inflation data",
+    "body": "Trading firms widened risk controls ahead of a closely watched price report."
+  },
+  {
+    "id": 100,
+    "headline": "Banking software outage delays payroll deposits",
+    "body": "A processing issue at a technology vendor caused delayed postings for several employers before normal service resumed."
+  },
+  {
+    "id": 101,
+    "headline": "Drug trial shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 102,
+    "headline": "Hospital staffing faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 103,
+    "headline": "Surgical robot receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 104,
+    "headline": "Rare disease funding draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 105,
+    "headline": "Retail clinic benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 106,
+    "headline": "Insurance authorization warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 107,
+    "headline": "Diagnostic testing expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 108,
+    "headline": "Patient monitoring cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 109,
+    "headline": "Clinical research signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 110,
+    "headline": "Medical supply tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 111,
+    "headline": "Drug trial reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 112,
+    "headline": "Hospital staffing announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 113,
+    "headline": "Surgical robot sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 114,
+    "headline": "Rare disease funding faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 115,
+    "headline": "Retail clinic adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 116,
+    "headline": "Insurance authorization raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 117,
+    "headline": "Diagnostic testing lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 118,
+    "headline": "Patient monitoring reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 119,
+    "headline": "Clinical research opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 120,
+    "headline": "Medical supply warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 121,
+    "headline": "Drug trial benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 122,
+    "headline": "Hospital staffing introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 123,
+    "headline": "Surgical robot faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 124,
+    "headline": "Rare disease funding receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 125,
+    "headline": "Retail clinic receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 126,
+    "headline": "Insurance authorization benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 127,
+    "headline": "Diagnostic testing pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 128,
+    "headline": "Patient monitoring reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 129,
+    "headline": "Clinical research launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 130,
+    "headline": "Medical supply reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 131,
+    "headline": "Drug trial sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 132,
+    "headline": "Hospital staffing faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 133,
+    "headline": "Surgical robot expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 134,
+    "headline": "Rare disease funding secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 135,
+    "headline": "Retail clinic reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 136,
+    "headline": "Insurance authorization delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 137,
+    "headline": "Diagnostic testing sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 138,
+    "headline": "Patient monitoring faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 139,
+    "headline": "Clinical research wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 140,
+    "headline": "Medical supply reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 141,
+    "headline": "Drug trial starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 142,
+    "headline": "Hospital staffing increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 143,
+    "headline": "Surgical robot suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 144,
+    "headline": "Rare disease funding benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 145,
+    "headline": "Retail clinic faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 146,
+    "headline": "Insurance authorization reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 147,
+    "headline": "Diagnostic testing warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 148,
+    "headline": "Patient monitoring adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 149,
+    "headline": "Clinical research reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 150,
+    "headline": "Medical supply faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 151,
+    "headline": "Grocery prices shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 152,
+    "headline": "Restaurant traffic faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 153,
+    "headline": "Apparel inventories receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 154,
+    "headline": "Home renovation demand draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 155,
+    "headline": "Online marketplace fees benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 156,
+    "headline": "Beauty product launches warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 157,
+    "headline": "Travel bookings expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 158,
+    "headline": "Auto showroom visits cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 159,
+    "headline": "Household appliance repairs signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 160,
+    "headline": "Discount store promotions tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 161,
+    "headline": "Grocery prices reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 162,
+    "headline": "Restaurant traffic announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 163,
+    "headline": "Apparel inventories sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 164,
+    "headline": "Home renovation demand faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 165,
+    "headline": "Online marketplace fees adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 166,
+    "headline": "Beauty product launches raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 167,
+    "headline": "Travel bookings lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 168,
+    "headline": "Auto showroom visits reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 169,
+    "headline": "Household appliance repairs opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 170,
+    "headline": "Discount store promotions warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 171,
+    "headline": "Grocery prices benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 172,
+    "headline": "Restaurant traffic introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 173,
+    "headline": "Apparel inventories faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 174,
+    "headline": "Home renovation demand receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 175,
+    "headline": "Online marketplace fees receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 176,
+    "headline": "Beauty product launches benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 177,
+    "headline": "Travel bookings pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 178,
+    "headline": "Auto showroom visits reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 179,
+    "headline": "Household appliance repairs launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 180,
+    "headline": "Discount store promotions reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 181,
+    "headline": "Grocery prices sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 182,
+    "headline": "Restaurant traffic faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 183,
+    "headline": "Apparel inventories expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 184,
+    "headline": "Home renovation demand secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 185,
+    "headline": "Online marketplace fees reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 186,
+    "headline": "Beauty product launches delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 187,
+    "headline": "Travel bookings sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 188,
+    "headline": "Auto showroom visits faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 189,
+    "headline": "Household appliance repairs wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 190,
+    "headline": "Discount store promotions reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 191,
+    "headline": "Grocery prices starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 192,
+    "headline": "Restaurant traffic increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 193,
+    "headline": "Apparel inventories suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 194,
+    "headline": "Home renovation demand benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 195,
+    "headline": "Online marketplace fees faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 196,
+    "headline": "Beauty product launches reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 197,
+    "headline": "Travel bookings warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 198,
+    "headline": "Auto showroom visits adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 199,
+    "headline": "Household appliance repairs reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 200,
+    "headline": "Discount store promotions faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 201,
+    "headline": "Naval procurement shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 202,
+    "headline": "Aircraft maintenance faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 203,
+    "headline": "Radar upgrade receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 204,
+    "headline": "Secure radio contract draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 205,
+    "headline": "Border sensor program benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 206,
+    "headline": "Training simulator order warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 207,
+    "headline": "Satellite imaging request expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 208,
+    "headline": "Munitions production cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 209,
+    "headline": "Base logistics signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 210,
+    "headline": "Allied equipment package tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 211,
+    "headline": "Naval procurement reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 212,
+    "headline": "Aircraft maintenance announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 213,
+    "headline": "Radar upgrade sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 214,
+    "headline": "Secure radio contract faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 215,
+    "headline": "Border sensor program adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 216,
+    "headline": "Training simulator order raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 217,
+    "headline": "Satellite imaging request lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 218,
+    "headline": "Munitions production reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 219,
+    "headline": "Base logistics opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 220,
+    "headline": "Allied equipment package warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 221,
+    "headline": "Naval procurement benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 222,
+    "headline": "Aircraft maintenance introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 223,
+    "headline": "Radar upgrade faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 224,
+    "headline": "Secure radio contract receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 225,
+    "headline": "Border sensor program receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 226,
+    "headline": "Training simulator order benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 227,
+    "headline": "Satellite imaging request pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 228,
+    "headline": "Munitions production reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 229,
+    "headline": "Base logistics launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 230,
+    "headline": "Allied equipment package reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 231,
+    "headline": "Naval procurement sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 232,
+    "headline": "Aircraft maintenance faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 233,
+    "headline": "Radar upgrade expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 234,
+    "headline": "Secure radio contract secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 235,
+    "headline": "Border sensor program reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 236,
+    "headline": "Training simulator order delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 237,
+    "headline": "Satellite imaging request sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 238,
+    "headline": "Munitions production faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 239,
+    "headline": "Base logistics wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 240,
+    "headline": "Allied equipment package reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 241,
+    "headline": "Naval procurement starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 242,
+    "headline": "Aircraft maintenance increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 243,
+    "headline": "Radar upgrade suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 244,
+    "headline": "Secure radio contract benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 245,
+    "headline": "Border sensor program faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 246,
+    "headline": "Training simulator order reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 247,
+    "headline": "Satellite imaging request warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 248,
+    "headline": "Munitions production adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 249,
+    "headline": "Base logistics reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 250,
+    "headline": "Allied equipment package faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 251,
+    "headline": "Rail freight shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 252,
+    "headline": "Factory automation faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 253,
+    "headline": "Truck parts receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 254,
+    "headline": "Packaging demand draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 255,
+    "headline": "Construction equipment benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 256,
+    "headline": "Aerospace components warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 257,
+    "headline": "Electrical systems expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 258,
+    "headline": "Warehouse machinery cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 259,
+    "headline": "Freight forwarding signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 260,
+    "headline": "Tool replacement tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 261,
+    "headline": "Rail freight reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 262,
+    "headline": "Factory automation announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 263,
+    "headline": "Truck parts sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 264,
+    "headline": "Packaging demand faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 265,
+    "headline": "Construction equipment adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 266,
+    "headline": "Aerospace components raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 267,
+    "headline": "Electrical systems lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 268,
+    "headline": "Warehouse machinery reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 269,
+    "headline": "Freight forwarding opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 270,
+    "headline": "Tool replacement warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 271,
+    "headline": "Rail freight benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 272,
+    "headline": "Factory automation introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 273,
+    "headline": "Truck parts faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 274,
+    "headline": "Packaging demand receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 275,
+    "headline": "Construction equipment receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 276,
+    "headline": "Aerospace components benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 277,
+    "headline": "Electrical systems pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 278,
+    "headline": "Warehouse machinery reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 279,
+    "headline": "Freight forwarding launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 280,
+    "headline": "Tool replacement reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 281,
+    "headline": "Rail freight sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 282,
+    "headline": "Factory automation faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 283,
+    "headline": "Truck parts expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 284,
+    "headline": "Packaging demand secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 285,
+    "headline": "Construction equipment reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 286,
+    "headline": "Aerospace components delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 287,
+    "headline": "Electrical systems sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 288,
+    "headline": "Warehouse machinery faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 289,
+    "headline": "Freight forwarding wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 290,
+    "headline": "Tool replacement reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 291,
+    "headline": "Rail freight starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 292,
+    "headline": "Factory automation increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 293,
+    "headline": "Truck parts suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 294,
+    "headline": "Packaging demand benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 295,
+    "headline": "Construction equipment faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 296,
+    "headline": "Aerospace components reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 297,
+    "headline": "Electrical systems warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 298,
+    "headline": "Warehouse machinery adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 299,
+    "headline": "Freight forwarding reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 300,
+    "headline": "Tool replacement faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 301,
+    "headline": "Crude output shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 302,
+    "headline": "Gas export terminal faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 303,
+    "headline": "Pipeline inspection receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 304,
+    "headline": "Power grid reliability draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 305,
+    "headline": "Solar permit benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 306,
+    "headline": "Wind turbine maintenance warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 307,
+    "headline": "Battery storage project expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 308,
+    "headline": "Refinery outage cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 309,
+    "headline": "Utility rate case signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 310,
+    "headline": "Water infrastructure tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 311,
+    "headline": "Crude output reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 312,
+    "headline": "Gas export terminal announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 313,
+    "headline": "Pipeline inspection sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 314,
+    "headline": "Power grid reliability faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 315,
+    "headline": "Solar permit adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 316,
+    "headline": "Wind turbine maintenance raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 317,
+    "headline": "Battery storage project lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 318,
+    "headline": "Refinery outage reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 319,
+    "headline": "Utility rate case opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 320,
+    "headline": "Water infrastructure warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 321,
+    "headline": "Crude output benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 322,
+    "headline": "Gas export terminal introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 323,
+    "headline": "Pipeline inspection faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 324,
+    "headline": "Power grid reliability receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 325,
+    "headline": "Solar permit receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 326,
+    "headline": "Wind turbine maintenance benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 327,
+    "headline": "Battery storage project pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 328,
+    "headline": "Refinery outage reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 329,
+    "headline": "Utility rate case launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 330,
+    "headline": "Water infrastructure reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 331,
+    "headline": "Crude output sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 332,
+    "headline": "Gas export terminal faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 333,
+    "headline": "Pipeline inspection expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 334,
+    "headline": "Power grid reliability secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 335,
+    "headline": "Solar permit reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 336,
+    "headline": "Wind turbine maintenance delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 337,
+    "headline": "Battery storage project sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 338,
+    "headline": "Refinery outage faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 339,
+    "headline": "Utility rate case wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 340,
+    "headline": "Water infrastructure reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 341,
+    "headline": "Crude output starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 342,
+    "headline": "Gas export terminal increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 343,
+    "headline": "Pipeline inspection suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 344,
+    "headline": "Power grid reliability benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 345,
+    "headline": "Solar permit faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 346,
+    "headline": "Wind turbine maintenance reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 347,
+    "headline": "Battery storage project warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 348,
+    "headline": "Refinery outage adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 349,
+    "headline": "Utility rate case reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 350,
+    "headline": "Water infrastructure faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 351,
+    "headline": "Copper mine shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 352,
+    "headline": "Steel mill faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 353,
+    "headline": "Lithium processing receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 354,
+    "headline": "Chemical plant draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 355,
+    "headline": "Paper packaging benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 356,
+    "headline": "Cement kiln warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 357,
+    "headline": "Fertilizer shipment expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 358,
+    "headline": "Aluminum smelter cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 359,
+    "headline": "Glass furnace signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 360,
+    "headline": "Timber harvest tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 361,
+    "headline": "Copper mine reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 362,
+    "headline": "Steel mill announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 363,
+    "headline": "Lithium processing sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 364,
+    "headline": "Chemical plant faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 365,
+    "headline": "Paper packaging adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 366,
+    "headline": "Cement kiln raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 367,
+    "headline": "Fertilizer shipment lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 368,
+    "headline": "Aluminum smelter reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 369,
+    "headline": "Glass furnace opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 370,
+    "headline": "Timber harvest warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 371,
+    "headline": "Copper mine benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 372,
+    "headline": "Steel mill introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 373,
+    "headline": "Lithium processing faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 374,
+    "headline": "Chemical plant receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 375,
+    "headline": "Paper packaging receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 376,
+    "headline": "Cement kiln benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 377,
+    "headline": "Fertilizer shipment pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 378,
+    "headline": "Aluminum smelter reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 379,
+    "headline": "Glass furnace launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 380,
+    "headline": "Timber harvest reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 381,
+    "headline": "Copper mine sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 382,
+    "headline": "Steel mill faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 383,
+    "headline": "Lithium processing expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 384,
+    "headline": "Chemical plant secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 385,
+    "headline": "Paper packaging reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 386,
+    "headline": "Cement kiln delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 387,
+    "headline": "Fertilizer shipment sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 388,
+    "headline": "Aluminum smelter faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 389,
+    "headline": "Glass furnace wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 390,
+    "headline": "Timber harvest reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 391,
+    "headline": "Copper mine starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 392,
+    "headline": "Steel mill increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 393,
+    "headline": "Lithium processing suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 394,
+    "headline": "Chemical plant benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 395,
+    "headline": "Paper packaging faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 396,
+    "headline": "Cement kiln reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 397,
+    "headline": "Fertilizer shipment warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 398,
+    "headline": "Aluminum smelter adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 399,
+    "headline": "Glass furnace reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 400,
+    "headline": "Timber harvest faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 401,
+    "headline": "Streaming subscriber shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 402,
+    "headline": "Wireless network faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 403,
+    "headline": "Advertising budget receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 404,
+    "headline": "Newspaper subscription draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 405,
+    "headline": "Music licensing benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 406,
+    "headline": "Game release warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 407,
+    "headline": "Sports broadcast expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 408,
+    "headline": "Fiber rollout cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 409,
+    "headline": "Studio production signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 410,
+    "headline": "Social platform moderation tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 411,
+    "headline": "Streaming subscriber reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 412,
+    "headline": "Wireless network announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 413,
+    "headline": "Advertising budget sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 414,
+    "headline": "Newspaper subscription faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 415,
+    "headline": "Music licensing adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 416,
+    "headline": "Game release raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 417,
+    "headline": "Sports broadcast lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 418,
+    "headline": "Fiber rollout reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 419,
+    "headline": "Studio production opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 420,
+    "headline": "Social platform moderation warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 421,
+    "headline": "Streaming subscriber benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 422,
+    "headline": "Wireless network introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 423,
+    "headline": "Advertising budget faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 424,
+    "headline": "Newspaper subscription receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 425,
+    "headline": "Music licensing receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 426,
+    "headline": "Game release benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 427,
+    "headline": "Sports broadcast pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 428,
+    "headline": "Fiber rollout reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 429,
+    "headline": "Studio production launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 430,
+    "headline": "Social platform moderation reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 431,
+    "headline": "Streaming subscriber sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 432,
+    "headline": "Wireless network faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 433,
+    "headline": "Advertising budget expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 434,
+    "headline": "Newspaper subscription secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 435,
+    "headline": "Music licensing reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 436,
+    "headline": "Game release delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 437,
+    "headline": "Sports broadcast sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 438,
+    "headline": "Fiber rollout faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 439,
+    "headline": "Studio production wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 440,
+    "headline": "Social platform moderation reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 441,
+    "headline": "Streaming subscriber starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 442,
+    "headline": "Wireless network increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 443,
+    "headline": "Advertising budget suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 444,
+    "headline": "Newspaper subscription benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 445,
+    "headline": "Music licensing faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 446,
+    "headline": "Game release reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 447,
+    "headline": "Sports broadcast warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 448,
+    "headline": "Fiber rollout adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 449,
+    "headline": "Studio production reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 450,
+    "headline": "Social platform moderation faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
+  },
+  {
+    "id": 451,
+    "headline": "Warehouse leasing shows stronger demand than expected",
+    "body": "Operators reported better activity after customers resumed delayed plans and adjusted budgets for the new quarter."
+  },
+  {
+    "id": 452,
+    "headline": "Apartment occupancy faces delays after supplier disruption",
+    "body": "A key vendor reported production issues, forcing companies to revise delivery schedules and communicate new timelines to customers."
+  },
+  {
+    "id": 453,
+    "headline": "Office refinancing receives approval from regulators",
+    "body": "Officials completed a review of safety, pricing, and operating documents, allowing the project or product to move forward."
+  },
+  {
+    "id": 454,
+    "headline": "Cell tower lease draws scrutiny from lawmakers",
+    "body": "Committee members requested records and scheduled hearings after complaints from customers, workers, or local officials."
+  },
+  {
+    "id": 455,
+    "headline": "Data center tenancy benefits from emergency replacement demand",
+    "body": "Customers placed urgent orders after older equipment, facilities, or systems failed during a period of heavy usage."
+  },
+  {
+    "id": 456,
+    "headline": "Toll road traffic warns of higher insurance and labor costs",
+    "body": "Executives said operating expenses increased faster than expected and may pressure margins in the coming reporting period."
+  },
+  {
+    "id": 457,
+    "headline": "Airport retail expands capacity in a regional market",
+    "body": "The project adds staff, equipment, and service coverage closer to customers that have been waiting for shorter lead times."
+  },
+  {
+    "id": 458,
+    "headline": "Self-storage demand cuts outlook after weak bookings",
+    "body": "Management cited slower order intake, cautious customers, and delayed contract approvals in its revised forecast."
+  },
+  {
+    "id": 459,
+    "headline": "Senior housing occupancy signs long-term supply agreement",
+    "body": "The contract gives buyers more predictable access while helping suppliers plan production and investment."
+  },
+  {
+    "id": 460,
+    "headline": "Rail terminal throughput tests lower-emission operating methods",
+    "body": "Pilot projects aim to reduce fuel use, waste, or environmental impact without disrupting service levels."
+  },
+  {
+    "id": 461,
+    "headline": "Warehouse leasing reports inventory buildup",
+    "body": "Distributors ordered less while working through stock accumulated during earlier supply shortages."
+  },
+  {
+    "id": 462,
+    "headline": "Apartment occupancy announces restructuring plan",
+    "body": "Management said the plan will consolidate sites, reduce overlapping functions, and direct spending toward higher-return operations."
+  },
+  {
+    "id": 463,
+    "headline": "Office refinancing sees stronger international orders",
+    "body": "Foreign customers increased purchases after local inventories declined and currency conditions improved."
+  },
+  {
+    "id": 464,
+    "headline": "Cell tower lease faces lawsuit over contract terms",
+    "body": "A customer alleged missed deadlines or unclear pricing, while the company said it complied with the agreement."
+  },
+  {
+    "id": 465,
+    "headline": "Data center tenancy adopts new inspection technology",
+    "body": "The system uses sensors, analytics, or automated review to detect problems earlier and reduce unplanned downtime."
+  },
+  {
+    "id": 466,
+    "headline": "Toll road traffic raises capital spending plans",
+    "body": "Executives said expected demand justifies additional investment in equipment, facilities, and worker training."
+  },
+  {
+    "id": 467,
+    "headline": "Airport retail lowers capital spending plans",
+    "body": "The company said it will preserve cash until demand and financing conditions become clearer."
+  },
+  {
+    "id": 468,
+    "headline": "Self-storage demand reports stable demand despite slower consumer spending",
+    "body": "Customers continued funding essential operations even as discretionary projects were reviewed."
+  },
+  {
+    "id": 469,
+    "headline": "Senior housing occupancy opens new regional service center",
+    "body": "The site will support faster repairs, training, parts availability, and customer response times."
+  },
+  {
+    "id": 470,
+    "headline": "Rail terminal throughput warns that currency swings may affect results",
+    "body": "Management said revenue translated from overseas markets could be more volatile in the next quarter."
+  },
+  {
+    "id": 471,
+    "headline": "Warehouse leasing benefits from competitor outage",
+    "body": "Orders shifted after a rival temporarily closed a facility for repairs, inspections, or software recovery."
+  },
+  {
+    "id": 472,
+    "headline": "Apartment occupancy introduces subscription-based service option",
+    "body": "The company moved more customers toward recurring contracts that bundle support, replacement parts, or analytics."
+  },
+  {
+    "id": 473,
+    "headline": "Office refinancing faces stricter reporting requirements",
+    "body": "New rules will require more detailed disclosures about costs, safety, emissions, or supply-chain practices."
+  },
+  {
+    "id": 474,
+    "headline": "Cell tower lease receives upgraded credit outlook",
+    "body": "Analysts cited lower leverage, steadier demand, and improved liquidity in the revised assessment."
+  },
+  {
+    "id": 475,
+    "headline": "Data center tenancy receives downgraded credit outlook",
+    "body": "Analysts warned that weaker bookings or rising costs may pressure cash flow in coming quarters."
+  },
+  {
+    "id": 476,
+    "headline": "Toll road traffic benefits from seasonal demand",
+    "body": "Orders increased as customers prepared for a busy operating period and replenished inventories."
+  },
+  {
+    "id": 477,
+    "headline": "Airport retail pauses acquisition after antitrust questions",
+    "body": "The companies said they would provide more information to regulators before deciding whether to proceed."
+  },
+  {
+    "id": 478,
+    "headline": "Self-storage demand reports lower freight costs",
+    "body": "Reduced shipping rates helped offset wage, material, and insurance inflation during the quarter."
+  },
+  {
+    "id": 479,
+    "headline": "Senior housing occupancy launches product aimed at commercial customers",
+    "body": "Early orders came from buyers seeking lower maintenance costs and more predictable service intervals."
+  },
+  {
+    "id": 480,
+    "headline": "Rail terminal throughput reports cybersecurity incident affecting customer portal",
+    "body": "The company said core operations continued while it investigated unauthorized access to a vendor-managed system."
+  },
+  {
+    "id": 481,
+    "headline": "Warehouse leasing sees customer concentration risk rise",
+    "body": "A handful of large buyers accounted for a greater share of revenue after smaller accounts reduced orders."
+  },
+  {
+    "id": 482,
+    "headline": "Apartment occupancy faces recall of a limited product batch",
+    "body": "The company identified a quality issue and said it would replace affected units while reviewing procedures."
+  },
+  {
+    "id": 483,
+    "headline": "Office refinancing expands training program to address skill shortages",
+    "body": "The company partnered with schools, unions, or local agencies to recruit workers for specialized roles."
+  },
+  {
+    "id": 484,
+    "headline": "Cell tower lease secures government-backed project financing",
+    "body": "Public agencies approved funding support tied to jobs, resilience, infrastructure, or domestic production goals."
+  },
+  {
+    "id": 485,
+    "headline": "Data center tenancy reports higher maintenance revenue",
+    "body": "Customers spent more on repairs, parts, and service visits as installed assets aged."
+  },
+  {
+    "id": 486,
+    "headline": "Toll road traffic delays deliveries because of component shortages",
+    "body": "A shortage of specialized parts forced production teams to adjust schedules and prioritize larger contracts."
+  },
+  {
+    "id": 487,
+    "headline": "Airport retail sees demand shift toward premium services",
+    "body": "Customers selected higher-spec offerings that promise better reliability, speed, or compliance support."
+  },
+  {
+    "id": 488,
+    "headline": "Self-storage demand faces permitting backlog",
+    "body": "Local agencies said a large volume of applications has extended review timelines for new projects."
+  },
+  {
+    "id": 489,
+    "headline": "Senior housing occupancy wins export orders from overseas buyers",
+    "body": "Demand improved after customers sought alternative suppliers and more secure delivery arrangements."
+  },
+  {
+    "id": 490,
+    "headline": "Rail terminal throughput reports margin pressure from input volatility",
+    "body": "Prices for fuel, labor, insurance, and materials moved faster than customer contracts could be repriced."
+  },
+  {
+    "id": 491,
+    "headline": "Warehouse leasing starts partnership to improve data sharing",
+    "body": "The agreement connects suppliers, customers, and service providers through a shared reporting platform."
+  },
+  {
+    "id": 492,
+    "headline": "Apartment occupancy increases shareholder payout after cash flow improves",
+    "body": "The board approved a higher payout after management reported stronger operating cash generation."
+  },
+  {
+    "id": 493,
+    "headline": "Office refinancing suspends repurchases to fund expansion",
+    "body": "Executives said available cash will be redirected toward capacity, technology, and workforce investments."
+  },
+  {
+    "id": 494,
+    "headline": "Cell tower lease benefits from infrastructure spending",
+    "body": "Contract awards increased for projects tied to modernization, resilience, and regional economic development."
+  },
+  {
+    "id": 495,
+    "headline": "Data center tenancy faces customer pushback over price increases",
+    "body": "Buyers asked for longer payment terms and volume discounts after several rounds of price changes."
+  },
+  {
+    "id": 496,
+    "headline": "Toll road traffic reports stronger recurring revenue",
+    "body": "More customers moved to multiyear service agreements, improving visibility even as new sales remained uneven."
+  },
+  {
+    "id": 497,
+    "headline": "Airport retail warns of weather-related disruption",
+    "body": "Severe storms affected facilities, worker availability, and transport schedules in several regions."
+  },
+  {
+    "id": 498,
+    "headline": "Self-storage demand adds automation to reduce bottlenecks",
+    "body": "Operators installed software, sensors, and specialized machinery to improve throughput and reduce manual handling."
+  },
+  {
+    "id": 499,
+    "headline": "Senior housing occupancy reports improved cash collection",
+    "body": "Customers paid outstanding invoices faster after contract disputes eased and financing conditions stabilized."
+  },
+  {
+    "id": 500,
+    "headline": "Rail terminal throughput faces weaker small-customer demand",
+    "body": "Smaller accounts delayed purchases while larger customers continued funding essential operations."
   }
 ]

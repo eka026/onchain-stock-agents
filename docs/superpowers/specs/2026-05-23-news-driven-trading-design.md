@@ -15,9 +15,9 @@ Each record contains only identifying and text fields:
 ```json
 [
   {
-    "id": "news-001",
-    "headline": "Apple reports stronger than expected quarterly revenue",
-    "body": "Apple announced quarterly revenue above analyst expectations, citing strong services growth and higher iPhone sales."
+    "id": 1,
+    "headline": "Large companies accelerate cloud migration after budget freeze ends",
+    "body": "Procurement teams reopened infrastructure projects that had been delayed for two quarters, with priority given to data storage, security monitoring, and collaboration tools."
   }
 ]
 ```

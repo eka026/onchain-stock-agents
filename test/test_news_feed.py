@@ -8,19 +8,19 @@ from agents.news_feed import NewsFeed, NewsItem, Scenario
 
 def test_news_item_accepts_only_raw_news_fields():
     item = NewsItem(
-        id="news-001",
+        id=1,
         headline="Apple reports stronger than expected quarterly revenue",
         body="Apple announced quarterly revenue above analyst expectations.",
     )
 
-    assert item.id == "news-001"
+    assert item.id == 1
     assert item.headline.startswith("Apple reports")
 
 
 @pytest.mark.parametrize("field", ["token", "sentiment", "impact"])
 def test_news_item_rejects_interpretation_fields(field):
     payload = {
-        "id": "news-001",
+        "id": 1,
         "headline": "Apple reports stronger than expected quarterly revenue",
         "body": "Apple announced quarterly revenue above analyst expectations.",
         field: "not allowed",
@@ -36,7 +36,7 @@ def test_load_news_rejects_interpretation_fields(tmp_path):
         json.dumps(
             [
                 {
-                    "id": "news-001",
+                    "id": 1,
                     "headline": "Apple reports stronger than expected quarterly revenue",
                     "body": "Apple announced quarterly revenue above analyst expectations.",
                     "token": "AAPL",
@@ -52,9 +52,9 @@ def test_load_news_rejects_interpretation_fields(tmp_path):
 
 def test_same_seed_produces_same_schedule():
     news = [
-        NewsItem(id="news-001", headline="First headline", body="First body"),
-        NewsItem(id="news-002", headline="Second headline", body="Second body"),
-        NewsItem(id="news-003", headline="Third headline", body="Third body"),
+        NewsItem(id=1, headline="First headline", body="First body"),
+        NewsItem(id=2, headline="Second headline", body="Second body"),
+        NewsItem(id=3, headline="Third headline", body="Third body"),
     ]
     scenario = Scenario(
         seed=438,
@@ -90,8 +90,8 @@ def test_same_seed_produces_same_schedule():
 
 def test_broadcast_delivers_same_news_to_all_traders_at_tick():
     news = [
-        NewsItem(id="news-001", headline="First headline", body="First body"),
-        NewsItem(id="news-002", headline="Second headline", body="Second body"),
+        NewsItem(id=1, headline="First headline", body="First body"),
+        NewsItem(id=2, headline="Second headline", body="Second body"),
     ]
     scenario = Scenario(
         seed=438,

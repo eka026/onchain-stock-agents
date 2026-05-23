@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class NewsItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str
+    id: int
     headline: str
     body: str
 

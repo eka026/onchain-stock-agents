@@ -15,9 +15,9 @@ Each record contains only identifying and text fields:
 ```json
 [
   {
-    "id": "news-001",
-    "headline": "Apple reports stronger than expected quarterly revenue",
-    "body": "Apple announced quarterly revenue above analyst expectations, citing strong services growth and higher iPhone sales."
+    "id": 1,
+    "headline": "Large companies accelerate cloud migration after budget freeze ends",
+    "body": "Procurement teams reopened infrastructure projects that had been delayed for two quarters, with priority given to data storage, security monitoring, and collaboration tools."
   }
 ]
 ```
@@ -41,30 +41,37 @@ The scenario controls scheduling and market metadata, not news interpretation:
   "broadcast_to_all_traders": true,
   "tokens": [
     { "symbol": "USD", "address": "0x..." },
-    { "symbol": "AAPL", "address": "0x..." },
-    { "symbol": "TSLA", "address": "0x..." },
-    { "symbol": "NVDA", "address": "0x..." }
+    { "symbol": "TECH", "address": "0x..." },
+    { "symbol": "FIN", "address": "0x..." },
+    { "symbol": "HLTH", "address": "0x..." },
+    { "symbol": "CSMR", "address": "0x..." },
+    { "symbol": "MLTRY", "address": "0x..." },
+    { "symbol": "INDS", "address": "0x..." },
+    { "symbol": "ENRG", "address": "0x..." },
+    { "symbol": "MATL", "address": "0x..." },
+    { "symbol": "COMM", "address": "0x..." },
+    { "symbol": "REIT", "address": "0x..." }
   ],
   "pools": [
     {
-      "id": "AAPL-USD",
-      "base_symbol": "AAPL",
+      "id": "TECH-USD",
+      "base_symbol": "TECH",
       "quote_symbol": "USD",
       "pool_address": "0x...",
       "lp_token_address": "0x...",
       "vault_address": "0x..."
     },
     {
-      "id": "TSLA-USD",
-      "base_symbol": "TSLA",
+      "id": "FIN-USD",
+      "base_symbol": "FIN",
       "quote_symbol": "USD",
       "pool_address": "0x...",
       "lp_token_address": "0x...",
       "vault_address": "0x..."
     },
     {
-      "id": "NVDA-USD",
-      "base_symbol": "NVDA",
+      "id": "HLTH-USD",
+      "base_symbol": "HLTH",
       "quote_symbol": "USD",
       "pool_address": "0x...",
       "lp_token_address": "0x...",
@@ -83,10 +90,16 @@ Use multiple two-token AMM pools instead of rewriting the smart contract as a mu
 Each stock-like token trades against a shared mock USD token:
 
 ```text
-AAPL / USD
-TSLA / USD
-NVDA / USD
-MSFT / USD
+TECH / USD
+FIN / USD
+HLTH / USD
+CSMR / USD
+MLTRY / USD
+INDS / USD
+ENRG / USD
+MATL / USD
+COMM / USD
+REIT / USD
 ```
 
 This matches the existing `AMMPool` contract, which supports exactly two ERC-20 tokens. Supporting many stock tokens means deploying multiple `AMMPool` instances, one per pair.
@@ -125,10 +138,10 @@ For multiple pools, a trader decision should include the selected pool:
 ```json
 {
   "action": "SWAP",
-  "pool_id": "NVDA-USD",
+  "pool_id": "TECH-USD",
   "token_in": "USD",
   "amount_in": 1000000000000000000,
-  "reason": "The news appears positive for Nvidia, so I am buying NVDA with USD."
+  "reason": "The news appears relevant to enterprise software and computing infrastructure, so I am increasing exposure to that market."
 }
 ```
 

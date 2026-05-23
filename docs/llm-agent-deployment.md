@@ -201,9 +201,9 @@ News records are raw and unlabeled:
 
 ```json
 {
-  "id": "news-001",
-  "headline": "Nvidia reports stronger than expected data center revenue",
-  "body": "Nvidia announced quarterly revenue above analyst expectations, citing continued demand for AI infrastructure."
+  "id": 1,
+  "headline": "Large companies accelerate cloud migration after budget freeze ends",
+  "body": "Procurement teams reopened infrastructure projects that had been delayed for two quarters, with priority given to data storage, security monitoring, and collaboration tools."
 }
 ```
 
