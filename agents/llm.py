@@ -1,7 +1,8 @@
 import json
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from pydantic import ValidationError
 
@@ -16,6 +17,18 @@ class LLMDecisionError(ValueError):
 @dataclass(frozen=True)
 class LLMResponse:
     raw_text: str
+    model: str = "mock"
+    finish_reason: str | None = None
+    usage: dict[str, int] | None = None
+    latency_ms: int | None = None
+
+
+class LLMClient(Protocol):
+    def decide_trader(self, observation: dict[str, Any]) -> TraderDecision:
+        ...
+
+    def decide_lp(self, observation: dict[str, Any]) -> LPDecision:
+        ...
 
 
 class MockLLMClient:
@@ -32,23 +45,29 @@ class MockLLMClient:
         self._trader_index = 0
         self._lp_index = 0
 
+    def reset(self) -> None:
+        self._trader_index = 0
+        self._lp_index = 0
+
     def trader_response(self, observation: dict[str, Any]) -> LLMResponse:
+        pools = _pools_from_observation(observation)
         if self.invalid_json:
             return LLMResponse(raw_text="{invalid json")
         if self._trader_index < len(self.trader_responses):
             response = self.trader_responses[self._trader_index]
             self._trader_index += 1
             return LLMResponse(raw_text=response)
-        return LLMResponse(raw_text=json.dumps(self._default_trader_payload(observation), sort_keys=True))
+        return LLMResponse(raw_text=json.dumps(self._default_trader_payload(observation, pools), sort_keys=True))
 
     def lp_response(self, observation: dict[str, Any]) -> LLMResponse:
+        pools = _pools_from_observation(observation)
         if self.invalid_json:
             return LLMResponse(raw_text="{invalid json")
         if self._lp_index < len(self.lp_responses):
             response = self.lp_responses[self._lp_index]
             self._lp_index += 1
             return LLMResponse(raw_text=response)
-        return LLMResponse(raw_text=json.dumps(self._default_lp_payload(observation), sort_keys=True))
+        return LLMResponse(raw_text=json.dumps(self._default_lp_payload(observation, pools), sort_keys=True))
 
     def decide_trader(self, observation: dict[str, Any]) -> TraderDecision:
         response = self.trader_response(observation)
@@ -60,8 +79,8 @@ class MockLLMClient:
         pools = _pools_from_observation(observation)
         return parse_lp_decision(response.raw_text, pools=pools)
 
-    def _default_trader_payload(self, observation: dict[str, Any]) -> dict[str, Any]:
-        pool = _matching_pool(observation)
+    def _default_trader_payload(self, observation: dict[str, Any], pools: list[PoolInfo]) -> dict[str, Any]:
+        pool = _matching_pool(observation, pools)
         if pool is None:
             return {
                 "action": "HOLD",
@@ -78,8 +97,7 @@ class MockLLMClient:
             "reason": f"Mock client matched the news to {pool.base_symbol}.",
         }
 
-    def _default_lp_payload(self, observation: dict[str, Any]) -> dict[str, Any]:
-        pools = _pools_from_observation(observation)
+    def _default_lp_payload(self, observation: dict[str, Any], pools: list[PoolInfo]) -> dict[str, Any]:
         if not pools:
             return {
                 "action": "HOLD",
@@ -161,14 +179,14 @@ def _pools_from_observation(observation: dict[str, Any]) -> list[PoolInfo]:
     return [pool if isinstance(pool, PoolInfo) else PoolInfo.model_validate(pool) for pool in pools]
 
 
-def _matching_pool(observation: dict[str, Any]) -> PoolInfo | None:
-    pools = _pools_from_observation(observation)
+def _matching_pool(observation: dict[str, Any], pools: list[PoolInfo]) -> PoolInfo | None:
     if not pools:
         return None
 
     text = _news_text(observation).lower()
+    tokens = set(re.findall(r"\b[a-z0-9]+\b", text))
     for pool in pools:
-        if pool.base_symbol.lower() in text:
+        if pool.base_symbol.lower() in tokens:
             return pool
 
     for pool in pools:
@@ -214,7 +232,7 @@ SECTOR_KEYWORDS = {
     "HLTH": ("drug", "hospital", "medical", "patient", "pharma"),
     "CSMR": ("consumer", "grocery", "retail", "travel"),
     "MLTRY": ("defense", "military"),
-    "INDS": ("factory", "industrial", "logistics", "warehouse"),
+    "INDS": ("factory", "industrial", "logistics"),
     "ENRG": ("energy", "gas", "grid", "oil", "power", "utility"),
     "MATL": ("material", "metal", "mining", "wafer"),
     "COMM": ("advertising", "media", "streaming", "telecom", "wireless"),
