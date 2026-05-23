@@ -29,6 +29,8 @@ class PoolInfo(BaseModel):
     base_symbol: str
     quote_symbol: str
     pool_address: str
+    lp_token_address: str
+    vault_address: str
 
     def symbols(self) -> set[str]:
         return {self.base_symbol, self.quote_symbol}
@@ -39,6 +41,7 @@ class Scenario(BaseModel):
 
     seed: int
     news_file: str
+    policy_address: str
     min_interval_ticks: int = Field(gt=0)
     max_interval_ticks: int = Field(gt=0)
     max_events: int = Field(gt=0)

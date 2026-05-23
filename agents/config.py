@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+from agents.news_feed import NewsFeed, Scenario
+
 load_dotenv()
 
 
@@ -21,12 +23,8 @@ class LPConfig:
 @dataclass(frozen=True)
 class Config:
     rpc_url: str
-    token_a: str
-    token_b: str
-    lp_token: str
-    policy: str
-    pool: str
-    vault: str
+    scenario_path: str
+    scenario: Scenario
     traders: list[TraderConfig]
     lps: list[LPConfig]
     google_api_key: str | None
@@ -51,12 +49,8 @@ def load() -> Config:
 
     return Config(
         rpc_url=_require("SEPOLIA_RPC_URL"),
-        token_a=_require("TOKEN_A_ADDRESS"),
-        token_b=_require("TOKEN_B_ADDRESS"),
-        lp_token=_require("LP_TOKEN_ADDRESS"),
-        policy=_require("POLICY_ADDRESS"),
-        pool=_require("POOL_ADDRESS"),
-        vault=_require("VAULT_ADDRESS"),
+        scenario_path=os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json"),
+        scenario=NewsFeed.load_scenario(os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json")),
         traders=[TraderConfig(private_key=k, model=m) for k, m in zip(trader_keys, trader_models)],
         lps=[LPConfig(private_key=k, model=m) for k, m in zip(lp_keys, lp_models)],
         google_api_key=os.environ.get("GOOGLE_API_KEY"),

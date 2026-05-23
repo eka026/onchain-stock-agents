@@ -12,12 +12,16 @@ def pools():
             base_symbol="AAPL",
             quote_symbol="USD",
             pool_address="0xaaplpool",
+            lp_token_address="0xaapllp",
+            vault_address="0xaaplvault",
         ),
         PoolInfo(
             id="NVDA-USD",
             base_symbol="NVDA",
             quote_symbol="USD",
             pool_address="0$nvdapool",
+            lp_token_address="0$nvdalp",
+            vault_address="0$nvdavault",
         ),
     ]
 
@@ -36,6 +40,8 @@ def test_swap_decision_accepts_known_pool_token_and_positive_amount():
         pool_id="AAPL-USD",
         token_in="USD",
         amount_in=1_000,
+        max_slippage_bps=100,
+        deadline_seconds=60,
         reason="The news appears positive for Apple.",
     )
 
@@ -43,6 +49,8 @@ def test_swap_decision_accepts_known_pool_token_and_positive_amount():
 
     assert validated.pool_id == "AAPL-USD"
     assert validated.token_in == "USD"
+    assert validated.max_slippage_bps == 100
+    assert validated.deadline_seconds == 60
 
 
 def test_swap_decision_rejects_unknown_pool():
@@ -97,12 +105,14 @@ def test_lp_add_liquidity_accepts_known_pool_and_positive_amounts():
         pool_id="NVDA-USD",
         amount_a=1_000,
         amount_b=2_000,
+        min_lp_shares=500,
         reason="Adding liquidity to active pool.",
     )
 
     validated = validate_lp_decision(decision, pools())
 
     assert validated.pool_id == "NVDA-USD"
+    assert validated.min_lp_shares == 500
 
 
 def test_lp_remove_liquidity_accepts_known_pool_and_positive_shares():
@@ -155,4 +165,50 @@ def test_lp_decision_rejects_unknown_pool():
 def test_lp_decision_rejects_non_positive_amounts(payload):
     with pytest.raises(ValidationError):
         LPDecision(**payload)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "action": "SWAP",
+            "pool_id": "AAPL-USD",
+            "token_in": "USD",
+            "amount_in": 1,
+            "max_slippage_bps": -1,
+            "reason": "bad",
+        },
+        {
+            "action": "SWAP",
+            "pool_id": "AAPL-USD",
+            "token_in": "USD",
+            "amount_in": 1,
+            "max_slippage_bps": 10_001,
+            "reason": "bad",
+        },
+        {
+            "action": "SWAP",
+            "pool_id": "AAPL-USD",
+            "token_in": "USD",
+            "amount_in": 1,
+            "deadline_seconds": 0,
+            "reason": "bad",
+        },
+    ],
+)
+def test_trader_decision_rejects_invalid_optional_execution_fields(payload):
+    with pytest.raises(ValidationError):
+        TraderDecision(**payload)
+
+
+def test_lp_decision_rejects_negative_min_lp_shares():
+    with pytest.raises(ValidationError):
+        LPDecision(
+            action="ADD_LIQUIDITY",
+            pool_id="AAPL-USD",
+            amount_a=1,
+            amount_b=1,
+            min_lp_shares=-1,
+            reason="bad",
+        )
 

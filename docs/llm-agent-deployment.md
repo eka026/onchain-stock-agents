@@ -72,6 +72,7 @@ Use `.env` for wallet/model/provider configuration:
 ```text
 SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 DEPLOYER_PRIVATE_KEY=0x...
+SCENARIO_PATH=data/scenarios/demo.json
 
 TRADER_PRIVATE_KEYS=0x...,0x...
 TRADER_MODELS=gemini-2.0-flash-lite,gpt-4o-mini
@@ -90,7 +91,7 @@ Use scenario files for market metadata:
 data/scenarios/demo.json
 ```
 
-Scenario files define available tokens, pools, deployed addresses, news schedule settings, and the raw news file. They must not label news with sentiment, impact, or recommended trades.
+Scenario files define available tokens, deployed policy address, pool addresses, LP token addresses, vault addresses, news schedule settings, and the raw news file. They must not label news with sentiment, impact, or recommended trades.
 
 ## Agent Service Loop
 

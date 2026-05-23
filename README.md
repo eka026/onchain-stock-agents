@@ -45,7 +45,7 @@ npm run compile
 npm run export:abis
 ```
 
-In Remix, deploy the contracts to Sepolia in this order:
+In Remix, deploy the contracts to Sepolia in this order for each stock/USD pool:
 
 1. `MockERC20` from `contracts/test/MockERC20.sol` for token A
 2. `MockERC20` from `contracts/test/MockERC20.sol` for token B
@@ -54,22 +54,22 @@ In Remix, deploy the contracts to Sepolia in this order:
 5. `FeeVault`, using the policy, token A, token B, and LP token addresses
 6. `AMMPool`, using the policy, token A, token B, LP token, and fee vault addresses
 
-After deployment, wire the pool:
+After deployment, wire each pool:
 
 ```text
-LPToken.setPool(POOL_ADDRESS)
-FeeVault.setPool(POOL_ADDRESS)
+LPToken.setPool(<pool address for this pair>)
+FeeVault.setPool(<pool address for this pair>)
 ```
 
 Configure the market from the policy owner wallet:
 
 ```text
-AgentPolicy.setTokenApproval(TOKEN_A_ADDRESS, true)
-AgentPolicy.setTokenApproval(TOKEN_B_ADDRESS, true)
+AgentPolicy.setTokenApproval(<USD token address>, true)
+AgentPolicy.setTokenApproval(<stock token address>, true)
 AgentPolicy.setTraderPolicy(TRADER_ADDRESS, true, 1000000000000000000000, 100000000000000000000000, 3600)
 AgentPolicy.setLPPolicy(LP_ADDRESS, true, 100000000000000000000000, 100000000000000000000000, 100000000000000000000000, 3600)
-AgentPolicy.setRecorder(POOL_ADDRESS, true)
-AgentPolicy.setRecorder(VAULT_ADDRESS, true)
+AgentPolicy.setRecorder(<pool address for this pair>, true)
+AgentPolicy.setRecorder(<vault address for this pair>, true)
 ```
 
 Fund LP and trader wallets with token A and token B, then approve the pool from each funded wallet:
@@ -77,25 +77,42 @@ Fund LP and trader wallets with token A and token B, then approve the pool from 
 ```text
 MockERC20.transfer(LP_ADDRESS, AMOUNT)
 MockERC20.transfer(TRADER_ADDRESS, AMOUNT)
-MockERC20.approve(POOL_ADDRESS, MAX_UINT256)
+MockERC20.approve(<pool address for this pair>, MAX_UINT256)
 ```
 
-Paste the deployed addresses into `.env`:
+Paste runtime settings into `.env`:
 
 ```env
 SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 DEPLOYER_PRIVATE_KEY=0x...
+SCENARIO_PATH=data/scenarios/demo.json
+
 TRADER_PRIVATE_KEYS=0x...,0x...
 TRADER_MODELS=gemini-2.0-flash-lite,gpt-4o-mini
 LP_PRIVATE_KEYS=0x...
 LP_MODELS=gemini-2.0-flash-lite
+```
 
-TOKEN_A_ADDRESS=0x...
-TOKEN_B_ADDRESS=0x...
-LP_TOKEN_ADDRESS=0x...
-POLICY_ADDRESS=0x...
-POOL_ADDRESS=0x...
-VAULT_ADDRESS=0x...
+Paste deployed market addresses into the scenario file, not `.env`:
+
+```json
+{
+  "policy_address": "0x...",
+  "tokens": [
+    { "symbol": "USD", "address": "0x..." },
+    { "symbol": "NVDA", "address": "0x..." }
+  ],
+  "pools": [
+    {
+      "id": "NVDA-USD",
+      "base_symbol": "NVDA",
+      "quote_symbol": "USD",
+      "pool_address": "0x...",
+      "lp_token_address": "0x...",
+      "vault_address": "0x..."
+    }
+  ]
+}
 ```
 
 ### Option B: Deploy with Hardhat

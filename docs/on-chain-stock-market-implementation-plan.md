@@ -222,7 +222,8 @@ The scenario should define:
 - broadcast interval range;
 - max news events;
 - token metadata;
-- pool metadata.
+- shared policy address;
+- pool metadata, including pool, LP token, and fee vault addresses.
 
 The scenario may tell agents which markets exist. It must not tell agents how to interpret the news.
 
@@ -495,8 +496,8 @@ test/test_schemas.py
 - [x] Require positive `amount_in` for swaps.
 - [x] Validate known `pool_id`.
 - [x] Validate `token_in` belongs to the selected pool.
-- [ ] Add optional `max_slippage_bps` if agents should control slippage.
-- [ ] Add optional `deadline_seconds` if agents should control deadline.
+- [x] Add optional `max_slippage_bps` if agents should control slippage.
+- [x] Add optional `deadline_seconds` if agents should control deadline.
 
 Verification:
 
@@ -520,7 +521,7 @@ test/test_schemas.py
 - [x] Require positive token amounts for liquidity add.
 - [x] Require positive LP shares for remove and fee collection.
 - [x] Validate known `pool_id`.
-- [ ] Add optional `min_lp_shares` if agents should control LP slippage.
+- [x] Add optional `min_lp_shares` if agents should control LP slippage.
 
 Verification:
 
@@ -544,7 +545,14 @@ test/test_config.py
 - [x] Reject trader key/model length mismatch.
 - [x] Reject LP key/model length mismatch.
 - [x] Load optional provider API keys.
-- [ ] Decide whether pool addresses live in `.env`, scenario JSON, or both.
+- [x] Decide whether pool addresses live in `.env`, scenario JSON, or both.
+
+Decision:
+
+```text
+.env stores RPC, wallet keys, model assignments, provider keys, and SCENARIO_PATH.
+Scenario JSON stores deployed policy, token, pool, LP token, and vault addresses.
+```
 
 Verification:
 

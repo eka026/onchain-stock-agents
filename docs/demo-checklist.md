@@ -8,7 +8,8 @@
 - [ ] Scenario file exists at `data/scenarios/demo.json`.
 - [ ] Raw news file exists at `data/news.json`.
 - [ ] News records contain only raw identifying/text fields, with no token, sentiment, impact, or trade-hint labels.
-- [ ] Scenario defines token metadata and one pool per stock/USD pair.
+- [ ] Scenario defines token metadata, shared policy address, and one pool per stock/USD pair.
+- [ ] Scenario records each pool's `pool_address`, `lp_token_address`, and `vault_address`.
 - [ ] Contracts are deployed locally or on Sepolia.
 - [ ] Deployment uses one simple two-token `AMMPool` per pair.
 - [ ] Each pool has its own `LPToken` and `FeeVault`.

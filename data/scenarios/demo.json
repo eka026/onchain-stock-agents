@@ -1,6 +1,7 @@
 {
   "seed": 438,
   "news_file": "data/news.json",
+  "policy_address": "0x0000000000000000000000000000000000000100",
   "min_interval_ticks": 2,
   "max_interval_ticks": 5,
   "max_events": 4,
@@ -32,25 +33,33 @@
       "id": "AAPL-USD",
       "base_symbol": "AAPL",
       "quote_symbol": "USD",
-      "pool_address": "0x0000000000000000000000000000000000000011"
+      "pool_address": "0x0000000000000000000000000000000000000011",
+      "lp_token_address": "0x0000000000000000000000000000000000000021",
+      "vault_address": "0x0000000000000000000000000000000000000031"
     },
     {
       "id": "TSLA-USD",
       "base_symbol": "TSLA",
       "quote_symbol": "USD",
-      "pool_address": "0x0000000000000000000000000000000000000012"
+      "pool_address": "0x0000000000000000000000000000000000000012",
+      "lp_token_address": "0x0000000000000000000000000000000000000022",
+      "vault_address": "0x0000000000000000000000000000000000000032"
     },
     {
       "id": "NVDA-USD",
       "base_symbol": "NVDA",
       "quote_symbol": "USD",
-      "pool_address": "0x0000000000000000000000000000000000000013"
+      "pool_address": "0x0000000000000000000000000000000000000013",
+      "lp_token_address": "0x0000000000000000000000000000000000000023",
+      "vault_address": "0x0000000000000000000000000000000000000033"
     },
     {
       "id": "MSFT-USD",
       "base_symbol": "MSFT",
       "quote_symbol": "USD",
-      "pool_address": "0x0000000000000000000000000000000000000014"
+      "pool_address": "0x0000000000000000000000000000000000000014",
+      "lp_token_address": "0x0000000000000000000000000000000000000024",
+      "vault_address": "0x0000000000000000000000000000000000000034"
     }
   ]
 }

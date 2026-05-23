@@ -34,6 +34,7 @@ The scenario controls scheduling and market metadata, not news interpretation:
 {
   "seed": 438,
   "news_file": "data/news.json",
+  "policy_address": "0x...",
   "min_interval_ticks": 2,
   "max_interval_ticks": 5,
   "max_events": 6,
@@ -49,19 +50,25 @@ The scenario controls scheduling and market metadata, not news interpretation:
       "id": "AAPL-USD",
       "base_symbol": "AAPL",
       "quote_symbol": "USD",
-      "pool_address": "0x..."
+      "pool_address": "0x...",
+      "lp_token_address": "0x...",
+      "vault_address": "0x..."
     },
     {
       "id": "TSLA-USD",
       "base_symbol": "TSLA",
       "quote_symbol": "USD",
-      "pool_address": "0x..."
+      "pool_address": "0x...",
+      "lp_token_address": "0x...",
+      "vault_address": "0x..."
     },
     {
       "id": "NVDA-USD",
       "base_symbol": "NVDA",
       "quote_symbol": "USD",
-      "pool_address": "0x..."
+      "pool_address": "0x...",
+      "lp_token_address": "0x...",
+      "vault_address": "0x..."
     }
   ]
 }

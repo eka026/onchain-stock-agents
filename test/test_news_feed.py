@@ -59,6 +59,7 @@ def test_same_seed_produces_same_schedule():
     scenario = Scenario(
         seed=438,
         news_file="data/news.json",
+        policy_address="0xpolicy",
         min_interval_ticks=2,
         max_interval_ticks=5,
         max_events=3,
@@ -73,6 +74,8 @@ def test_same_seed_produces_same_schedule():
                 "base_symbol": "AAPL",
                 "quote_symbol": "USD",
                 "pool_address": "0xpool",
+                "lp_token_address": "0xlp",
+                "vault_address": "0xvault",
             }
         ],
     )
@@ -93,6 +96,7 @@ def test_broadcast_delivers_same_news_to_all_traders_at_tick():
     scenario = Scenario(
         seed=438,
         news_file="data/news.json",
+        policy_address="0xpolicy",
         min_interval_ticks=1,
         max_interval_ticks=1,
         max_events=1,
@@ -107,6 +111,8 @@ def test_broadcast_delivers_same_news_to_all_traders_at_tick():
                 "base_symbol": "NVDA",
                 "quote_symbol": "USD",
                 "pool_address": "0xpool",
+                "lp_token_address": "0xlp",
+                "vault_address": "0xvault",
             }
         ],
     )

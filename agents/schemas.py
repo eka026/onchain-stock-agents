@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from agents.news_feed import PoolInfo
 
@@ -12,6 +12,8 @@ class TraderDecision(BaseModel):
     pool_id: str | None = None
     token_in: str | None = None
     amount_in: int | None = None
+    max_slippage_bps: int | None = Field(default=None, ge=0, le=10_000)
+    deadline_seconds: int | None = Field(default=None, gt=0)
     reason: str
 
     @model_validator(mode="after")
@@ -45,6 +47,7 @@ class LPDecision(BaseModel):
     amount_a: int | None = None
     amount_b: int | None = None
     lp_shares: int | None = None
+    min_lp_shares: int | None = Field(default=None, ge=0)
     reason: str
 
     @model_validator(mode="after")
