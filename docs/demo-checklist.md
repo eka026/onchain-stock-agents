@@ -1,36 +1,47 @@
 # Demo Checklist
 
+- [ ] `npm run compile` passes.
 - [ ] `npm test` passes.
-- [ ] `pytest tests` passes.
+- [ ] `python -m pytest` passes.
 - [ ] `python -m compileall agents` passes.
-- [ ] Contracts compile with `npm run compile`.
-- [ ] Contracts are deployed to Sepolia with Remix IDE or `npm run deploy:sepolia`.
-- [ ] Deployment prints policy, stock token, payment token, exchange, and dividend vault addresses.
-- [ ] `.env` contains Sepolia RPC, deployed contract addresses, funded testnet wallets, and LLM provider configuration.
-- [ ] LLM provider is configured for a low-cost model such as `gpt-4o-mini`.
-- [ ] Unit tests use mock LLM clients and do not call paid APIs.
-- [ ] Firm agent runs as a separate wallet-backed service.
-- [ ] Trader A agent runs as a separate wallet-backed service.
-- [ ] Trader B agent runs as a separate wallet-backed service.
-- [ ] Agent logs show observation summary, structured LLM decision, transaction hash, receipt status, and verified event.
-- [ ] Firm LLM agent issues shares to the market maker.
-- [ ] Firm LLM agent publishes a simulated announcement.
-- [ ] Successful buy emits `TradeSettled`.
-- [ ] Successful buy is based on a structured trader LLM decision.
-- [ ] Successful buy decreases trader cash and increases trader share holdings only after confirmation.
-- [ ] Successful sell emits `TradeSettled`.
-- [ ] Successful sell is based on a structured trader LLM decision.
-- [ ] Successful sell increases trader cash and decreases trader share holdings only after confirmation.
-- [ ] Firm LLM agent deposits dividend reserve.
-- [ ] Dividend distribution emits `DividendPaid`.
-- [ ] Dividend distribution pays eligible holders.
-- [ ] Dividend distribution is based on a structured firm LLM decision.
-- [ ] Oversized LLM trade decision is rejected locally or reverts on-chain.
-- [ ] Oversized LLM trade decision leaves local portfolio state unchanged.
-- [ ] Unauthorized-asset LLM trade decision is rejected locally or reverts on-chain.
-- [ ] Unauthorized-asset LLM trade decision leaves local portfolio state unchanged.
-- [ ] Excessive share mint reverts.
-- [ ] Excessive dividend payout reverts.
+- [ ] `npm run export:abis` generates `agents/abis/*.json`.
+- [ ] Scenario file exists at `data/scenarios/demo.json`.
+- [ ] Raw news file exists at `data/news.json`.
+- [ ] News records contain only raw identifying/text fields, with no token, sentiment, impact, or trade-hint labels.
+- [ ] Scenario defines token metadata and one pool per stock/USD pair.
+- [ ] Contracts are deployed locally or on Sepolia.
+- [ ] Deployment uses one simple two-token `AMMPool` per pair.
+- [ ] Each pool has its own `LPToken` and `FeeVault`.
+- [ ] `LPToken.setPool(pool)` is called for every pool.
+- [ ] `FeeVault.setPool(pool)` is called for every pool.
+- [ ] `AgentPolicy` approves all tradable tokens.
+- [ ] `AgentPolicy` configures trader policies.
+- [ ] `AgentPolicy` configures LP policies.
+- [ ] `AgentPolicy` authorizes every pool and vault as recorders.
+- [ ] LP and trader wallets are funded with the required mock tokens.
+- [ ] LP and trader wallets approve the correct pool contracts.
+- [ ] `.env` contains RPC URL, wallet keys, model assignments, and optional provider keys.
+- [ ] Trader agents run as separate wallet-backed services.
+- [ ] LP agents run as separate wallet-backed services.
+- [ ] Mock LLM mode works without paid provider calls.
+- [ ] Live LLM mode is optional and configurable.
+- [ ] Logs show observation summary, structured decision, tx hash, receipt status, and verified event.
+- [ ] News feed broadcasts the same scheduled news item to all traders.
+- [ ] Trader agent can choose `HOLD` for irrelevant or uncertain news.
+- [ ] Trader agent can choose `SWAP` with a valid `pool_id`, `token_in`, and `amount_in`.
+- [ ] Successful swap emits `Swap`.
+- [ ] Successful swap updates local token balances only after receipt confirmation.
+- [ ] LP agent can add liquidity.
+- [ ] Successful liquidity add emits `LiquidityAdded`.
+- [ ] LP agent can collect fees.
+- [ ] Successful fee collection emits `FeesCollected`.
+- [ ] LP agent can remove liquidity.
+- [ ] Successful liquidity removal emits `LiquidityRemoved`.
+- [ ] Oversized swap reverts with `POLICY_SWAP_TOO_LARGE`.
+- [ ] Unapproved token swap reverts with `POLICY_TOKEN_NOT_APPROVED`.
+- [ ] Disabled trader swap reverts with `POLICY_TRADER_DISABLED`.
+- [ ] Disabled LP liquidity action reverts with `POLICY_LP_DISABLED`.
+- [ ] Fee withdrawal above policy limit reverts with `POLICY_FEE_WITHDRAWAL_LIMIT`.
 - [ ] Reverted transactions are logged as rejected, not confirmed.
-- [ ] `docs/llm-agent-deployment.md` explains how the deployed agents work.
-- [ ] README explains how to reproduce the testnet demo from a fresh clone.
+- [ ] Rejected and pending actions do not mutate confirmed local portfolio state.
+- [ ] README explains how to reproduce the news-driven multi-pool AMM demo from a fresh clone.

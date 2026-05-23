@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from agents.news_feed import PoolInfo
-from agents.schemas import TraderDecision, validate_trader_decision
+from agents.schemas import LPDecision, TraderDecision, validate_lp_decision, validate_trader_decision
 
 
 def pools():
@@ -81,4 +81,78 @@ def test_swap_decision_rejects_non_positive_amount(amount):
             amount_in=amount,
             reason="Invalid amount.",
         )
+
+
+def test_lp_hold_decision_is_valid_without_pool():
+    decision = LPDecision(action="HOLD", reason="No liquidity action needed.")
+
+    validated = validate_lp_decision(decision, pools())
+
+    assert validated.action == "HOLD"
+
+
+def test_lp_add_liquidity_accepts_known_pool_and_positive_amounts():
+    decision = LPDecision(
+        action="ADD_LIQUIDITY",
+        pool_id="NVDA-USD",
+        amount_a=1_000,
+        amount_b=2_000,
+        reason="Adding liquidity to active pool.",
+    )
+
+    validated = validate_lp_decision(decision, pools())
+
+    assert validated.pool_id == "NVDA-USD"
+
+
+def test_lp_remove_liquidity_accepts_known_pool_and_positive_shares():
+    decision = LPDecision(
+        action="REMOVE_LIQUIDITY",
+        pool_id="AAPL-USD",
+        lp_shares=100,
+        reason="Reducing exposure.",
+    )
+
+    validated = validate_lp_decision(decision, pools())
+
+    assert validated.lp_shares == 100
+
+
+def test_lp_collect_fees_accepts_known_pool_and_positive_shares():
+    decision = LPDecision(
+        action="COLLECT_FEES",
+        pool_id="AAPL-USD",
+        lp_shares=100,
+        reason="Collecting accumulated fees.",
+    )
+
+    validated = validate_lp_decision(decision, pools())
+
+    assert validated.action == "COLLECT_FEES"
+
+
+def test_lp_decision_rejects_unknown_pool():
+    decision = LPDecision(
+        action="COLLECT_FEES",
+        pool_id="TSLA-USD",
+        lp_shares=100,
+        reason="Unknown pool.",
+    )
+
+    with pytest.raises(ValueError, match="unknown pool_id"):
+        validate_lp_decision(decision, pools())
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"action": "ADD_LIQUIDITY", "pool_id": "AAPL-USD", "amount_a": 0, "amount_b": 1, "reason": "bad"},
+        {"action": "ADD_LIQUIDITY", "pool_id": "AAPL-USD", "amount_a": 1, "amount_b": -1, "reason": "bad"},
+        {"action": "REMOVE_LIQUIDITY", "pool_id": "AAPL-USD", "lp_shares": 0, "reason": "bad"},
+        {"action": "COLLECT_FEES", "pool_id": "AAPL-USD", "lp_shares": -1, "reason": "bad"},
+    ],
+)
+def test_lp_decision_rejects_non_positive_amounts(payload):
+    with pytest.raises(ValidationError):
+        LPDecision(**payload)
 

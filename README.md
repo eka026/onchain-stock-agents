@@ -1,6 +1,8 @@
 # onchain-stock-agents
 
-A blockchain-based AMM simulation where autonomous trader and liquidity-provider agents interact with Solidity contracts that enforce token approvals, swap limits, liquidity limits, fee-withdrawal limits, swap fees, and atomic settlement.
+A news-driven multi-pool AMM simulation where autonomous trader and liquidity-provider agents interact with Solidity contracts that enforce token approvals, swap limits, liquidity limits, fee-withdrawal limits, swap fees, and atomic settlement.
+
+The core AMM contract is intentionally a simple two-token pool. Multi-market behavior is modeled by deploying one pool per stock/USD pair and giving agents scenario metadata so they can choose which pool to trade after receiving raw news.
 
 ## Local setup
 
@@ -19,9 +21,20 @@ npm test
 python -m pytest
 ```
 
+The news-driven demo uses:
+
+```text
+data/news.json
+data/scenarios/demo.json
+```
+
+News records are raw and unlabeled. Scenario files define available tokens and pools, not sentiment or trade hints.
+
 ## Testnet contract deployment
 
 The contracts are intended to run against a public test network such as Sepolia. Hardhat is used for compilation, tests, ABI export, and optional scripted deployment. Runtime agents should point at a testnet RPC URL.
+
+`scripts/deploy.ts` currently deploys one token pair as a smoke-test market. For the full news-driven demo, repeat the same LPToken/FeeVault/AMMPool pattern once per stock/USD pair and record those pool addresses in the scenario file.
 
 ### Option A: Deploy with Remix IDE
 

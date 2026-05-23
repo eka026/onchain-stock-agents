@@ -1,77 +1,82 @@
-from agents.portfolio import Portfolio, PendingTrade
+import pytest
+
+from agents.portfolio import Portfolio
 
 
-def test_pending_does_not_mutate_confirmed_state():
-    p = Portfolio(cash=1_000, holdings={"ACME": 10})
-    p.record_pending("0xabc", "BUY", "ACME", 5, 250)
-    assert p.cash == 1_000
-    assert p.holdings["ACME"] == 10
+def test_pending_does_not_mutate_confirmed_balances():
+    p = Portfolio(balances={"USD": 1_000, "NVDA": 10})
+
+    p.record_pending("0xswap", "SWAP", {"USD": -250, "NVDA": 5})
+
+    assert p.balances == {"USD": 1_000, "NVDA": 10}
 
 
-def test_confirmed_buy_decreases_cash_and_increases_holdings():
-    p = Portfolio(cash=1_000)
-    p.record_pending("0xabc", "BUY", "ACME", 5, 250)
-    p.confirm("0xabc")
-    assert p.cash == 750
-    assert p.holdings["ACME"] == 5
-    assert "0xabc" not in p.pending
+def test_confirmed_swap_applies_token_deltas():
+    p = Portfolio(balances={"USD": 1_000})
+
+    p.record_pending("0xswap", "SWAP", {"USD": -250, "NVDA": 5})
+    p.confirm("0xswap")
+
+    assert p.balances == {"USD": 750, "NVDA": 5}
+    assert "0xswap" not in p.pending
 
 
-def test_confirmed_sell_increases_cash_and_decreases_holdings():
-    p = Portfolio(cash=500, holdings={"ACME": 10})
-    p.record_pending("0xdef", "SELL", "ACME", 4, 200)
-    p.confirm("0xdef")
-    assert p.cash == 700
-    assert p.holdings["ACME"] == 6
-    assert "0xdef" not in p.pending
+def test_confirmed_liquidity_add_decreases_tokens_and_increases_lp_shares():
+    p = Portfolio(balances={"USD": 1_000, "NVDA": 20})
+
+    p.record_pending("0xadd", "ADD_LIQUIDITY", {"USD": -500, "NVDA": -10, "NVDA-USD-LP": 70})
+    p.confirm("0xadd")
+
+    assert p.balances == {"USD": 500, "NVDA": 10, "NVDA-USD-LP": 70}
 
 
-def test_discard_removes_pending_without_changing_confirmed_state():
-    p = Portfolio(cash=1_000, holdings={"ACME": 10})
-    p.record_pending("0xrev", "BUY", "ACME", 5, 250)
+def test_confirmed_liquidity_remove_increases_tokens_and_decreases_lp_shares():
+    p = Portfolio(balances={"USD": 500, "NVDA": 10, "NVDA-USD-LP": 70})
+
+    p.record_pending("0xremove", "REMOVE_LIQUIDITY", {"USD": 250, "NVDA": 5, "NVDA-USD-LP": -35})
+    p.confirm("0xremove")
+
+    assert p.balances == {"USD": 750, "NVDA": 15, "NVDA-USD-LP": 35}
+
+
+def test_confirmed_fee_collection_increases_fee_token_balances():
+    p = Portfolio(balances={"USD": 500, "NVDA": 10, "NVDA-USD-LP": 70})
+
+    p.record_pending("0xfees", "COLLECT_FEES", {"USD": 12, "NVDA": 1})
+    p.confirm("0xfees")
+
+    assert p.balances == {"USD": 512, "NVDA": 11, "NVDA-USD-LP": 70}
+
+
+def test_zero_balance_is_removed_after_confirmation():
+    p = Portfolio(balances={"USD": 100})
+
+    p.record_pending("0xall", "SWAP", {"USD": -100, "NVDA": 2})
+    p.confirm("0xall")
+
+    assert p.balances == {"NVDA": 2}
+
+
+def test_discard_removes_pending_without_changing_confirmed_balances():
+    p = Portfolio(balances={"USD": 1_000, "NVDA": 10})
+
+    p.record_pending("0xrev", "SWAP", {"USD": -250, "NVDA": 5})
     p.discard("0xrev")
-    assert p.cash == 1_000
-    assert p.holdings["ACME"] == 10
+
+    assert p.balances == {"USD": 1_000, "NVDA": 10}
     assert "0xrev" not in p.pending
 
 
 def test_discard_unknown_tx_is_a_noop():
-    p = Portfolio(cash=1_000)
-    p.discard("0xnotexist")
-    assert p.cash == 1_000
+    p = Portfolio(balances={"USD": 1_000})
 
+    p.discard("0xmissing")
 
-def test_selling_all_shares_removes_symbol_from_holdings():
-    p = Portfolio(cash=0, holdings={"ACME": 5})
-    p.record_pending("0xfull", "SELL", "ACME", 5, 500)
-    p.confirm("0xfull")
-    assert "ACME" not in p.holdings
-    assert p.cash == 500
-
-
-def test_buy_new_symbol_creates_holdings_entry():
-    p = Portfolio(cash=500)
-    p.record_pending("0xnew", "BUY", "NEWY", 10, 100)
-    p.confirm("0xnew")
-    assert p.holdings["NEWY"] == 10
-    assert p.cash == 400
-
-
-def test_multiple_pending_trades_are_independent():
-    p = Portfolio(cash=1_000, holdings={"ACME": 10})
-    p.record_pending("0x1", "BUY", "ACME", 3, 150)
-    p.record_pending("0x2", "SELL", "ACME", 2, 100)
-    p.discard("0x1")
-    p.confirm("0x2")
-    assert p.cash == 1_100
-    assert p.holdings["ACME"] == 8
-    assert not p.pending
+    assert p.balances == {"USD": 1_000}
 
 
 def test_confirm_raises_for_unknown_tx_hash():
-    p = Portfolio(cash=1_000)
-    try:
+    p = Portfolio(balances={"USD": 1_000})
+
+    with pytest.raises(KeyError):
         p.confirm("0xmissing")
-        assert False, "expected KeyError"
-    except KeyError:
-        pass
