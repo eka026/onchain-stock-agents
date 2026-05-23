@@ -579,11 +579,12 @@ agents/chain.py
 test/test_chain_contracts.py
 ```
 
-- [ ] Load ABI files from `agents/abis`.
-- [ ] Build Web3 contract instances for `AgentPolicy`, `AMMPool`, `LPToken`, and `FeeVault`.
-- [ ] Resolve pool contracts from scenario `pool_id`.
-- [ ] Resolve token symbols to addresses.
-- [ ] Fail clearly when an ABI or address is missing.
+- [x] Load ABI files from `agents/abis`.
+- [x] Build Web3 contract instances for `AgentPolicy`, `AMMPool`, `LPToken`, and `FeeVault`.
+- [x] Build Web3 contract instances for `MockERC20`.
+- [x] Resolve pool contracts from scenario `pool_id`.
+- [x] Resolve token symbols to addresses.
+- [x] Fail clearly when an ABI or address is missing.
 
 Verification:
 
@@ -600,14 +601,14 @@ agents/chain.py
 test/test_chain_reads.py
 ```
 
-- [ ] Read ERC-20 token balances.
-- [ ] Read LP token balances.
-- [ ] Read pool reserves.
-- [ ] Read spot price.
-- [ ] Read vault fee totals.
-- [ ] Read token approval status.
-- [ ] Read trader policy state.
-- [ ] Read LP policy state.
+- [x] Read ERC-20 token balances.
+- [x] Read LP token balances.
+- [x] Read pool reserves.
+- [x] Read spot price.
+- [x] Read vault fee totals.
+- [x] Read token approval status.
+- [x] Read trader policy state.
+- [x] Read LP policy state.
 
 Verification:
 
