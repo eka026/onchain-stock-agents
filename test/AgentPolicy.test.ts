@@ -2,12 +2,11 @@ import { expect } from "chai";
 import { ethers, network } from "hardhat";
 
 describe("AgentPolicy", function () {
-  async function deployPolicy() {
-    const [owner, trader, firm, token, recorder, outsider] = await ethers.getSigners();
+  async function deploy() {
+    const [owner, trader, lp, token, recorder, outsider] = await ethers.getSigners();
     const AgentPolicy = await ethers.getContractFactory("AgentPolicy");
     const policy = await AgentPolicy.deploy();
-
-    return { policy, owner, trader, firm, token, recorder, outsider };
+    return { policy, owner, trader, lp, token, recorder, outsider };
   }
 
   async function increaseTime(seconds: number) {
@@ -15,109 +14,129 @@ describe("AgentPolicy", function () {
     await network.provider.send("evm_mine");
   }
 
-  it("stores token policy and rejects unapproved or paused assets", async function () {
-    const { policy, token, trader } = await deployPolicy();
+  // ── Token approval ────────────────────────────────────────────────────────
 
-    await policy.setTraderPolicy(trader.address, true, 100, 1_000, 60);
-    await policy.setTokenPolicy(token.address, true, 50, false);
-
+  it("approves and revokes token for swapping", async function () {
+    const { policy, token } = await deploy();
+    await policy.setTokenApproval(token.address, true);
     expect(await policy.isTokenApproved(token.address)).to.equal(true);
-    expect(await policy.tokenMaxTradeSize(token.address)).to.equal(50);
-    expect(await policy.isTokenTradingPaused(token.address)).to.equal(false);
-    await expect(policy.validateTrade(trader.address, token.address, 50, 1_000)).to.not.be.reverted;
-
-    await policy.setTokenPolicy(token.address, true, 50, true);
-    await expect(policy.validateTrade(trader.address, token.address, 1, 1)).to.be.revertedWith(
-      "POLICY_TOKEN_PAUSED"
-    );
+    await policy.setTokenApproval(token.address, false);
+    expect(await policy.isTokenApproved(token.address)).to.equal(false);
   });
 
-  it("rejects disabled traders, oversized trader trades, and oversized token trades", async function () {
-    const { policy, token, trader } = await deployPolicy();
+  // ── Trader policy / validateSwap ──────────────────────────────────────────
 
-    await policy.setTokenPolicy(token.address, true, 25, false);
-    await expect(policy.validateTrade(trader.address, token.address, 1, 1)).to.be.revertedWith(
-      "POLICY_TRADER_DISABLED"
-    );
-
-    await policy.setTraderPolicy(trader.address, true, 10, 1_000, 60);
-    await expect(policy.validateTrade(trader.address, token.address, 11, 1)).to.be.revertedWith(
-      "POLICY_TRADE_TOO_LARGE"
-    );
-    await policy.setTraderPolicy(trader.address, true, 100, 1_000, 60);
-    await expect(policy.validateTrade(trader.address, token.address, 26, 1)).to.be.revertedWith(
-      "POLICY_TOKEN_TRADE_TOO_LARGE"
-    );
+  it("rejects swap when token is not approved", async function () {
+    const { policy, trader, token } = await deploy();
+    await policy.setTraderPolicy(trader.address, true, 1_000, 50_000, 3_600);
+    await expect(policy.validateSwap(trader.address, token.address, 100))
+      .to.be.revertedWith("POLICY_TOKEN_NOT_APPROVED");
   });
 
-  it("tracks trader spending within a rolling window", async function () {
-    const { policy, token, trader, recorder } = await deployPolicy();
+  it("rejects swap when trader is disabled", async function () {
+    const { policy, trader, token } = await deploy();
+    await policy.setTokenApproval(token.address, true);
+    await policy.setTraderPolicy(trader.address, false, 1_000, 50_000, 3_600);
+    await expect(policy.validateSwap(trader.address, token.address, 100))
+      .to.be.revertedWith("POLICY_TRADER_DISABLED");
+  });
 
-    await policy.setTokenPolicy(token.address, true, 100, false);
-    await policy.setTraderPolicy(trader.address, true, 100, 1_000, 60);
+  it("rejects swap exceeding maxSwapAmount", async function () {
+    const { policy, trader, token } = await deploy();
+    await policy.setTokenApproval(token.address, true);
+    await policy.setTraderPolicy(trader.address, true, 500, 50_000, 3_600);
+    await expect(policy.validateSwap(trader.address, token.address, 501))
+      .to.be.revertedWith("POLICY_SWAP_TOO_LARGE");
+  });
+
+  it("rejects swap when cumulative spending exceeds limit", async function () {
+    const { policy, trader, token, recorder } = await deploy();
+    await policy.setTokenApproval(token.address, true);
+    await policy.setTraderPolicy(trader.address, true, 1_000, 1_000, 3_600);
     await policy.setRecorder(recorder.address, true);
+    await policy.connect(recorder).recordSpending(trader.address, 800);
+    await expect(policy.validateSwap(trader.address, token.address, 201))
+      .to.be.revertedWith("POLICY_SPENDING_LIMIT");
+  });
 
-    await policy.connect(recorder).recordSpending(trader.address, 600);
-    expect(await policy.currentSpentAmount(trader.address)).to.equal(600);
-    await expect(policy.validateTrade(trader.address, token.address, 1, 401)).to.be.revertedWith(
-      "POLICY_SPENDING_LIMIT"
-    );
-
+  it("resets spending after window expiry", async function () {
+    const { policy, trader, token, recorder } = await deploy();
+    await policy.setTokenApproval(token.address, true);
+    await policy.setTraderPolicy(trader.address, true, 1_000, 1_000, 60);
+    await policy.setRecorder(recorder.address, true);
+    await policy.connect(recorder).recordSpending(trader.address, 800);
     await increaseTime(61);
     expect(await policy.currentSpentAmount(trader.address)).to.equal(0);
-    await expect(policy.validateTrade(trader.address, token.address, 1, 1_000)).to.not.be.reverted;
+    await expect(policy.validateSwap(trader.address, token.address, 1_000)).to.not.be.reverted;
   });
 
-  it("allows only approved recorders to record spending and dividends", async function () {
-    const { policy, trader, firm, recorder, outsider } = await deployPolicy();
+  // ── LP policy ─────────────────────────────────────────────────────────────
 
-    await policy.setTraderPolicy(trader.address, true, 100, 1_000, 60);
-    await policy.setDividendPolicy(firm.address, true, 1_000, 60);
-
-    await expect(policy.connect(outsider).recordSpending(trader.address, 1)).to.be.revertedWith(
-      "POLICY_NOT_RECORDER"
-    );
-    await expect(policy.connect(outsider).recordDividend(firm.address, 1)).to.be.revertedWith(
-      "POLICY_NOT_RECORDER"
-    );
-
-    await policy.setRecorder(recorder.address, true);
-    await expect(policy.connect(recorder).recordSpending(trader.address, 1)).to.not.be.reverted;
-    await expect(policy.connect(recorder).recordDividend(firm.address, 1)).to.not.be.reverted;
+  it("rejects addLiquidity when LP is disabled", async function () {
+    const { policy, lp } = await deploy();
+    await policy.setLPPolicy(lp.address, false, 10_000, 5_000, 500, 3_600);
+    await expect(policy.validateLiquidityAdd(lp.address, 100, 100))
+      .to.be.revertedWith("POLICY_LP_DISABLED");
   });
 
-  it("validates dividend budgets within a rolling window", async function () {
-    const { policy, firm, recorder } = await deployPolicy();
+  it("rejects addLiquidity exceeding maxLiquidityAdd", async function () {
+    const { policy, lp } = await deploy();
+    await policy.setLPPolicy(lp.address, true, 10_000, 5_000, 500, 3_600);
+    await expect(policy.validateLiquidityAdd(lp.address, 10_001, 100))
+      .to.be.revertedWith("POLICY_LIQUIDITY_TOO_LARGE");
+    await expect(policy.validateLiquidityAdd(lp.address, 100, 10_001))
+      .to.be.revertedWith("POLICY_LIQUIDITY_TOO_LARGE");
+  });
 
-    await policy.setDividendPolicy(firm.address, true, 1_000, 60);
+  it("rejects removeLiquidity exceeding maxLiquidityRemove", async function () {
+    const { policy, lp } = await deploy();
+    await policy.setLPPolicy(lp.address, true, 10_000, 5_000, 500, 3_600);
+    await expect(policy.validateLiquidityRemove(lp.address, 5_001))
+      .to.be.revertedWith("POLICY_REMOVE_TOO_LARGE");
+  });
+
+  it("rejects fee withdrawal exceeding maxFeeWithdrawal", async function () {
+    const { policy, lp, recorder } = await deploy();
+    await policy.setLPPolicy(lp.address, true, 10_000, 5_000, 500, 3_600);
     await policy.setRecorder(recorder.address, true);
+    await policy.connect(recorder).recordFeeWithdrawal(lp.address, 400);
+    await expect(policy.validateFeeWithdrawal(lp.address, 101))
+      .to.be.revertedWith("POLICY_FEE_WITHDRAWAL_LIMIT");
+  });
 
-    await policy.connect(recorder).recordDividend(firm.address, 700);
-    expect(await policy.currentDividendPaid(firm.address)).to.equal(700);
-    await expect(policy.validateDividend(firm.address, 301)).to.be.revertedWith(
-      "POLICY_DIVIDEND_BUDGET"
-    );
-
+  it("resets fee withdrawal after window expiry", async function () {
+    const { policy, lp, recorder } = await deploy();
+    await policy.setLPPolicy(lp.address, true, 10_000, 5_000, 500, 60);
+    await policy.setRecorder(recorder.address, true);
+    await policy.connect(recorder).recordFeeWithdrawal(lp.address, 400);
     await increaseTime(61);
-    expect(await policy.currentDividendPaid(firm.address)).to.equal(0);
-    await expect(policy.validateDividend(firm.address, 1_000)).to.not.be.reverted;
+    expect(await policy.currentFeeWithdrawn(lp.address)).to.equal(0);
+    await expect(policy.validateFeeWithdrawal(lp.address, 500)).to.not.be.reverted;
   });
 
-  it("restricts configuration to the owner", async function () {
-    const { policy, token, trader, firm, recorder, outsider } = await deployPolicy();
+  // ── Recorder access ───────────────────────────────────────────────────────
 
-    await expect(
-      policy.connect(outsider).setTokenPolicy(token.address, true, 1, false)
-    ).to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
-    await expect(
-      policy.connect(outsider).setTraderPolicy(trader.address, true, 1, 1, 60)
-    ).to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
-    await expect(
-      policy.connect(outsider).setDividendPolicy(firm.address, true, 1, 60)
-    ).to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
-    await expect(policy.connect(outsider).setRecorder(recorder.address, true)).to.be.revertedWithCustomError(
-      policy,
-      "OwnableUnauthorizedAccount"
-    );
+  it("blocks non-recorders from recording spending or fee withdrawals", async function () {
+    const { policy, trader, lp, outsider } = await deploy();
+    await policy.setTraderPolicy(trader.address, true, 1_000, 50_000, 3_600);
+    await policy.setLPPolicy(lp.address, true, 10_000, 5_000, 500, 3_600);
+    await expect(policy.connect(outsider).recordSpending(trader.address, 1))
+      .to.be.revertedWith("POLICY_NOT_RECORDER");
+    await expect(policy.connect(outsider).recordFeeWithdrawal(lp.address, 1))
+      .to.be.revertedWith("POLICY_NOT_RECORDER");
+  });
+
+  // ── Owner-only config ─────────────────────────────────────────────────────
+
+  it("restricts all configuration to the owner", async function () {
+    const { policy, trader, lp, token, recorder, outsider } = await deploy();
+    await expect(policy.connect(outsider).setTokenApproval(token.address, true))
+      .to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
+    await expect(policy.connect(outsider).setTraderPolicy(trader.address, true, 1, 1, 60))
+      .to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
+    await expect(policy.connect(outsider).setLPPolicy(lp.address, true, 1, 1, 1, 60))
+      .to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
+    await expect(policy.connect(outsider).setRecorder(recorder.address, true))
+      .to.be.revertedWithCustomError(policy, "OwnableUnauthorizedAccount");
   });
 });
