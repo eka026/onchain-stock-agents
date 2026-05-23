@@ -104,6 +104,9 @@ class ChainReader:
     def lp_balance(self, pool_id: str, account: str) -> int:
         return self.registry.pool_contracts(pool_id).lp_token.functions.balanceOf(account).call()
 
+    def lp_total_supply(self, pool_id: str) -> int:
+        return self.registry.pool_contracts(pool_id).lp_token.functions.totalSupply().call()
+
     def reserves(self, pool_id: str) -> tuple[int, int]:
         pool = self.registry.pool_contracts(pool_id).pool
         return (
@@ -130,6 +133,12 @@ class ChainReader:
 
     def lp_policy(self, lp: str) -> Any:
         return self.registry.policy.functions.lpPolicies(lp).call()
+
+    def current_spent_amount(self, trader: str) -> int:
+        return self.registry.policy.functions.currentSpentAmount(trader).call()
+
+    def current_fee_withdrawn(self, lp: str) -> int:
+        return self.registry.policy.functions.currentFeeWithdrawn(lp).call()
 
     def token_allowance(self, symbol: str, owner: str, spender: str) -> int:
         return self.registry.token_contract(symbol).functions.allowance(owner, spender).call()
@@ -171,7 +180,8 @@ class LocalValidator:
             return ValidationResult(ok=False, reason="insufficient token allowance")
 
         policy = self.reader.trader_policy(trader)
-        enabled, max_swap_amount, spending_limit, spent_amount = policy[:4]
+        enabled, max_swap_amount, spending_limit = policy[:3]
+        spent_amount = self.reader.current_spent_amount(trader)
         if not enabled:
             return ValidationResult(ok=False, reason="trader policy is disabled")
         if decision.amount_in > max_swap_amount:
@@ -192,7 +202,8 @@ class LocalValidator:
         pool = self.registry.pool_info(decision.pool_id or "")
         contracts = self.registry.pool_contracts(pool.id)
         policy = self.reader.lp_policy(lp)
-        enabled, max_liquidity_add, max_liquidity_remove, max_fee_withdrawal, withdrawn_fees = policy[:5]
+        enabled, max_liquidity_add, max_liquidity_remove, max_fee_withdrawal = policy[:4]
+        withdrawn_fees = self.reader.current_fee_withdrawn(lp)
         if not enabled:
             return ValidationResult(ok=False, reason="LP policy is disabled")
 
@@ -221,7 +232,10 @@ class LocalValidator:
             if decision.lp_shares is None or decision.lp_shares <= 0:
                 return ValidationResult(ok=False, reason="lp_shares must be positive")
             fees_a, fees_b = self.reader.vault_fees(pool.id)
-            fee_amount = fees_a + fees_b
+            total_supply = self.reader.lp_total_supply(pool.id)
+            if total_supply <= 0:
+                return ValidationResult(ok=False, reason="LP token supply is zero")
+            fee_amount = decision.lp_shares * (fees_a + fees_b) // total_supply
             if withdrawn_fees + fee_amount > max_fee_withdrawal:
                 return ValidationResult(ok=False, reason="fee withdrawal exceeds policy limit")
 

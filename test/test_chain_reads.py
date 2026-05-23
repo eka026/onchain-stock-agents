@@ -26,6 +26,7 @@ def registry_with_values(tmp_path):
         [],
         {
             ("balanceOf", ("0xalice",)): 50,
+            "totalSupply": 1_000,
         },
     )
     registry.pools["TECH-USD"].pool = FakeContract(
@@ -52,6 +53,8 @@ def registry_with_values(tmp_path):
             ("isTokenApproved", ("0xtech",)): True,
             ("traderPolicies", ("0xtrader",)): (True, 100, 1_000, 25, 123, 3600),
             ("lpPolicies", ("0xlp",)): (True, 500, 300, 50, 10, 123, 3600),
+            ("currentSpentAmount", ("0xtrader",)): 20,
+            ("currentFeeWithdrawn", ("0xlp",)): 5,
         },
     )
 
@@ -69,6 +72,7 @@ def test_chain_reader_reads_lp_balance(tmp_path):
     reader = ChainReader(registry_with_values(tmp_path))
 
     assert reader.lp_balance("TECH-USD", "0xalice") == 50
+    assert reader.lp_total_supply("TECH-USD") == 1_000
 
 
 def test_chain_reader_reads_reserves_and_spot_price(tmp_path):
@@ -90,3 +94,19 @@ def test_chain_reader_reads_policy_state(tmp_path):
     assert reader.is_token_approved("TECH") is True
     assert reader.trader_policy("0xtrader") == (True, 100, 1_000, 25, 123, 3600)
     assert reader.lp_policy("0xlp") == (True, 500, 300, 50, 10, 123, 3600)
+    assert reader.current_spent_amount("0xtrader") == 20
+    assert reader.current_fee_withdrawn("0xlp") == 5
+
+
+def test_chain_reader_reads_token_allowance(tmp_path):
+    reader = ChainReader(registry_with_values(tmp_path))
+
+    reader.registry.tokens["USD"] = FakeContract(
+        "0xusd",
+        [],
+        {
+            ("allowance", ("0xalice", "0xpool")): 123,
+        },
+    )
+
+    assert reader.token_allowance("USD", "0xalice", "0xpool") == 123

@@ -8,6 +8,9 @@ def validator_with_values(
     *,
     trader_policy=(True, 100, 1_000, 25, 123, 3600),
     lp_policy=(True, 500, 300, 50, 10, 123, 3600),
+    current_spent=25,
+    current_fee_withdrawn=10,
+    lp_total_supply=100,
     approved=True,
     tech_allowance=1_000,
     usd_allowance=1_000,
@@ -39,6 +42,13 @@ def validator_with_values(
             "totalFeesB": vault_fees[1],
         },
     )
+    registry.pools["TECH-USD"].lp_token = FakeContract(
+        "0xtechlp",
+        [],
+        {
+            "totalSupply": lp_total_supply,
+        },
+    )
     registry.policy = FakeContract(
         "0xpolicy",
         [],
@@ -47,6 +57,8 @@ def validator_with_values(
             ("isTokenApproved", ("0xusd",)): approved,
             ("traderPolicies", ("0xtrader",)): trader_policy,
             ("lpPolicies", ("0xlp",)): lp_policy,
+            ("currentSpentAmount", ("0xtrader",)): current_spent,
+            ("currentFeeWithdrawn", ("0xlp",)): current_fee_withdrawn,
         },
     )
     return LocalValidator(ChainReader(registry))
@@ -103,13 +115,28 @@ def test_trader_validation_rejects_missing_allowance(tmp_path):
 def test_trader_validation_rejects_policy_violations(tmp_path):
     disabled = validator_with_values(tmp_path, trader_policy=(False, 100, 1_000, 25, 123, 3600))
     too_large = validator_with_values(tmp_path, trader_policy=(True, 99, 1_000, 25, 123, 3600))
-    too_expensive = validator_with_values(tmp_path, trader_policy=(True, 100, 124, 25, 123, 3600))
+    too_expensive = validator_with_values(tmp_path, trader_policy=(True, 100, 124, 999, 123, 3600))
 
     decision = TraderDecision(action="SWAP", pool_id="TECH-USD", token_in="USD", amount_in=100, reason="bad")
 
     assert disabled.validate_trader_decision("0xtrader", decision).reason == "trader policy is disabled"
     assert too_large.validate_trader_decision("0xtrader", decision).reason == "swap exceeds max swap amount"
     assert too_expensive.validate_trader_decision("0xtrader", decision).reason == "swap exceeds spending limit"
+
+
+def test_trader_validation_uses_current_spent_amount_not_raw_policy_value(tmp_path):
+    validator = validator_with_values(
+        tmp_path,
+        trader_policy=(True, 100, 100, 999, 123, 3600),
+        current_spent=0,
+    )
+
+    result = validator.validate_trader_decision(
+        "0xtrader",
+        TraderDecision(action="SWAP", pool_id="TECH-USD", token_in="USD", amount_in=100, reason="valid"),
+    )
+
+    assert result.ok is True
 
 
 def test_lp_validation_accepts_valid_add_remove_and_collect(tmp_path):
@@ -182,7 +209,13 @@ def test_lp_validation_rejects_missing_allowance(tmp_path):
 
 
 def test_lp_validation_rejects_policy_limits(tmp_path):
-    validator = validator_with_values(tmp_path, lp_policy=(True, 99, 50, 20, 10, 123, 3600))
+    validator = validator_with_values(
+        tmp_path,
+        lp_policy=(True, 99, 50, 20, 999, 123, 3600),
+        current_fee_withdrawn=10,
+        lp_total_supply=10,
+        vault_fees=(200, 0),
+    )
 
     add = validator.validate_lp_decision(
         "0xlp",
@@ -200,3 +233,37 @@ def test_lp_validation_rejects_policy_limits(tmp_path):
     assert add.reason == "liquidity add exceeds policy limit"
     assert remove.reason == "liquidity remove exceeds policy limit"
     assert collect.reason == "fee withdrawal exceeds policy limit"
+
+
+def test_lp_validation_uses_current_fee_withdrawn_not_raw_policy_value(tmp_path):
+    validator = validator_with_values(
+        tmp_path,
+        lp_policy=(True, 500, 300, 20, 999, 123, 3600),
+        current_fee_withdrawn=0,
+        lp_total_supply=100,
+        vault_fees=(100, 100),
+    )
+
+    result = validator.validate_lp_decision(
+        "0xlp",
+        LPDecision(action="COLLECT_FEES", pool_id="TECH-USD", lp_shares=10, reason="valid"),
+    )
+
+    assert result.ok is True
+
+
+def test_lp_validation_uses_proportional_fee_share(tmp_path):
+    validator = validator_with_values(
+        tmp_path,
+        lp_policy=(True, 500, 300, 200, 0, 123, 3600),
+        current_fee_withdrawn=0,
+        lp_total_supply=1_000,
+        vault_fees=(10_000, 0),
+    )
+
+    result = validator.validate_lp_decision(
+        "0xlp",
+        LPDecision(action="COLLECT_FEES", pool_id="TECH-USD", lp_shares=10, reason="valid"),
+    )
+
+    assert result.ok is True
