@@ -46,7 +46,6 @@ class FakeReceiptEth:
 
 class FakeReceiptWeb3:
     def __init__(self, receipt=None, raises_timeout=False):
-        super().__init__()
         self.eth = FakeReceiptEth(receipt=receipt, raises_timeout=raises_timeout)
 
 
@@ -106,6 +105,15 @@ def test_receipt_verifier_rejects_reverted_receipt(tmp_path):
 
     assert result.status == "REJECTED"
     assert result.reason == "transaction reverted"
+
+
+def test_receipt_verifier_rejects_receipt_missing_status(tmp_path):
+    verifier = receipt_verifier(tmp_path, receipt={}, pool_events={"Swap": [{"args": {}}]})
+
+    result = verifier.verify_swap("0xtx", "TECH-USD", timeout=1)
+
+    assert result.status == "REJECTED"
+    assert result.reason == "receipt missing status"
 
 
 def test_receipt_verifier_rejects_successful_receipt_missing_expected_event(tmp_path):

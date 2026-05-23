@@ -67,9 +67,13 @@ class FakeTxEth:
         return b"\x12\x34"
 
 
+class FakePrefixedHexBytes(bytes):
+    def hex(self):
+        return "0x1234"
+
+
 class FakeTxWeb3:
     def __init__(self):
-        super().__init__()
         self.eth = FakeTxEth()
 
 
@@ -104,6 +108,25 @@ def test_builds_swap_transaction(tmp_path):
     assert tx["chainId"] == 31337
     assert tx["gas"] == 500_000
     assert tx["gasPrice"] == 2
+
+
+def test_build_swap_requires_computed_min_amount_out_when_decision_has_slippage(tmp_path):
+    submitter, _ = transaction_submitter(tmp_path)
+    decision = TraderDecision(
+        action="SWAP",
+        pool_id="TECH-USD",
+        token_in="USD",
+        amount_in=100,
+        max_slippage_bps=50,
+        reason="buy",
+    )
+
+    try:
+        submitter.build_swap_transaction("0xtrader", decision)
+    except ValueError as exc:
+        assert str(exc) == "min_amount_out is required when max_slippage_bps is set"
+    else:
+        raise AssertionError("expected ValueError")
 
 
 def test_builds_lp_transactions(tmp_path):
@@ -148,3 +171,56 @@ def test_signs_and_submits_without_portfolio_mutation(tmp_path):
     assert tx_hash == "0x1234"
     assert web3.eth.account.signed == [(tx, "0xprivate")]
     assert web3.eth.sent == [b"signed-transaction"]
+
+
+def test_hex_normalizes_prefixed_hexbytes(tmp_path):
+    submitter, _ = transaction_submitter(tmp_path)
+
+    assert submitter._hex(FakePrefixedHexBytes(b"\x12\x34")) == "0x1234"
+
+
+def test_submit_trader_decision_handles_hold_and_swap(tmp_path):
+    submitter, web3 = transaction_submitter(tmp_path)
+
+    hold_hash = submitter.submit_trader_decision(
+        "0xtrader",
+        "0xprivate",
+        TraderDecision(action="HOLD", reason="wait"),
+    )
+    swap_hash = submitter.submit_trader_decision(
+        "0xtrader",
+        "0xprivate",
+        TraderDecision(action="SWAP", pool_id="TECH-USD", token_in="USD", amount_in=100, reason="buy"),
+    )
+
+    assert hold_hash is None
+    assert swap_hash == "0x1234"
+    assert web3.eth.account.signed[-1][0]["function"] == "swap"
+
+
+def test_submit_lp_decision_dispatches_actions_and_hold(tmp_path):
+    submitter, web3 = transaction_submitter(tmp_path)
+
+    assert submitter.submit_lp_decision(
+        "0xlp",
+        "0xprivate",
+        LPDecision(action="HOLD", reason="wait"),
+    ) is None
+    submitter.submit_lp_decision(
+        "0xlp",
+        "0xprivate",
+        LPDecision(action="ADD_LIQUIDITY", pool_id="TECH-USD", amount_a=1, amount_b=2, reason="add"),
+    )
+    submitter.submit_lp_decision(
+        "0xlp",
+        "0xprivate",
+        LPDecision(action="REMOVE_LIQUIDITY", pool_id="TECH-USD", lp_shares=3, reason="remove"),
+    )
+    submitter.submit_lp_decision(
+        "0xlp",
+        "0xprivate",
+        LPDecision(action="COLLECT_FEES", pool_id="TECH-USD", lp_shares=4, reason="collect"),
+    )
+
+    signed_functions = [signed[0]["function"] for signed in web3.eth.account.signed]
+    assert signed_functions == ["addLiquidity", "removeLiquidity", "collectFees"]

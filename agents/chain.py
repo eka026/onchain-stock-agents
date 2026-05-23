@@ -306,6 +306,8 @@ class ChainTransactionSubmitter:
     ) -> dict[str, Any]:
         if decision.action != "SWAP":
             raise ValueError("build_swap_transaction requires a SWAP decision")
+        if decision.max_slippage_bps is not None and min_amount_out is None:
+            raise ValueError("min_amount_out is required when max_slippage_bps is set")
         pool = self.registry.pool_contracts(decision.pool_id or "")
         token_in = self.registry.token_address(decision.token_in or "")
         resolved_deadline = deadline if deadline is not None else self._deadline(decision.deadline_seconds)
@@ -420,7 +422,8 @@ class ChainTransactionSubmitter:
 
     def _hex(self, value: Any) -> str:
         if isinstance(value, bytes):
-            return "0x" + value.hex()
+            hex_str = value.hex()
+            return hex_str if hex_str.startswith("0x") else "0x" + hex_str
         if hasattr(value, "hex"):
             return value.hex()
         return str(value)
@@ -459,7 +462,19 @@ class ReceiptVerifier:
                 reason="receipt unavailable",
             )
 
-        if self._receipt_status(receipt) == 0:
+        receipt_status = self._receipt_status(receipt)
+        if receipt_status is None:
+            return ExecutionResult(
+                status="REJECTED",
+                tx_hash=tx_hash,
+                action=action,
+                pool_id=pool_id,
+                event_name=expected_event,
+                receipt=receipt,
+                reason="receipt missing status",
+            )
+
+        if receipt_status == 0:
             return ExecutionResult(
                 status="REJECTED",
                 tx_hash=tx_hash,
@@ -547,6 +562,7 @@ class ReceiptVerifier:
         logs = event.process_receipt(receipt)
         if not logs:
             return None
+        # Contract methods used here emit one action event; take the first matching log.
         first_log = logs[0]
         if isinstance(first_log, dict):
             args = first_log.get("args", first_log)
