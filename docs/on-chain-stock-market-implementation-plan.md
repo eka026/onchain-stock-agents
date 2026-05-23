@@ -647,13 +647,13 @@ agents/chain.py
 test/test_chain_transactions.py
 ```
 
-- [ ] Build `AMMPool.swap(...)` transactions.
-- [ ] Build `AMMPool.addLiquidity(...)` transactions.
-- [ ] Build `AMMPool.removeLiquidity(...)` transactions.
-- [ ] Build `FeeVault.collectFees(...)` transactions.
-- [ ] Sign transactions with the selected wallet.
-- [ ] Submit transactions through Web3.
-- [ ] Return transaction hashes without mutating local portfolio state.
+- [x] Build `AMMPool.swap(...)` transactions.
+- [x] Build `AMMPool.addLiquidity(...)` transactions.
+- [x] Build `AMMPool.removeLiquidity(...)` transactions.
+- [x] Build `FeeVault.collectFees(...)` transactions.
+- [x] Sign transactions with the selected wallet.
+- [x] Submit transactions through Web3.
+- [x] Return transaction hashes without mutating local portfolio state.
 
 Verification:
 
@@ -670,12 +670,12 @@ agents/chain.py
 test/test_chain_receipts.py
 ```
 
-- [ ] Define `ExecutionResult`.
-- [ ] Return `CONFIRMED` for successful receipts with expected events.
-- [ ] Return `REJECTED` for reverted receipts.
-- [ ] Return `REJECTED` for successful receipts missing expected events.
-- [ ] Return `PENDING` for timeout or missing receipts.
-- [ ] Extract event data needed for portfolio updates.
+- [x] Define `ExecutionResult`.
+- [x] Return `CONFIRMED` for successful receipts with expected events.
+- [x] Return `REJECTED` for reverted receipts.
+- [x] Return `REJECTED` for successful receipts missing expected events.
+- [x] Return `PENDING` for timeout or missing receipts.
+- [x] Extract event data needed for portfolio updates.
 
 Verification:
 
