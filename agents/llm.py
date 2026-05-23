@@ -51,6 +51,9 @@ class MockLLMClient:
 
     def trader_response(self, observation: dict[str, Any]) -> LLMResponse:
         pools = _pools_from_observation(observation)
+        return self._trader_response(observation, pools)
+
+    def _trader_response(self, observation: dict[str, Any], pools: list[PoolInfo]) -> LLMResponse:
         if self.invalid_json:
             return LLMResponse(raw_text="{invalid json")
         if self._trader_index < len(self.trader_responses):
@@ -61,6 +64,9 @@ class MockLLMClient:
 
     def lp_response(self, observation: dict[str, Any]) -> LLMResponse:
         pools = _pools_from_observation(observation)
+        return self._lp_response(observation, pools)
+
+    def _lp_response(self, observation: dict[str, Any], pools: list[PoolInfo]) -> LLMResponse:
         if self.invalid_json:
             return LLMResponse(raw_text="{invalid json")
         if self._lp_index < len(self.lp_responses):
@@ -70,13 +76,13 @@ class MockLLMClient:
         return LLMResponse(raw_text=json.dumps(self._default_lp_payload(observation, pools), sort_keys=True))
 
     def decide_trader(self, observation: dict[str, Any]) -> TraderDecision:
-        response = self.trader_response(observation)
         pools = _pools_from_observation(observation)
+        response = self._trader_response(observation, pools)
         return parse_trader_decision(response.raw_text, pools=pools)
 
     def decide_lp(self, observation: dict[str, Any]) -> LPDecision:
-        response = self.lp_response(observation)
         pools = _pools_from_observation(observation)
+        response = self._lp_response(observation, pools)
         return parse_lp_decision(response.raw_text, pools=pools)
 
     def _default_trader_payload(self, observation: dict[str, Any], pools: list[PoolInfo]) -> dict[str, Any]:
