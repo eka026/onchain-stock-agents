@@ -718,11 +718,11 @@ agents/llm.py
 test/test_llm.py
 ```
 
-- [ ] Implement deterministic mock responses.
-- [ ] Support trader decision responses.
-- [ ] Support LP decision responses.
-- [ ] Support invalid JSON test responses.
-- [ ] Ensure tests never call paid APIs.
+- [x] Implement deterministic mock responses.
+- [x] Support trader decision responses.
+- [x] Support LP decision responses.
+- [x] Support invalid JSON test responses.
+- [x] Ensure tests never call paid APIs.
 
 Verification:
 
