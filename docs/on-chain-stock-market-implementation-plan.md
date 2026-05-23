@@ -625,12 +625,12 @@ agents/chain.py
 test/test_local_validation.py
 ```
 
-- [ ] Reject unknown pool IDs.
-- [ ] Reject token symbols not in selected pool.
-- [ ] Reject missing token allowance before submitting.
-- [ ] Reject swaps that exceed locally observed policy limits.
-- [ ] Reject liquidity actions that exceed locally observed LP policy limits.
-- [ ] Keep smart contracts as final authority even if local validation passes.
+- [x] Reject unknown pool IDs.
+- [x] Reject token symbols not in selected pool.
+- [x] Reject missing token allowance before submitting.
+- [x] Reject swaps that exceed locally observed policy limits.
+- [x] Reject liquidity actions that exceed locally observed LP policy limits.
+- [x] Keep smart contracts as final authority even if local validation passes.
 
 Verification:
 
