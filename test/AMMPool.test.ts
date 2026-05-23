@@ -1,13 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { AMMPool, LPToken, AgentPolicy, FeeVault } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("AMMPool", function () {
-  let pool: AMMPool;
-  let lpToken: LPToken;
-  let policy: AgentPolicy;
-  let feeVault: FeeVault;
+  let pool: any;
+  let lpToken: any;
+  let policy: any;
+  let feeVault: any;
   let tokenA: any;
   let tokenB: any;
   let owner: HardhatEthersSigner;
@@ -83,7 +82,7 @@ describe("AMMPool", function () {
   async function addInitialLiquidity(amountA: bigint, amountB: bigint) {
     await tokenA.connect(lp).approve(await pool.getAddress(), amountA);
     await tokenB.connect(lp).approve(await pool.getAddress(), amountB);
-    return pool.connect(lp).addLiquidity(amountA, amountB);
+    return pool.connect(lp).addLiquidity(amountA, amountB, 0);
   }
 
   // ── addLiquidity ────────────────────────────────────────────────────────────
@@ -109,16 +108,37 @@ describe("AMMPool", function () {
     // Add the same amounts again → same shares
     await tokenA.connect(lp).approve(await pool.getAddress(), amountA);
     await tokenB.connect(lp).approve(await pool.getAddress(), amountB);
-    await pool.connect(lp).addLiquidity(amountA, amountB);
+    await pool.connect(lp).addLiquidity(amountA, amountB, 0);
 
     const totalShares = await lpToken.balanceOf(lp.address);
     expect(totalShares).to.equal(firstShares * 2n);
   });
 
+  it("reverts subsequent addLiquidity when token amounts do not match reserves", async function () {
+    await addInitialLiquidity(ethers.parseEther("100"), ethers.parseEther("100"));
+    const amountA = ethers.parseEther("10");
+    const amountB = ethers.parseEther("20");
+    await tokenA.connect(lp).approve(await pool.getAddress(), amountA);
+    await tokenB.connect(lp).approve(await pool.getAddress(), amountB);
+
+    await expect(pool.connect(lp).addLiquidity(amountA, amountB, 0))
+      .to.be.revertedWith("POOL_INVALID_LIQUIDITY_RATIO");
+  });
+
+  it("reverts addLiquidity when minted LP shares are below caller minimum", async function () {
+    const amountA = ethers.parseEther("100");
+    const amountB = ethers.parseEther("100");
+    await tokenA.connect(lp).approve(await pool.getAddress(), amountA);
+    await tokenB.connect(lp).approve(await pool.getAddress(), amountB);
+
+    await expect(pool.connect(lp).addLiquidity(amountA, amountB, amountA + 1n))
+      .to.be.revertedWith("POOL_SLIPPAGE");
+  });
+
   it("reverts addLiquidity with zero amounts", async function () {
-    await expect(pool.connect(lp).addLiquidity(0, 100))
+    await expect(pool.connect(lp).addLiquidity(0, 100, 0))
       .to.be.revertedWith("POOL_ZERO_AMOUNT");
-    await expect(pool.connect(lp).addLiquidity(100, 0))
+    await expect(pool.connect(lp).addLiquidity(100, 0, 0))
       .to.be.revertedWith("POOL_ZERO_AMOUNT");
   });
 
@@ -127,7 +147,7 @@ describe("AMMPool", function () {
     const amountB = ethers.parseEther("100");
     await tokenA.connect(lp).approve(await pool.getAddress(), amountA);
     await tokenB.connect(lp).approve(await pool.getAddress(), amountB);
-    await expect(pool.connect(lp).addLiquidity(amountA, amountB))
+    await expect(pool.connect(lp).addLiquidity(amountA, amountB, 0))
       .to.emit(pool, "LiquidityAdded");
   });
 
@@ -181,7 +201,7 @@ describe("AMMPool", function () {
 
     await tokenA.connect(trader).approve(await pool.getAddress(), amountIn);
     const balB_before = await tokenB.balanceOf(trader.address);
-    await pool.connect(trader).swap(await tokenA.getAddress(), amountIn);
+    await pool.connect(trader).swap(await tokenA.getAddress(), amountIn, 0, ethers.MaxUint256);
     const balB_after = await tokenB.balanceOf(trader.address);
 
     expect(balB_after - balB_before).to.equal(expectedOut);
@@ -200,7 +220,7 @@ describe("AMMPool", function () {
 
     await tokenB.connect(trader).approve(await pool.getAddress(), amountIn);
     const balA_before = await tokenA.balanceOf(trader.address);
-    await pool.connect(trader).swap(await tokenB.getAddress(), amountIn);
+    await pool.connect(trader).swap(await tokenB.getAddress(), amountIn, 0, ethers.MaxUint256);
     const balA_after = await tokenA.balanceOf(trader.address);
 
     expect(balA_after - balA_before).to.equal(expectedOut);
@@ -213,7 +233,7 @@ describe("AMMPool", function () {
     const fee = amountIn * 30n / 10_000n;
 
     await tokenA.connect(trader).approve(await pool.getAddress(), amountIn);
-    await pool.connect(trader).swap(await tokenA.getAddress(), amountIn);
+    await pool.connect(trader).swap(await tokenA.getAddress(), amountIn, 0, ethers.MaxUint256);
 
     expect(await feeVault.totalFeesA()).to.equal(fee);
     expect(await tokenA.balanceOf(await feeVault.getAddress())).to.equal(fee);
@@ -222,20 +242,39 @@ describe("AMMPool", function () {
   it("reverts swap with invalid token", async function () {
     const MockERC20 = await ethers.getContractFactory("MockERC20");
     const rogue = await MockERC20.deploy("Rogue", "RGE", 1000n);
-    await expect(pool.connect(trader).swap(await rogue.getAddress(), 1))
+    await expect(pool.connect(trader).swap(await rogue.getAddress(), 1, 0, ethers.MaxUint256))
       .to.be.revertedWith("POOL_INVALID_TOKEN");
   });
 
   it("reverts swap with zero input", async function () {
-    await expect(pool.connect(trader).swap(await tokenA.getAddress(), 0))
+    await expect(pool.connect(trader).swap(await tokenA.getAddress(), 0, 0, ethers.MaxUint256))
       .to.be.revertedWith("POOL_ZERO_INPUT");
+  });
+
+  it("reverts swap when output is below caller minimum", async function () {
+    await addInitialLiquidity(ethers.parseEther("1000"), ethers.parseEther("1000"));
+    const amountIn = ethers.parseEther("10");
+    await tokenA.connect(trader).approve(await pool.getAddress(), amountIn);
+
+    await expect(
+      pool.connect(trader).swap(await tokenA.getAddress(), amountIn, ethers.parseEther("10"), ethers.MaxUint256)
+    ).to.be.revertedWith("POOL_SLIPPAGE");
+  });
+
+  it("reverts swap after caller deadline", async function () {
+    await addInitialLiquidity(ethers.parseEther("1000"), ethers.parseEther("1000"));
+    const amountIn = ethers.parseEther("10");
+    await tokenA.connect(trader).approve(await pool.getAddress(), amountIn);
+
+    await expect(pool.connect(trader).swap(await tokenA.getAddress(), amountIn, 0, 1))
+      .to.be.revertedWith("POOL_DEADLINE_EXPIRED");
   });
 
   it("emits Swap event", async function () {
     await addInitialLiquidity(ethers.parseEther("1000"), ethers.parseEther("1000"));
     const amountIn = ethers.parseEther("10");
     await tokenA.connect(trader).approve(await pool.getAddress(), amountIn);
-    await expect(pool.connect(trader).swap(await tokenA.getAddress(), amountIn))
+    await expect(pool.connect(trader).swap(await tokenA.getAddress(), amountIn, 0, ethers.MaxUint256))
       .to.emit(pool, "Swap");
   });
 
@@ -275,7 +314,7 @@ describe("AMMPool", function () {
     await addInitialLiquidity(ethers.parseEther("1000"), ethers.parseEther("1000"));
     const badAmount = ethers.parseEther("1001"); // exceeds maxSwapAmount
     await tokenA.connect(trader).approve(await pool.getAddress(), badAmount);
-    await expect(pool.connect(trader).swap(await tokenA.getAddress(), badAmount))
+    await expect(pool.connect(trader).swap(await tokenA.getAddress(), badAmount, 0, ethers.MaxUint256))
       .to.be.revertedWith("POLICY_SWAP_TOO_LARGE");
   });
 
@@ -287,7 +326,7 @@ describe("AMMPool", function () {
     await tokenA.connect(outsider).approve(await pool.getAddress(), amt);
     await tokenB.connect(outsider).approve(await pool.getAddress(), amt);
     // outsider has no LP policy → validateLiquidityAdd reverts as disabled (default struct)
-    await expect(pool.connect(outsider).addLiquidity(amt, amt))
+    await expect(pool.connect(outsider).addLiquidity(amt, amt, 0))
       .to.be.revertedWith("POLICY_LP_DISABLED");
   });
 });

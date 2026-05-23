@@ -714,7 +714,7 @@ The project is complete when:
 - Keep prompts short, use structured JSON outputs, cap output tokens, and prefer low-cost models.
 - Never run paid LLM calls in unit tests; inject mock LLM clients.
 - Contracts are deployed manually via Remix IDE on Sepolia. `scripts/deploy.ts` is reference only.
-- Fee collection in FeeVault uses a simple proportional snapshot (first-claimer advantage exists — acceptable for prototype).
+- Fee collection in FeeVault tracks cumulative fees and per-LP claimed amounts so the same LP shares cannot claim the same fees twice.
 - First LP add uses Babylonian sqrt(amountA × amountB) to avoid ratio-dependent initialization.
 - Emit events for every important state transition so agents can verify outcomes.
 - Prefer small contracts and direct tests over broad abstractions.

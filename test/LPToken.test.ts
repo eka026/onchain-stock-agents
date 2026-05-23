@@ -5,7 +5,7 @@ describe("LPToken", function () {
   async function deploy() {
     const [owner, pool, other] = await ethers.getSigners();
     const LPToken = await ethers.getContractFactory("LPToken");
-    const token = await LPToken.deploy("AMM LP Token", "ALP");
+    const token: any = await LPToken.deploy("AMM LP Token", "ALP");
     return { token, owner, pool, other };
   }
 

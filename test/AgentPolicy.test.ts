@@ -5,7 +5,7 @@ describe("AgentPolicy", function () {
   async function deploy() {
     const [owner, trader, lp, token, recorder, outsider] = await ethers.getSigners();
     const AgentPolicy = await ethers.getContractFactory("AgentPolicy");
-    const policy = await AgentPolicy.deploy();
+    const policy: any = await AgentPolicy.deploy();
     return { policy, owner, trader, lp, token, recorder, outsider };
   }
 

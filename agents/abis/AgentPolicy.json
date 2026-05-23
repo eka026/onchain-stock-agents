@@ -32,38 +32,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "firm",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "enabled",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "budget",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "windowDuration",
-        "type": "uint256"
-      }
-    ],
-    "name": "DividendPolicySet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "firm",
+        "name": "lp",
         "type": "address"
       },
       {
@@ -81,11 +50,54 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "paidAmount",
+        "name": "withdrawnFees",
         "type": "uint256"
       }
     ],
-    "name": "DividendRecorded",
+    "name": "FeeWithdrawalRecorded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "lp",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "enabled",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxLiquidityAdd",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxLiquidityRemove",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxFeeWithdrawal",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "windowDuration",
+        "type": "uint256"
+      }
+    ],
+    "name": "LPPolicySet",
     "type": "event"
   },
   {
@@ -171,21 +183,9 @@
         "internalType": "bool",
         "name": "approved",
         "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "maxTradeSize",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
       }
     ],
-    "name": "TokenPolicySet",
+    "name": "TokenApprovalSet",
     "type": "event"
   },
   {
@@ -206,7 +206,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "maxTradeSize",
+        "name": "maxSwapAmount",
         "type": "uint256"
       },
       {
@@ -229,11 +229,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "firm",
+        "name": "lp",
         "type": "address"
       }
     ],
-    "name": "currentDividendPaid",
+    "name": "currentFeeWithdrawn",
     "outputs": [
       {
         "internalType": "uint256",
@@ -257,45 +257,6 @@
       {
         "internalType": "uint256",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "dividendPolicies",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "enabled",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "budget",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "paidAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "windowStart",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "windowDuration",
         "type": "uint256"
       }
     ],
@@ -348,12 +309,42 @@
         "type": "address"
       }
     ],
-    "name": "isTokenTradingPaused",
+    "name": "lpPolicies",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "",
+        "name": "enabled",
         "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxLiquidityAdd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxLiquidityRemove",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxFeeWithdrawal",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "withdrawnFees",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "windowStart",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "windowDuration",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -376,7 +367,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "firm",
+        "name": "lp",
         "type": "address"
       },
       {
@@ -385,7 +376,7 @@
         "type": "uint256"
       }
     ],
-    "name": "recordDividend",
+    "name": "recordFeeWithdrawal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -419,7 +410,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "firm",
+        "name": "lp",
         "type": "address"
       },
       {
@@ -429,7 +420,17 @@
       },
       {
         "internalType": "uint256",
-        "name": "budget",
+        "name": "maxLiquidityAdd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxLiquidityRemove",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxFeeWithdrawal",
         "type": "uint256"
       },
       {
@@ -438,7 +439,7 @@
         "type": "uint256"
       }
     ],
-    "name": "setDividendPolicy",
+    "name": "setLPPolicy",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -472,19 +473,9 @@
         "internalType": "bool",
         "name": "approved",
         "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxTradeSize",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
       }
     ],
-    "name": "setTokenPolicy",
+    "name": "setTokenApproval",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -503,7 +494,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "maxTradeSize",
+        "name": "maxSwapAmount",
         "type": "uint256"
       },
       {
@@ -530,25 +521,6 @@
         "type": "address"
       }
     ],
-    "name": "tokenMaxTradeSize",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
     "name": "traderPolicies",
     "outputs": [
       {
@@ -558,7 +530,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "maxTradeSize",
+        "name": "maxSwapAmount",
         "type": "uint256"
       },
       {
@@ -602,7 +574,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "firm",
+        "name": "lp",
         "type": "address"
       },
       {
@@ -611,7 +583,48 @@
         "type": "uint256"
       }
     ],
-    "name": "validateDividend",
+    "name": "validateFeeWithdrawal",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "lp",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountA",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountB",
+        "type": "uint256"
+      }
+    ],
+    "name": "validateLiquidityAdd",
+    "outputs": [],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "lp",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lpShares",
+        "type": "uint256"
+      }
+    ],
+    "name": "validateLiquidityRemove",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"
@@ -625,21 +638,16 @@
       },
       {
         "internalType": "address",
-        "name": "token",
+        "name": "tokenIn",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "shareAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "paymentAmount",
+        "name": "amountIn",
         "type": "uint256"
       }
     ],
-    "name": "validateTrade",
+    "name": "validateSwap",
     "outputs": [],
     "stateMutability": "view",
     "type": "function"

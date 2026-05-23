@@ -15,6 +15,11 @@ contract FeeVault is Ownable {
 
     uint256 public totalFeesA;
     uint256 public totalFeesB;
+    uint256 public cumulativeFeesA;
+    uint256 public cumulativeFeesB;
+
+    mapping(address => uint256) public claimedFeesA;
+    mapping(address => uint256) public claimedFeesB;
 
     event PoolSet(address indexed pool);
     event FeeNotified(address indexed token, uint256 amount);
@@ -49,8 +54,10 @@ contract FeeVault is Ownable {
         require(token == address(tokenA) || token == address(tokenB), "FEEVAULT_INVALID_TOKEN");
         if (token == address(tokenA)) {
             totalFeesA += amount;
+            cumulativeFeesA += amount;
         } else {
             totalFeesB += amount;
+            cumulativeFeesB += amount;
         }
         emit FeeNotified(token, amount);
     }
@@ -63,12 +70,16 @@ contract FeeVault is Ownable {
         uint256 totalSupply = lpToken.totalSupply();
         require(totalSupply > 0, "FEEVAULT_ZERO_SUPPLY");
 
-        uint256 feesA = totalFeesA * lpShares / totalSupply;
-        uint256 feesB = totalFeesB * lpShares / totalSupply;
+        uint256 entitledA = cumulativeFeesA * lpShares / totalSupply;
+        uint256 entitledB = cumulativeFeesB * lpShares / totalSupply;
+        uint256 feesA = entitledA > claimedFeesA[msg.sender] ? entitledA - claimedFeesA[msg.sender] : 0;
+        uint256 feesB = entitledB > claimedFeesB[msg.sender] ? entitledB - claimedFeesB[msg.sender] : 0;
         require(feesA > 0 || feesB > 0, "FEEVAULT_ZERO_FEES");
 
         policy.validateFeeWithdrawal(msg.sender, feesA + feesB);
 
+        claimedFeesA[msg.sender] += feesA;
+        claimedFeesB[msg.sender] += feesB;
         if (feesA > 0) totalFeesA -= feesA;
         if (feesB > 0) totalFeesB -= feesB;
 

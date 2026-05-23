@@ -1,16 +1,16 @@
 import { ethers, network } from "hardhat";
 
 const CONFIG = {
-  paymentInitialSupply: 1_000_000n,
-  stockMaxSupply: 500_000n,
-  initialFirmShares: 10_000n,
-  initialSellerAgentShares: 10_000n,
-  initialSellerAgentPayment: 50_000n,
-  initialBuyerAgentPayment: 50_000n,
-  stockTokenMaxTradeSize: 500n,
-  agentMaxTradeSize: 500n,
-  agentSpendingLimit: 100_000n,
-  firmDividendBudget: 10_000n,
+  tokenInitialSupply: ethers.parseEther("1000000"),
+  initialLpTokenA: ethers.parseEther("10000"),
+  initialLpTokenB: ethers.parseEther("10000"),
+  initialTraderTokenA: ethers.parseEther("1000"),
+  initialTraderTokenB: ethers.parseEther("1000"),
+  traderMaxSwapAmount: ethers.parseEther("1000"),
+  traderSpendingLimit: ethers.parseEther("100000"),
+  lpMaxLiquidityAdd: ethers.parseEther("100000"),
+  lpMaxLiquidityRemove: ethers.parseEther("100000"),
+  lpMaxFeeWithdrawal: ethers.parseEther("100000"),
   policyWindowDuration: 3_600n
 };
 
@@ -38,108 +38,101 @@ function getOptionalPrivateKeys(key: string) {
 }
 
 export async function deployContracts() {
-  const [deployer] = await ethers.getSigners();
+  const [deployer, localLp, localTrader] = await ethers.getSigners();
   const isLocalNetwork = network.name === "hardhat" || network.name === "localhost";
 
-  const [, localFirm, localSellerAgent, localBuyerAgent] = await ethers.getSigners();
-  const firm = isLocalNetwork
-    ? localFirm
-    : new ethers.Wallet(requireEnv("FIRM_PRIVATE_KEY"), ethers.provider);
-  const traderWallets = isLocalNetwork
-    ? [localSellerAgent, localBuyerAgent]
-    : getOptionalPrivateKeys("TRADER_PRIVATE_KEYS")
-        .slice(0, 2)
-        .map((key) => new ethers.Wallet(key, ethers.provider));
-  const [sellerAgent, buyerAgent] = traderWallets;
-
-  if (!sellerAgent || !buyerAgent) {
-    throw new Error("TRADER_PRIVATE_KEYS must include at least two private keys for deployment setup");
-  }
-
-  const AgentPolicy = await ethers.getContractFactory("AgentPolicy");
-  const policy = await AgentPolicy.deploy();
+  const lpWallet = isLocalNetwork
+    ? localLp
+    : new ethers.Wallet(getOptionalPrivateKeys("LP_PRIVATE_KEYS")[0] ?? requireEnv("LP_PRIVATE_KEYS"), ethers.provider);
+  const traderWallet = isLocalNetwork
+    ? localTrader
+    : new ethers.Wallet(getOptionalPrivateKeys("TRADER_PRIVATE_KEYS")[0] ?? requireEnv("TRADER_PRIVATE_KEYS"), ethers.provider);
 
   const MockERC20 = await ethers.getContractFactory("MockERC20");
-  const paymentToken = await MockERC20.deploy("USD Coin", "USDC", CONFIG.paymentInitialSupply);
+  const tokenA: any = await MockERC20.deploy("Token A", "TKA", CONFIG.tokenInitialSupply);
+  const tokenB: any = await MockERC20.deploy("Token B", "TKB", CONFIG.tokenInitialSupply);
 
-  const StockToken = await ethers.getContractFactory("StockToken");
-  const stockToken = await StockToken.deploy("ACME Corp", "ACME", firm.address, CONFIG.stockMaxSupply);
+  const AgentPolicy = await ethers.getContractFactory("AgentPolicy");
+  const policy: any = await AgentPolicy.deploy();
 
-  const Exchange = await ethers.getContractFactory("Exchange");
-  const exchange = await Exchange.deploy(await policy.getAddress(), await paymentToken.getAddress());
+  const LPToken = await ethers.getContractFactory("LPToken");
+  const lpToken: any = await LPToken.deploy("AMM LP", "ALP");
 
-  const DividendVault = await ethers.getContractFactory("DividendVault");
-  const dividendVault = await DividendVault.deploy(
+  const FeeVault = await ethers.getContractFactory("FeeVault");
+  const vault: any = await FeeVault.deploy(
     await policy.getAddress(),
-    await paymentToken.getAddress()
+    await tokenA.getAddress(),
+    await tokenB.getAddress(),
+    await lpToken.getAddress()
+  );
+
+  const AMMPool = await ethers.getContractFactory("AMMPool");
+  const pool: any = await AMMPool.deploy(
+    await policy.getAddress(),
+    await tokenA.getAddress(),
+    await tokenB.getAddress(),
+    await lpToken.getAddress(),
+    await vault.getAddress()
   );
 
   const contracts = {
-    paymentToken: await paymentToken.getAddress(),
-    stockToken: await stockToken.getAddress(),
+    tokenA: await tokenA.getAddress(),
+    tokenB: await tokenB.getAddress(),
+    lpToken: await lpToken.getAddress(),
     policy: await policy.getAddress(),
-    exchange: await exchange.getAddress(),
-    dividendVault: await dividendVault.getAddress()
+    pool: await pool.getAddress(),
+    vault: await vault.getAddress()
   };
 
-  await policy.setTokenPolicy(contracts.stockToken, true, CONFIG.stockTokenMaxTradeSize, false);
-  await policy.setTraderPolicy(
-    firm.address,
-    true,
-    CONFIG.agentMaxTradeSize,
-    CONFIG.agentSpendingLimit,
-    CONFIG.policyWindowDuration
-  );
-  await policy.setTraderPolicy(
-    sellerAgent.address,
-    true,
-    CONFIG.agentMaxTradeSize,
-    CONFIG.agentSpendingLimit,
-    CONFIG.policyWindowDuration
-  );
-  await policy.setTraderPolicy(
-    buyerAgent.address,
-    true,
-    CONFIG.agentMaxTradeSize,
-    CONFIG.agentSpendingLimit,
-    CONFIG.policyWindowDuration
-  );
-  await policy.setDividendPolicy(
-    firm.address,
-    true,
-    CONFIG.firmDividendBudget,
-    CONFIG.policyWindowDuration
-  );
-  await policy.setRecorder(contracts.exchange, true);
-  await policy.setRecorder(contracts.dividendVault, true);
+  await lpToken.setPool(contracts.pool);
+  await vault.setPool(contracts.pool);
 
-  await stockToken.connect(firm).mint(firm.address, CONFIG.initialFirmShares);
-  await stockToken.connect(firm).mint(sellerAgent.address, CONFIG.initialSellerAgentShares);
-  await paymentToken.transfer(sellerAgent.address, CONFIG.initialSellerAgentPayment);
-  await paymentToken.transfer(buyerAgent.address, CONFIG.initialBuyerAgentPayment);
+  await policy.setTokenApproval(contracts.tokenA, true);
+  await policy.setTokenApproval(contracts.tokenB, true);
+  await policy.setTraderPolicy(
+    traderWallet.address,
+    true,
+    CONFIG.traderMaxSwapAmount,
+    CONFIG.traderSpendingLimit,
+    CONFIG.policyWindowDuration
+  );
+  await policy.setLPPolicy(
+    lpWallet.address,
+    true,
+    CONFIG.lpMaxLiquidityAdd,
+    CONFIG.lpMaxLiquidityRemove,
+    CONFIG.lpMaxFeeWithdrawal,
+    CONFIG.policyWindowDuration
+  );
+  await policy.setRecorder(contracts.pool, true);
+  await policy.setRecorder(contracts.vault, true);
 
-  await stockToken.connect(firm).approve(contracts.exchange, ethers.MaxUint256);
-  await stockToken.connect(sellerAgent).approve(contracts.exchange, ethers.MaxUint256);
-  await paymentToken.connect(sellerAgent).approve(contracts.exchange, ethers.MaxUint256);
-  await paymentToken.connect(buyerAgent).approve(contracts.exchange, ethers.MaxUint256);
-  await paymentToken.connect(firm).approve(contracts.dividendVault, ethers.MaxUint256);
+  await tokenA.transfer(lpWallet.address, CONFIG.initialLpTokenA);
+  await tokenB.transfer(lpWallet.address, CONFIG.initialLpTokenB);
+  await tokenA.transfer(traderWallet.address, CONFIG.initialTraderTokenA);
+  await tokenB.transfer(traderWallet.address, CONFIG.initialTraderTokenB);
+
+  await tokenA.connect(lpWallet).approve(contracts.pool, ethers.MaxUint256);
+  await tokenB.connect(lpWallet).approve(contracts.pool, ethers.MaxUint256);
+  await tokenA.connect(traderWallet).approve(contracts.pool, ethers.MaxUint256);
+  await tokenB.connect(traderWallet).approve(contracts.pool, ethers.MaxUint256);
 
   return {
     network: network.name,
     contracts,
     actors: {
       deployer: deployer.address,
-      firm: firm.address,
-      sellerAgent: sellerAgent.address,
-      buyerAgent: buyerAgent.address
+      lp: lpWallet.address,
+      trader: traderWallet.address
     },
     config: CONFIG,
     instances: {
-      paymentToken,
-      stockToken,
+      tokenA,
+      tokenB,
+      lpToken,
       policy,
-      exchange,
-      dividendVault
+      pool,
+      vault
     }
   };
 }

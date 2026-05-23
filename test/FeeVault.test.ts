@@ -1,11 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { FeeVault, AgentPolicy } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("FeeVault", function () {
-  let vault: FeeVault;
-  let policy: AgentPolicy;
+  let vault: any;
+  let policy: any;
   let tokenA: any;
   let tokenB: any;
   let lpToken: any;
@@ -156,6 +155,30 @@ describe("FeeVault", function () {
 
     expect(await vault.totalFeesA()).to.equal(0n);
     expect(await vault.totalFeesB()).to.equal(0n);
+  });
+
+  it("does not allow the same LP shares to collect the same fees twice", async function () {
+    const totalLP = await lpToken.totalSupply();
+    const lpHalf = totalLP / 2n;
+    await lpToken.transfer(lp.address, lpHalf);
+
+    const feeA = ethers.parseEther("100");
+    await notifyFees(feeA, 0n);
+
+    await policy.setLPPolicy(
+      lp.address,
+      true,
+      ethers.parseEther("1000000"),
+      ethers.parseEther("1000000"),
+      ethers.parseEther("1000000"),
+      3600
+    );
+    await policy.setRecorder(await vault.getAddress(), true);
+
+    await vault.connect(lp).collectFees(lpHalf);
+
+    await expect(vault.connect(lp).collectFees(lpHalf))
+      .to.be.revertedWith("FEEVAULT_ZERO_FEES");
   });
 
   it("reverts collectFees with zero lpShares", async function () {

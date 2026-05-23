@@ -52,7 +52,7 @@ contract AMMPool is Ownable {
         emit FeeBpsUpdated(newFeeBps);
     }
 
-    function addLiquidity(uint256 amountA, uint256 amountB) external returns (uint256 lpShares) {
+    function addLiquidity(uint256 amountA, uint256 amountB, uint256 minLpShares) external returns (uint256 lpShares) {
         require(amountA > 0 && amountB > 0, "POOL_ZERO_AMOUNT");
         policy.validateLiquidityAdd(msg.sender, amountA, amountB);
 
@@ -60,11 +60,13 @@ contract AMMPool is Ownable {
         if (totalSupply == 0) {
             lpShares = _sqrt(amountA * amountB);
         } else {
+            require(amountA * reserveB == amountB * reserveA, "POOL_INVALID_LIQUIDITY_RATIO");
             uint256 sharesA = amountA * totalSupply / reserveA;
             uint256 sharesB = amountB * totalSupply / reserveB;
             lpShares = sharesA < sharesB ? sharesA : sharesB;
         }
         require(lpShares > 0, "POOL_ZERO_SHARES");
+        require(lpShares >= minLpShares, "POOL_SLIPPAGE");
 
         require(tokenA.transferFrom(msg.sender, address(this), amountA), "POOL_TRANSFER_A_FAILED");
         require(tokenB.transferFrom(msg.sender, address(this), amountB), "POOL_TRANSFER_B_FAILED");
@@ -95,7 +97,8 @@ contract AMMPool is Ownable {
         emit LiquidityRemoved(msg.sender, amountA, amountB, lpShares);
     }
 
-    function swap(address tokenIn, uint256 amountIn) external returns (uint256 amountOut) {
+    function swap(address tokenIn, uint256 amountIn, uint256 minAmountOut, uint256 deadline) external returns (uint256 amountOut) {
+        require(block.timestamp <= deadline, "POOL_DEADLINE_EXPIRED");
         require(tokenIn == address(tokenA) || tokenIn == address(tokenB), "POOL_INVALID_TOKEN");
         require(amountIn > 0, "POOL_ZERO_INPUT");
         policy.validateSwap(msg.sender, tokenIn, amountIn);
@@ -110,6 +113,7 @@ contract AMMPool is Ownable {
 
         require(amountOut > 0, "POOL_ZERO_OUTPUT");
         require(amountOut < reserveOut, "POOL_INSUFFICIENT_LIQUIDITY");
+        require(amountOut >= minAmountOut, "POOL_SLIPPAGE");
 
         require(IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn), "POOL_INPUT_TRANSFER_FAILED");
 

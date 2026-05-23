@@ -2,7 +2,7 @@ import { artifacts } from "hardhat";
 import fs from "fs";
 import path from "path";
 
-const CONTRACTS = ["AgentPolicy", "StockToken", "Exchange", "DividendVault"];
+const CONTRACTS = ["AgentPolicy", "LPToken", "AMMPool", "FeeVault"];
 
 async function main() {
   const outDir = path.join(__dirname, "../agents/abis");
