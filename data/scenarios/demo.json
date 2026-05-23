@@ -1,0 +1,56 @@
+{
+  "seed": 438,
+  "news_file": "data/news.json",
+  "min_interval_ticks": 2,
+  "max_interval_ticks": 5,
+  "max_events": 4,
+  "broadcast_to_all_traders": true,
+  "tokens": [
+    {
+      "symbol": "USD",
+      "address": "0x0000000000000000000000000000000000000001"
+    },
+    {
+      "symbol": "AAPL",
+      "address": "0x0000000000000000000000000000000000000002"
+    },
+    {
+      "symbol": "TSLA",
+      "address": "0x0000000000000000000000000000000000000003"
+    },
+    {
+      "symbol": "NVDA",
+      "address": "0x0000000000000000000000000000000000000004"
+    },
+    {
+      "symbol": "MSFT",
+      "address": "0x0000000000000000000000000000000000000005"
+    }
+  ],
+  "pools": [
+    {
+      "id": "AAPL-USD",
+      "base_symbol": "AAPL",
+      "quote_symbol": "USD",
+      "pool_address": "0x0000000000000000000000000000000000000011"
+    },
+    {
+      "id": "TSLA-USD",
+      "base_symbol": "TSLA",
+      "quote_symbol": "USD",
+      "pool_address": "0x0000000000000000000000000000000000000012"
+    },
+    {
+      "id": "NVDA-USD",
+      "base_symbol": "NVDA",
+      "quote_symbol": "USD",
+      "pool_address": "0x0000000000000000000000000000000000000013"
+    },
+    {
+      "id": "MSFT-USD",
+      "base_symbol": "MSFT",
+      "quote_symbol": "USD",
+      "pool_address": "0x0000000000000000000000000000000000000014"
+    }
+  ]
+}

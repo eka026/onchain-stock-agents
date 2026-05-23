@@ -1,0 +1,22 @@
+[
+  {
+    "id": "news-001",
+    "headline": "Apple reports stronger than expected quarterly revenue",
+    "body": "Apple announced quarterly revenue above analyst expectations, citing strong services growth and higher iPhone sales."
+  },
+  {
+    "id": "news-002",
+    "headline": "Tesla faces production delay at new facility",
+    "body": "Tesla said deliveries from its new facility will be delayed because of supply chain issues affecting specialized components."
+  },
+  {
+    "id": "news-003",
+    "headline": "Nvidia announces new data center chip demand",
+    "body": "Nvidia said cloud providers increased orders for its latest data center chips during the quarter."
+  },
+  {
+    "id": "news-004",
+    "headline": "Microsoft expands enterprise AI cloud contracts",
+    "body": "Microsoft announced several large enterprise cloud agreements tied to AI infrastructure and productivity tools."
+  }
+]
