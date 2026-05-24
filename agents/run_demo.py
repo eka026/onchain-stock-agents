@@ -1,0 +1,284 @@
+import argparse
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from agents import config
+from agents.chain import ChainReader, ChainTransactionSubmitter, ContractRegistry, LocalValidator, ReceiptVerifier
+from agents.llm import create_llm_client
+from agents.lp_agent import LPAgent, LPRunResult
+from agents.news_feed import NewsFeed, ScheduledNews, Scenario
+from agents.portfolio import Portfolio
+from agents.schemas import LPDecision, TraderDecision
+from agents.trader_agent import TraderAgent, TraderRunResult
+
+
+ONE = 10**18
+
+
+@dataclass(frozen=True)
+class NegativeScenarioResult:
+    name: str
+    result: TraderRunResult | LPRunResult
+
+
+@dataclass
+class DemoRunResult:
+    schedule: list[ScheduledNews]
+    initial_liquidity: LPRunResult | None = None
+    trader_results: list[tuple[int, str, TraderRunResult]] = field(default_factory=list)
+    fee_collection: LPRunResult | None = None
+    liquidity_removal: LPRunResult | None = None
+    negative_results: list[NegativeScenarioResult] = field(default_factory=list)
+    final_portfolios: dict[str, dict[str, int]] = field(default_factory=dict)
+
+
+def build_demo_agents(
+    *,
+    scenario_path: str,
+    llm_override: str | None = None,
+    trader_count: int = 2,
+) -> tuple[LPAgent, list[TraderAgent], Scenario]:
+    loaded = config.load(scenario_path=scenario_path)
+    if not loaded.lps:
+        raise RuntimeError("demo requires at least one LP_PRIVATE_KEYS entry")
+    if len(loaded.traders) < trader_count:
+        raise RuntimeError(f"demo requires at least {trader_count} trader private keys")
+
+    registry = ContractRegistry.from_rpc(loaded.scenario, loaded.rpc_url)
+    reader = ChainReader(registry)
+    validator = LocalValidator(reader)
+    submitter = ChainTransactionSubmitter(registry)
+    verifier = ReceiptVerifier(registry)
+
+    lp_config = loaded.lps[0]
+    lp_account = registry.web3.eth.account.from_key(lp_config.private_key)
+    lp_agent = LPAgent(
+        lp_address=lp_account.address,
+        private_key=lp_config.private_key,
+        scenario=loaded.scenario,
+        reader=reader,
+        validator=validator,
+        submitter=submitter,
+        verifier=verifier,
+        llm_client=create_llm_client(
+            llm_override or lp_config.model,
+            openai_api_key=loaded.openai_api_key,
+            google_api_key=loaded.google_api_key,
+            groq_api_key=loaded.groq_api_key,
+        ),
+        portfolio=Portfolio(),
+    )
+
+    trader_agents = []
+    for trader_config in loaded.traders[:trader_count]:
+        account = registry.web3.eth.account.from_key(trader_config.private_key)
+        trader_agents.append(
+            TraderAgent(
+                trader_address=account.address,
+                private_key=trader_config.private_key,
+                scenario=loaded.scenario,
+                reader=reader,
+                validator=validator,
+                submitter=submitter,
+                verifier=verifier,
+                llm_client=create_llm_client(
+                    llm_override or trader_config.model,
+                    openai_api_key=loaded.openai_api_key,
+                    google_api_key=loaded.google_api_key,
+                    groq_api_key=loaded.groq_api_key,
+                ),
+                portfolio=Portfolio(),
+            )
+        )
+
+    return lp_agent, trader_agents, loaded.scenario
+
+
+def run_demo(
+    *,
+    scenario_path: str,
+    llm_override: str | None = None,
+    lp_agent: LPAgent | None = None,
+    trader_agents: list[TraderAgent] | None = None,
+    news_feed: NewsFeed | None = None,
+) -> DemoRunResult:
+    if lp_agent is None or trader_agents is None:
+        lp_agent, trader_agents, scenario = build_demo_agents(
+            scenario_path=scenario_path,
+            llm_override=llm_override,
+        )
+    else:
+        scenario = lp_agent.scenario
+
+    if len(trader_agents) < 2:
+        raise RuntimeError("demo requires at least two trader agents")
+
+    feed = news_feed or NewsFeed(NewsFeed.load_news(_resolve_news_path(scenario, scenario_path)), scenario)
+    result = DemoRunResult(schedule=feed.schedule())
+
+    result.initial_liquidity = _run_lp_action(lp_agent, "ADD_LIQUIDITY")
+
+    trader_ids = [agent.trader_address for agent in trader_agents]
+    for scheduled in result.schedule:
+        broadcasts = feed.broadcast_at(scheduled.tick, trader_ids)
+        for agent in trader_agents:
+            news = broadcasts.get(agent.trader_address)
+            if news is None:
+                continue
+            result.trader_results.append((scheduled.tick, agent.trader_address, agent.run_once(news)))
+
+    result.fee_collection = _run_lp_action(lp_agent, "COLLECT_FEES")
+    result.liquidity_removal = _run_lp_action(lp_agent, "REMOVE_LIQUIDITY")
+    result.negative_results = _run_negative_scenarios(lp_agent, trader_agents[0])
+    result.final_portfolios = _final_portfolios(lp_agent, trader_agents)
+    return result
+
+
+def _run_lp_action(lp_agent: LPAgent, action: str) -> LPRunResult:
+    observation = lp_agent.observe()
+    observation["mock_lp_action"] = action
+    if action in {"REMOVE_LIQUIDITY", "COLLECT_FEES"}:
+        observation["default_lp_shares"] = _default_lp_shares(observation)
+    decision = lp_agent.decide(observation)
+    return lp_agent.execute(decision)
+
+
+def _run_negative_scenarios(lp_agent: LPAgent, trader_agent: TraderAgent) -> list[NegativeScenarioResult]:
+    pool = trader_agent.scenario.pools[0]
+    trader_observation = trader_agent.observe()
+    policy = trader_observation["policy"]
+    oversized_amount = max(
+        int(policy.get("max_swap_amount", 0)),
+        int(policy.get("remaining_spending", 0)),
+        0,
+    ) + 1
+
+    results = [
+        NegativeScenarioResult(
+            "oversized_swap",
+            trader_agent.execute(
+                TraderDecision(
+                    action="SWAP",
+                    pool_id=pool.id,
+                    token_in=pool.quote_symbol,
+                    amount_in=oversized_amount,
+                    reason="Demo negative scenario: exceed trader policy limits.",
+                )
+            ),
+        )
+    ]
+
+    unapproved_symbol = _first_unapproved_pool_symbol(trader_agent, pool)
+    if unapproved_symbol is not None:
+        results.append(
+            NegativeScenarioResult(
+                "unapproved_token_swap",
+                trader_agent.execute(
+                    TraderDecision(
+                        action="SWAP",
+                        pool_id=pool.id,
+                        token_in=unapproved_symbol,
+                        amount_in=1,
+                        reason="Demo negative scenario: use an unapproved token.",
+                    )
+                ),
+            )
+        )
+
+    lp_observation = lp_agent.observe()
+    lp_policy = lp_observation["policy"]
+    excessive_liquidity = int(lp_policy.get("max_liquidity_add", 0)) + 1
+    results.append(
+        NegativeScenarioResult(
+            "disabled_or_excessive_lp_action",
+            lp_agent.execute(
+                LPDecision(
+                    action="ADD_LIQUIDITY",
+                    pool_id=pool.id,
+                    amount_a=excessive_liquidity,
+                    amount_b=excessive_liquidity,
+                    reason="Demo negative scenario: exceed LP policy limits or hit disabled LP policy.",
+                )
+            ),
+        )
+    )
+    return results
+
+
+def _first_unapproved_pool_symbol(trader_agent: TraderAgent, pool: Any) -> str | None:
+    for symbol in (pool.base_symbol, pool.quote_symbol):
+        try:
+            if not trader_agent.reader.is_token_approved(symbol):
+                return symbol
+        except Exception:
+            return None
+    return None
+
+
+def _default_lp_shares(observation: dict[str, Any]) -> int:
+    pools = observation.get("pools", [])
+    if not pools:
+        return ONE
+    first_pool = pools[0]
+    lp_balance = int(first_pool.get("lp_balance", 0))
+    return max(1, lp_balance // 2) if lp_balance > 0 else ONE
+
+
+def _final_portfolios(lp_agent: LPAgent, trader_agents: list[TraderAgent]) -> dict[str, dict[str, int]]:
+    portfolios = {f"lp:{lp_agent.lp_address}": dict(lp_agent.portfolio.balances)}
+    for agent in trader_agents:
+        portfolios[f"trader:{agent.trader_address}"] = dict(agent.portfolio.balances)
+    return portfolios
+
+
+def _resolve_news_path(scenario: Scenario, scenario_path: str) -> str:
+    news_path = Path(scenario.news_file)
+    if news_path.is_absolute() or news_path.exists():
+        return str(news_path)
+    return str((Path(scenario_path).resolve().parent / news_path).resolve())
+
+
+def print_demo_result(result: DemoRunResult) -> None:
+    print({"step": "schedule", "events": [{"tick": item.tick, "news_id": item.news.id} for item in result.schedule]})
+    if result.initial_liquidity is not None:
+        _print_agent_result("initial_liquidity", result.initial_liquidity)
+    for tick, trader, trader_result in result.trader_results:
+        _print_agent_result("trader_broadcast", trader_result, {"tick": tick, "trader": trader})
+    if result.fee_collection is not None:
+        _print_agent_result("fee_collection", result.fee_collection)
+    if result.liquidity_removal is not None:
+        _print_agent_result("liquidity_removal", result.liquidity_removal)
+    for negative in result.negative_results:
+        _print_agent_result(f"negative:{negative.name}", negative.result)
+    print({"step": "final_portfolios", "portfolios": result.final_portfolios})
+
+
+def _print_agent_result(step: str, result: TraderRunResult | LPRunResult, extra: dict[str, Any] | None = None) -> None:
+    execution_status = result.execution.status if result.execution else None
+    payload = {
+        "step": step,
+        "decision": result.decision.model_dump(),
+        "validation": result.validation.ok,
+        "validation_reason": result.validation.reason,
+        "tx_hash": result.tx_hash,
+        "execution_status": execution_status,
+    }
+    if extra:
+        payload.update(extra)
+    print(payload)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scenario", default="data/scenarios/demo.json")
+    parser.add_argument("--llm", default=None)
+    args = parser.parse_args(argv)
+
+    result = run_demo(scenario_path=args.scenario, llm_override=args.llm)
+    print_demo_result(result)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

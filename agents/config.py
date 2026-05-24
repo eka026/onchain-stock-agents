@@ -32,7 +32,12 @@ class Config:
     openai_api_key: str | None
 
 
-def load(*, require_traders: bool = True, require_lps: bool = True) -> Config:
+def load(
+    *,
+    require_traders: bool = True,
+    require_lps: bool = True,
+    scenario_path: str | None = None,
+) -> Config:
     trader_keys, trader_models = _agent_pair_csv(
         "TRADER_PRIVATE_KEYS",
         "TRADER_MODELS",
@@ -53,10 +58,12 @@ def load(*, require_traders: bool = True, require_lps: bool = True) -> Config:
             f"LP_PRIVATE_KEYS has {len(lp_keys)} entries but LP_MODELS has {len(lp_models)}"
         )
 
+    resolved_scenario_path = scenario_path or os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json")
+
     return Config(
         rpc_url=_require("SEPOLIA_RPC_URL"),
-        scenario_path=os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json"),
-        scenario=NewsFeed.load_scenario(os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json")),
+        scenario_path=resolved_scenario_path,
+        scenario=NewsFeed.load_scenario(resolved_scenario_path),
         traders=[TraderConfig(private_key=k, model=m) for k, m in zip(trader_keys, trader_models)],
         lps=[LPConfig(private_key=k, model=m) for k, m in zip(lp_keys, lp_models)],
         google_api_key=os.environ.get("GOOGLE_API_KEY"),

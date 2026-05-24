@@ -75,6 +75,16 @@ def test_load_reads_scenario_and_agent_pairs(monkeypatch, tmp_path):
     assert [lp.private_key for lp in loaded.lps] == ["0xlp1"]
 
 
+def test_load_accepts_scenario_path_override(monkeypatch, tmp_path):
+    set_required_env(monkeypatch, tmp_path)
+    override_path = write_scenario(tmp_path)
+
+    loaded = config.load(scenario_path=str(override_path))
+
+    assert loaded.scenario_path == str(override_path)
+    assert loaded.scenario.policy_address == "0xpolicy"
+
+
 def test_load_rejects_mismatched_lp_keys_and_models(monkeypatch, tmp_path):
     set_required_env(monkeypatch, tmp_path)
     monkeypatch.setenv("LP_MODELS", "model-a,model-b")
