@@ -1,6 +1,19 @@
 import pytest
+from types import SimpleNamespace
 
-from agents.llm import LLMClient, LLMDecisionError, MockLLMClient, parse_lp_decision, parse_trader_decision
+from agents import llm
+from agents.llm import (
+    GeminiLLMClient,
+    GroqLLMClient,
+    LLMClient,
+    LLMConfigurationError,
+    LLMDecisionError,
+    MockLLMClient,
+    OpenAILLMClient,
+    create_llm_client,
+    parse_lp_decision,
+    parse_trader_decision,
+)
 from agents.news_feed import PoolInfo
 
 
@@ -251,3 +264,142 @@ def test_parse_validates_decision_schema_and_pool_metadata():
             '{"action":"COLLECT_FEES","pool_id":"MISSING-USD","lp_shares":1,"reason":"bad"}',
             pools=pools(),
         )
+
+
+def test_openai_client_parses_trader_response_from_injected_client():
+    class FakeResponses:
+        def create(self, **kwargs):
+            assert kwargs["model"] == "gpt-4o-mini"
+            assert kwargs["text"] == {"format": {"type": "json_object"}}
+            return SimpleNamespace(
+                output_text=(
+                    '{"action":"SWAP","pool_id":"TECH-USD","token_in":"USD",'
+                    '"amount_in":11,"reason":"cloud demand"}'
+                ),
+                status="completed",
+                usage=SimpleNamespace(prompt_tokens=3, completion_tokens=4, total_tokens=7),
+            )
+
+    client = OpenAILLMClient(
+        model="gpt-4o-mini",
+        api_key="test-key",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    decision = client.decide_trader({"pools": pools()})
+    response = client.trader_response({"pools": pools()})
+
+    assert decision.action == "SWAP"
+    assert decision.pool_id == "TECH-USD"
+    assert response.model == "gpt-4o-mini"
+    assert response.finish_reason == "completed"
+    assert response.usage == {"prompt_tokens": 3, "completion_tokens": 4, "total_tokens": 7}
+
+
+def test_gemini_client_parses_lp_response_from_injected_client():
+    class FakeGeminiClient:
+        def generate_content(self, prompt, generation_config):
+            assert generation_config == {"response_mime_type": "application/json"}
+            return SimpleNamespace(
+                text='{"action":"HOLD","reason":"no liquidity change"}',
+                candidates=[SimpleNamespace(finish_reason="STOP")],
+                usage_metadata=SimpleNamespace(
+                    prompt_token_count=2,
+                    candidates_token_count=3,
+                    total_token_count=5,
+                ),
+            )
+
+    client = GeminiLLMClient(model="gemini-2.0-flash-lite", api_key="test-key", client=FakeGeminiClient())
+
+    decision = client.decide_lp({"pools": pools()})
+    response = client.lp_response({"pools": pools()})
+
+    assert decision.action == "HOLD"
+    assert response.model == "gemini-2.0-flash-lite"
+    assert response.finish_reason == "STOP"
+    assert response.usage == {"prompt_tokens": 2, "completion_tokens": 3, "total_tokens": 5}
+
+
+def test_groq_client_parses_trader_response_from_injected_client():
+    class FakeCompletions:
+        def create(self, **kwargs):
+            assert kwargs["model"] == "llama-3.1-8b-instant"
+            assert kwargs["response_format"] == {"type": "json_object"}
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content=(
+                                '{"action":"SWAP","pool_id":"FIN-USD","token_in":"USD",'
+                                '"amount_in":13,"reason":"payment activity"}'
+                            )
+                        ),
+                        finish_reason="stop",
+                    )
+                ],
+                usage=SimpleNamespace(prompt_tokens=5, completion_tokens=6, total_tokens=11),
+            )
+
+    client = GroqLLMClient(
+        model="llama-3.1-8b-instant",
+        api_key="test-key",
+        client=SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions())),
+    )
+
+    decision = client.decide_trader({"pools": pools()})
+    response = client.trader_response({"pools": pools()})
+
+    assert decision.action == "SWAP"
+    assert decision.pool_id == "FIN-USD"
+    assert response.finish_reason == "stop"
+    assert response.usage == {"prompt_tokens": 5, "completion_tokens": 6, "total_tokens": 11}
+
+
+@pytest.mark.parametrize(
+    ("client_cls", "model", "message"),
+    [
+        (OpenAILLMClient, "gpt-4o-mini", "OPENAI_API_KEY"),
+        (GeminiLLMClient, "gemini-2.0-flash-lite", "GOOGLE_API_KEY"),
+        (GroqLLMClient, "llama-3.1-8b-instant", "GROQ_API_KEY"),
+    ],
+)
+def test_live_clients_fail_clearly_when_provider_key_is_missing(client_cls, model, message):
+    with pytest.raises(LLMConfigurationError, match=message):
+        client_cls(model=model, api_key=None, client=object())
+
+
+def test_model_router_selects_provider_without_live_calls(monkeypatch):
+    created = []
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            created.append(("openai", kwargs))
+
+    class FakeGemini:
+        def __init__(self, **kwargs):
+            created.append(("gemini", kwargs))
+
+    class FakeGroq:
+        def __init__(self, **kwargs):
+            created.append(("groq", kwargs))
+
+    monkeypatch.setattr(llm, "OpenAILLMClient", FakeOpenAI)
+    monkeypatch.setattr(llm, "GeminiLLMClient", FakeGemini)
+    monkeypatch.setattr(llm, "GroqLLMClient", FakeGroq)
+
+    assert isinstance(create_llm_client("mock"), MockLLMClient)
+    create_llm_client("gpt-4o-mini", openai_api_key="openai-key")
+    create_llm_client("gemini-2.0-flash-lite", google_api_key="google-key")
+    create_llm_client("llama-3.1-8b-instant", groq_api_key="groq-key")
+
+    assert created == [
+        ("openai", {"model": "gpt-4o-mini", "api_key": "openai-key"}),
+        ("gemini", {"model": "gemini-2.0-flash-lite", "api_key": "google-key"}),
+        ("groq", {"model": "llama-3.1-8b-instant", "api_key": "groq-key"}),
+    ]
+
+
+def test_model_router_rejects_unsupported_model():
+    with pytest.raises(LLMConfigurationError, match="unsupported LLM model"):
+        create_llm_client("unknown-model")

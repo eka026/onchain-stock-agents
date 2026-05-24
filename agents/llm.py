@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -11,6 +12,10 @@ from agents.schemas import LPDecision, TraderDecision, validate_lp_decision, val
 
 
 class LLMDecisionError(ValueError):
+    pass
+
+
+class LLMConfigurationError(RuntimeError):
     pass
 
 
@@ -29,6 +34,12 @@ class LLMClient(Protocol):
 
     def decide_lp(self, observation: dict[str, Any]) -> LPDecision:
         ...
+
+
+SYSTEM_INSTRUCTIONS = (
+    "You are an off-chain AMM simulation agent. Return only one JSON object that matches the requested "
+    "decision schema. Do not include markdown, comments, or extra text."
+)
 
 
 class MockLLMClient:
@@ -142,6 +153,145 @@ class MockLLMClient:
         }
 
 
+class ProviderLLMClient:
+    def __init__(self, *, model: str):
+        self.model = model
+
+    def trader_response(self, observation: dict[str, Any]) -> LLMResponse:
+        return self._json_response(_build_prompt("trader", observation))
+
+    def lp_response(self, observation: dict[str, Any]) -> LLMResponse:
+        return self._json_response(_build_prompt("lp", observation))
+
+    def decide_trader(self, observation: dict[str, Any]) -> TraderDecision:
+        pools = _pools_from_observation(observation)
+        return parse_trader_decision(self.trader_response(observation).raw_text, pools=pools)
+
+    def decide_lp(self, observation: dict[str, Any]) -> LPDecision:
+        pools = _pools_from_observation(observation)
+        return parse_lp_decision(self.lp_response(observation).raw_text, pools=pools)
+
+    def _json_response(self, prompt: str) -> LLMResponse:
+        raise NotImplementedError
+
+
+class OpenAILLMClient(ProviderLLMClient):
+    def __init__(self, *, model: str, api_key: str | None, client: Any | None = None):
+        super().__init__(model=model)
+        if not api_key:
+            raise LLMConfigurationError("missing OPENAI_API_KEY for OpenAI model")
+        self.client = client or self._create_client(api_key)
+
+    def _json_response(self, prompt: str) -> LLMResponse:
+        started = time.perf_counter()
+        response = self.client.responses.create(
+            model=self.model,
+            instructions=SYSTEM_INSTRUCTIONS,
+            input=prompt,
+            text={"format": {"type": "json_object"}},
+        )
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        return LLMResponse(
+            raw_text=_response_attr(response, "output_text"),
+            model=self.model,
+            finish_reason=_response_attr(response, "status", default=None),
+            usage=_usage_dict(_response_attr(response, "usage", default=None)),
+            latency_ms=latency_ms,
+        )
+
+    def _create_client(self, api_key: str) -> Any:
+        try:
+            from openai import OpenAI
+        except ModuleNotFoundError as exc:
+            raise LLMConfigurationError("openai package is required for OpenAI models") from exc
+        return OpenAI(api_key=api_key)
+
+
+class GeminiLLMClient(ProviderLLMClient):
+    def __init__(self, *, model: str, api_key: str | None, client: Any | None = None):
+        super().__init__(model=model)
+        if not api_key:
+            raise LLMConfigurationError("missing GOOGLE_API_KEY for Gemini model")
+        self.client = client or self._create_client(api_key)
+
+    def _json_response(self, prompt: str) -> LLMResponse:
+        started = time.perf_counter()
+        response = self.client.generate_content(
+            f"{SYSTEM_INSTRUCTIONS}\n\n{prompt}",
+            generation_config={"response_mime_type": "application/json"},
+        )
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        return LLMResponse(
+            raw_text=_response_text(response),
+            model=self.model,
+            finish_reason=_gemini_finish_reason(response),
+            usage=_usage_dict(_response_attr(response, "usage_metadata", default=None)),
+            latency_ms=latency_ms,
+        )
+
+    def _create_client(self, api_key: str) -> Any:
+        try:
+            import google.generativeai as genai
+        except ModuleNotFoundError as exc:
+            raise LLMConfigurationError("google-generativeai package is required for Gemini models") from exc
+        genai.configure(api_key=api_key)
+        return genai.GenerativeModel(self.model)
+
+
+class GroqLLMClient(ProviderLLMClient):
+    def __init__(self, *, model: str, api_key: str | None, client: Any | None = None):
+        super().__init__(model=model)
+        if not api_key:
+            raise LLMConfigurationError("missing GROQ_API_KEY for Groq model")
+        self.client = client or self._create_client(api_key)
+
+    def _json_response(self, prompt: str) -> LLMResponse:
+        started = time.perf_counter()
+        completion = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": SYSTEM_INSTRUCTIONS},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+        )
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        choice = completion.choices[0]
+        return LLMResponse(
+            raw_text=choice.message.content,
+            model=self.model,
+            finish_reason=getattr(choice, "finish_reason", None),
+            usage=_usage_dict(_response_attr(completion, "usage", default=None)),
+            latency_ms=latency_ms,
+        )
+
+    def _create_client(self, api_key: str) -> Any:
+        try:
+            from groq import Groq
+        except ModuleNotFoundError as exc:
+            raise LLMConfigurationError("groq package is required for Groq models") from exc
+        return Groq(api_key=api_key)
+
+
+def create_llm_client(
+    model: str,
+    *,
+    openai_api_key: str | None = None,
+    google_api_key: str | None = None,
+    groq_api_key: str | None = None,
+) -> LLMClient:
+    normalized = model.lower()
+    if normalized == "mock":
+        return MockLLMClient()
+    if _is_openai_model(normalized):
+        return OpenAILLMClient(model=model, api_key=openai_api_key)
+    if "gemini" in normalized:
+        return GeminiLLMClient(model=model, api_key=google_api_key)
+    if _is_groq_model(normalized):
+        return GroqLLMClient(model=model, api_key=groq_api_key)
+    raise LLMConfigurationError(f"unsupported LLM model: {model}")
+
+
 def parse_trader_decision(raw_text: str, *, pools: list[PoolInfo] | None = None) -> TraderDecision:
     payload = _parse_json_object(raw_text)
     try:
@@ -182,7 +332,117 @@ def _as_response_text(response: str | dict[str, Any]) -> str:
 
 def _pools_from_observation(observation: dict[str, Any]) -> list[PoolInfo]:
     pools = observation.get("pools", [])
-    return [pool if isinstance(pool, PoolInfo) else PoolInfo.model_validate(pool) for pool in pools]
+    return [pool if isinstance(pool, PoolInfo) else PoolInfo.model_validate(_pool_info_fields(pool)) for pool in pools]
+
+
+def _pool_info_fields(pool: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": pool["id"],
+        "base_symbol": pool["base_symbol"],
+        "quote_symbol": pool["quote_symbol"],
+        "pool_address": pool["pool_address"],
+        "lp_token_address": pool["lp_token_address"],
+        "vault_address": pool["vault_address"],
+    }
+
+
+def _build_prompt(agent_type: str, observation: dict[str, Any]) -> str:
+    if agent_type == "trader":
+        schema = {
+            "action": "SWAP or HOLD",
+            "pool_id": "pool id for SWAP",
+            "token_in": "input token symbol for SWAP",
+            "amount_in": "positive integer for SWAP",
+            "max_slippage_bps": "optional integer",
+            "deadline_seconds": "optional positive integer",
+            "reason": "short explanation",
+        }
+    elif agent_type == "lp":
+        schema = {
+            "action": "ADD_LIQUIDITY, REMOVE_LIQUIDITY, COLLECT_FEES, or HOLD",
+            "pool_id": "pool id for non-HOLD actions",
+            "amount_a": "positive integer for ADD_LIQUIDITY",
+            "amount_b": "positive integer for ADD_LIQUIDITY",
+            "lp_shares": "positive integer for REMOVE_LIQUIDITY or COLLECT_FEES",
+            "min_lp_shares": "optional integer for ADD_LIQUIDITY",
+            "reason": "short explanation",
+        }
+    else:
+        raise ValueError(f"unsupported agent_type: {agent_type}")
+
+    return json.dumps(
+        {
+            "task": f"Choose one {agent_type} decision from the observation.",
+            "schema": schema,
+            "observation": observation,
+        },
+        default=_json_default,
+        sort_keys=True,
+    )
+
+
+def _json_default(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump()
+    raise TypeError(f"object of type {type(value).__name__} is not JSON serializable")
+
+
+def _is_openai_model(normalized_model: str) -> bool:
+    return normalized_model.startswith(("gpt-", "o1", "o3", "o4", "o5", "chatgpt-"))
+
+
+def _is_groq_model(normalized_model: str) -> bool:
+    return any(prefix in normalized_model for prefix in ("llama", "groq", "mixtral", "gemma"))
+
+
+def _response_attr(value: Any, name: str, default: Any = "") -> Any:
+    if isinstance(value, dict):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _response_text(response: Any) -> str:
+    text = _response_attr(response, "text", default=None)
+    if text is not None:
+        return text
+    candidates = _response_attr(response, "candidates", default=[])
+    if candidates:
+        content = _response_attr(candidates[0], "content", default=None)
+        parts = _response_attr(content, "parts", default=[])
+        if parts:
+            return _response_attr(parts[0], "text")
+    return ""
+
+
+def _gemini_finish_reason(response: Any) -> str | None:
+    candidates = _response_attr(response, "candidates", default=[])
+    if not candidates:
+        return None
+    reason = _response_attr(candidates[0], "finish_reason", default=None)
+    return str(reason) if reason is not None else None
+
+
+def _usage_dict(usage: Any) -> dict[str, int] | None:
+    if usage is None:
+        return None
+    if isinstance(usage, dict):
+        return {key: value for key, value in usage.items() if isinstance(value, int)}
+
+    result = {}
+    for source, target in (
+        ("prompt_tokens", "prompt_tokens"),
+        ("completion_tokens", "completion_tokens"),
+        ("total_tokens", "total_tokens"),
+        ("input_tokens", "input_tokens"),
+        ("output_tokens", "output_tokens"),
+        ("total_token_count", "total_tokens"),
+        ("prompt_token_count", "prompt_tokens"),
+        ("candidates_token_count", "completion_tokens"),
+    ):
+        value = getattr(usage, source, None)
+        if isinstance(value, int):
+            result[target] = value
+    return result or None
 
 
 def _matching_pool(observation: dict[str, Any], pools: list[PoolInfo]) -> PoolInfo | None:

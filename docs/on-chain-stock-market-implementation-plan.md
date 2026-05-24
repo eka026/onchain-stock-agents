@@ -740,11 +740,11 @@ test/test_llm.py
 requirements.txt
 ```
 
-- [ ] Route OpenAI model names to OpenAI client.
-- [ ] Route Gemini model names to Google client.
-- [ ] Route Llama/Groq model names to Groq client.
-- [ ] Fail clearly when a required provider key is missing.
-- [ ] Keep live calls out of unit tests.
+- [x] Route OpenAI model names to OpenAI client.
+- [x] Route Gemini model names to Google client.
+- [x] Route Llama/Groq model names to Groq client.
+- [x] Fail clearly when a required provider key is missing.
+- [x] Keep live calls out of unit tests.
 
 Verification:
 
@@ -761,18 +761,18 @@ agents/trader_agent.py
 test/test_trader_agent.py
 ```
 
-- [ ] Load trader config by `--index`.
-- [ ] Observe current news.
-- [ ] Observe available pools and token metadata.
-- [ ] Observe balances, reserves, spot price, and policy state.
-- [ ] Build compact LLM prompt.
-- [ ] Parse `TraderDecision`.
-- [ ] Execute `HOLD` as no-op.
-- [ ] Execute `SWAP` through chain layer.
-- [ ] Verify `Swap` event.
-- [ ] Update portfolio only after confirmation.
-- [ ] Support `--once`.
-- [ ] Support `--interval`.
+- [x] Load trader config by `--index`.
+- [x] Observe current news.
+- [x] Observe available pools and token metadata.
+- [x] Observe balances, reserves, spot price, and policy state.
+- [x] Build compact LLM prompt.
+- [x] Parse `TraderDecision`.
+- [x] Execute `HOLD` as no-op.
+- [x] Execute `SWAP` through chain layer.
+- [x] Verify `Swap` event.
+- [x] Update portfolio only after confirmation.
+- [x] Support `--once`.
+- [x] Support `--interval`.
 
 Verification:
 
