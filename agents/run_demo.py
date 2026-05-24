@@ -137,11 +137,46 @@ def run_demo(
 
 def _run_lp_action(lp_agent: LPAgent, action: str) -> LPRunResult:
     observation = lp_agent.observe()
-    observation["mock_lp_action"] = action
-    if action in {"REMOVE_LIQUIDITY", "COLLECT_FEES"}:
-        observation["default_lp_shares"] = _default_lp_shares(observation)
-    decision = lp_agent.decide(observation)
+    decision = _deterministic_lp_decision(action, observation)
     return lp_agent.execute(decision)
+
+
+def _deterministic_lp_decision(action: str, observation: dict[str, Any]) -> LPDecision:
+    pools = observation.get("pools", [])
+    if not pools:
+        return LPDecision(action="HOLD", reason="Demo found no configured pools.")
+
+    pool = pools[0]
+    if action == "ADD_LIQUIDITY":
+        amount_a = _default_liquidity_amount(
+            balance=int(pool.get("base_balance", 0)),
+            policy_limit=int(observation.get("policy", {}).get("max_liquidity_add", 0)),
+        )
+        amount_b = _default_liquidity_amount(
+            balance=int(pool.get("quote_balance", 0)),
+            policy_limit=int(observation.get("policy", {}).get("max_liquidity_add", 0)),
+        )
+        if amount_a <= 0 or amount_b <= 0:
+            return LPDecision(action="HOLD", reason="Demo LP has no positive liquidity amount available.")
+        return LPDecision(
+            action="ADD_LIQUIDITY",
+            pool_id=pool["id"],
+            amount_a=amount_a,
+            amount_b=amount_b,
+            min_lp_shares=0,
+            reason="Demo step: add initial liquidity.",
+        )
+
+    if action in {"REMOVE_LIQUIDITY", "COLLECT_FEES"}:
+        lp_shares = _default_lp_shares(observation)
+        return LPDecision(
+            action=action,
+            pool_id=pool["id"],
+            lp_shares=lp_shares,
+            reason=f"Demo step: {action.lower().replace('_', ' ')}.",
+        )
+
+    raise ValueError(f"unsupported LP demo action: {action}")
 
 
 def _run_negative_scenarios(lp_agent: LPAgent, trader_agent: TraderAgent) -> list[NegativeScenarioResult]:
@@ -212,8 +247,13 @@ def _first_unapproved_pool_symbol(trader_agent: TraderAgent, pool: Any) -> str |
             if not trader_agent.reader.is_token_approved(symbol):
                 return symbol
         except Exception:
-            return None
+            continue
     return None
+
+
+def _default_liquidity_amount(*, balance: int, policy_limit: int) -> int:
+    candidates = [value for value in (balance, policy_limit, ONE) if value > 0]
+    return min(candidates) if candidates else 0
 
 
 def _default_lp_shares(observation: dict[str, Any]) -> int:

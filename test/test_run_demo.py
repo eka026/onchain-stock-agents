@@ -7,7 +7,7 @@ from agents.llm import MockLLMClient
 from agents.lp_agent import LPAgent
 from agents.news_feed import NewsItem, ScheduledNews
 from agents.portfolio import Portfolio
-from agents.run_demo import build_demo_agents, main, run_demo
+from agents.run_demo import _first_unapproved_pool_symbol, build_demo_agents, main, run_demo
 from agents.trader_agent import TraderAgent
 from test.test_chain_contracts import scenario
 from test.test_lp_agent import FakeReader as LPReader
@@ -131,6 +131,45 @@ def test_run_demo_orchestrates_liquidity_news_traders_fees_negative_scenarios_an
     assert [negative.result.validation.ok for negative in result.negative_results] == [False, False, False]
     assert result.final_portfolios["trader:0xtrader"]["USD"] == 900
     assert result.final_portfolios["trader:0xtrader2"]["TECH"] == 45
+
+
+def test_demo_lp_lifecycle_does_not_depend_on_mock_lp_action():
+    class SpyLLM(MockLLMClient):
+        calls = 0
+
+        def decide_lp(self, observation):
+            self.calls += 1
+            return super().decide_lp(observation)
+
+    lp_agent = make_lp_agent()
+    spy_llm = SpyLLM()
+    lp_agent.llm_client = spy_llm
+
+    result = run_demo(
+        scenario_path="data/scenarios/demo.json",
+        llm_override="mock",
+        lp_agent=lp_agent,
+        trader_agents=[make_trader_agent("0xtrader"), make_trader_agent("0xtrader2")],
+        news_feed=FakeFeed(),
+    )
+
+    assert result.initial_liquidity.decision.action == "ADD_LIQUIDITY"
+    assert result.fee_collection.decision.action == "COLLECT_FEES"
+    assert result.liquidity_removal.decision.action == "REMOVE_LIQUIDITY"
+    assert spy_llm.calls == 0
+
+
+def test_first_unapproved_pool_symbol_continues_after_reader_exception():
+    class Reader:
+        def is_token_approved(self, symbol):
+            if symbol == "TECH":
+                raise RuntimeError("temporary read failure")
+            return False
+
+    trader = SimpleNamespace(reader=Reader())
+    pool = SimpleNamespace(base_symbol="TECH", quote_symbol="USD")
+
+    assert _first_unapproved_pool_symbol(trader, pool) == "USD"
 
 
 def test_run_demo_requires_two_traders():
