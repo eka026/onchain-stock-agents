@@ -191,21 +191,29 @@ class LPAgent:
         pool = self.scenario_pool(decision.pool_id or "")
         lp_symbol = _lp_symbol(pool.id)
         if decision.action == "ADD_LIQUIDITY":
+            amount_a = _event_value(event_data, "amountA", "amount_a")
+            amount_b = _event_value(event_data, "amountB", "amount_b")
+            lp_shares = _event_value(event_data, "lpShares", "lp_shares")
             return {
-                pool.base_symbol: -int(_event_value(event_data, "amountA", "amount_a") or decision.amount_a or 0),
-                pool.quote_symbol: -int(_event_value(event_data, "amountB", "amount_b") or decision.amount_b or 0),
-                lp_symbol: int(_event_value(event_data, "lpShares", "lp_shares") or 0),
+                pool.base_symbol: -int(amount_a if amount_a is not None else decision.amount_a or 0),
+                pool.quote_symbol: -int(amount_b if amount_b is not None else decision.amount_b or 0),
+                lp_symbol: int(lp_shares if lp_shares is not None else 0),
             }
         if decision.action == "REMOVE_LIQUIDITY":
+            amount_a = _event_value(event_data, "amountA", "amount_a")
+            amount_b = _event_value(event_data, "amountB", "amount_b")
+            lp_shares = _event_value(event_data, "lpShares", "lp_shares")
             return {
-                pool.base_symbol: int(_event_value(event_data, "amountA", "amount_a") or 0),
-                pool.quote_symbol: int(_event_value(event_data, "amountB", "amount_b") or 0),
-                lp_symbol: -int(_event_value(event_data, "lpShares", "lp_shares") or decision.lp_shares or 0),
+                pool.base_symbol: int(amount_a if amount_a is not None else 0),
+                pool.quote_symbol: int(amount_b if amount_b is not None else 0),
+                lp_symbol: -int(lp_shares if lp_shares is not None else decision.lp_shares or 0),
             }
         if decision.action == "COLLECT_FEES":
+            fees_a = _event_value(event_data, "feesA", "fees_a")
+            fees_b = _event_value(event_data, "feesB", "fees_b")
             return {
-                pool.base_symbol: int(_event_value(event_data, "feesA", "fees_a") or 0),
-                pool.quote_symbol: int(_event_value(event_data, "feesB", "fees_b") or 0),
+                pool.base_symbol: int(fees_a if fees_a is not None else 0),
+                pool.quote_symbol: int(fees_b if fees_b is not None else 0),
             }
         raise ValueError(f"unsupported LP action: {decision.action}")
 

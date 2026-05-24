@@ -159,14 +159,16 @@ class TraderAgent:
 
     def _confirmed_swap_changes(self, decision: TraderDecision, event_data: dict[str, Any]) -> dict[str, int]:
         pool = self.scenario_pool(decision.pool_id or "")
-        token_in = _event_value(event_data, "tokenIn", "token_in") or self._symbol_to_address(decision.token_in or "")
+        token_in = _event_value(event_data, "tokenIn", "token_in")
+        if token_in is None:
+            token_in = self._symbol_to_address(decision.token_in or "")
         token_in_symbol = self._address_to_symbol(str(token_in))
         token_out_symbol = pool.quote_symbol if token_in_symbol == pool.base_symbol else pool.base_symbol
-        amount_in = int(_event_value(event_data, "amountIn", "amount_in") or decision.amount_in or 0)
-        amount_out = int(_event_value(event_data, "amountOut", "amount_out") or 0)
+        amount_in = _event_value(event_data, "amountIn", "amount_in")
+        amount_out = _event_value(event_data, "amountOut", "amount_out")
         return {
-            token_in_symbol: -amount_in,
-            token_out_symbol: amount_out,
+            token_in_symbol: -int(amount_in if amount_in is not None else decision.amount_in or 0),
+            token_out_symbol: int(amount_out if amount_out is not None else 0),
         }
 
     def scenario_pool(self, pool_id: str):

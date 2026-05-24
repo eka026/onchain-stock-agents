@@ -153,6 +153,24 @@ def test_trader_executes_swap_verifies_event_and_confirms_portfolio():
     assert agent.portfolio.pending == {}
 
 
+def test_trader_confirmed_swap_keeps_zero_event_values():
+    agent = make_agent()
+    decision = TraderDecision(
+        action="SWAP",
+        pool_id="TECH-USD",
+        token_in="USD",
+        amount_in=100,
+        reason="buy tech",
+    )
+
+    changes = agent._confirmed_swap_changes(
+        decision,
+        {"tokenIn": "0xusd", "amountIn": 0, "amountOut": 0},
+    )
+
+    assert changes == {"USD": 0, "TECH": 0}
+
+
 def test_trader_rejected_execution_discards_pending_without_confirming():
     portfolio = Portfolio(balances={"USD": 1_000})
     agent = make_agent(

@@ -2,6 +2,7 @@ from agents.chain import ExecutionResult, ValidationResult
 from agents.llm import MockLLMClient
 from agents.lp_agent import LPAgent, main
 from agents.portfolio import Portfolio
+from agents.schemas import LPDecision
 from test.test_chain_contracts import scenario
 
 
@@ -184,6 +185,21 @@ def test_lp_executes_add_liquidity_verifies_event_and_confirms_portfolio():
     assert agent.verifier.calls == [("ADD_LIQUIDITY", "0xlpaction", "TECH-USD")]
     assert agent.portfolio.balances == {"USD": 980, "TECH": 40, "TECH-USD-LP": 84}
     assert agent.portfolio.pending == {}
+
+
+def test_lp_confirmed_add_liquidity_keeps_zero_event_values():
+    agent = make_agent()
+    decision = LPDecision(
+        action="ADD_LIQUIDITY",
+        pool_id="TECH-USD",
+        amount_a=10,
+        amount_b=20,
+        reason="add",
+    )
+
+    changes = agent._confirmed_changes(decision, {"amountA": 0, "amountB": 0, "lpShares": 0})
+
+    assert changes == {"TECH": 0, "USD": 0, "TECH-USD-LP": 0}
 
 
 def test_lp_executes_remove_liquidity_verifies_event_and_confirms_portfolio():

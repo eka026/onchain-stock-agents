@@ -33,10 +33,16 @@ class Config:
 
 
 def load(*, require_traders: bool = True, require_lps: bool = True) -> Config:
-    trader_keys = _csv("TRADER_PRIVATE_KEYS", required=require_traders)
-    trader_models = _csv("TRADER_MODELS", required=require_traders)
-    lp_keys = _csv("LP_PRIVATE_KEYS", required=require_lps)
-    lp_models = _csv("LP_MODELS", required=require_lps)
+    trader_keys, trader_models = _agent_pair_csv(
+        "TRADER_PRIVATE_KEYS",
+        "TRADER_MODELS",
+        required=require_traders,
+    )
+    lp_keys, lp_models = _agent_pair_csv(
+        "LP_PRIVATE_KEYS",
+        "LP_MODELS",
+        required=require_lps,
+    )
 
     if len(trader_keys) != len(trader_models):
         raise RuntimeError(
@@ -70,3 +76,13 @@ def _csv(key: str, *, required: bool = True) -> list[str]:
     if not required and key not in os.environ:
         return []
     return [value.strip() for value in _require(key).split(",") if value.strip()]
+
+
+def _agent_pair_csv(keys_env: str, models_env: str, *, required: bool) -> tuple[list[str], list[str]]:
+    has_keys = keys_env in os.environ
+    has_models = models_env in os.environ
+    if not required and not has_keys and not has_models:
+        return [], []
+    if not required and has_keys != has_models:
+        raise RuntimeError(f"{keys_env} and {models_env} must both be set or both be omitted")
+    return _csv(keys_env), _csv(models_env)

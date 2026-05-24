@@ -92,3 +92,11 @@ def test_load_can_skip_unneeded_agent_pairs(monkeypatch, tmp_path):
 
     assert loaded.traders == []
     assert [lp.private_key for lp in loaded.lps] == ["0xlp1"]
+
+
+def test_optional_agent_pair_requires_both_env_vars_when_partially_set(monkeypatch, tmp_path):
+    set_required_env(monkeypatch, tmp_path)
+    monkeypatch.delenv("TRADER_PRIVATE_KEYS")
+
+    with pytest.raises(RuntimeError, match="TRADER_PRIVATE_KEYS and TRADER_MODELS must both be set"):
+        config.load(require_traders=False)
