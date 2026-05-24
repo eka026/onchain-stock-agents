@@ -81,3 +81,14 @@ def test_load_rejects_mismatched_lp_keys_and_models(monkeypatch, tmp_path):
 
     with pytest.raises(RuntimeError, match="LP_PRIVATE_KEYS has 1 entries"):
         config.load()
+
+
+def test_load_can_skip_unneeded_agent_pairs(monkeypatch, tmp_path):
+    set_required_env(monkeypatch, tmp_path)
+    monkeypatch.delenv("TRADER_PRIVATE_KEYS")
+    monkeypatch.delenv("TRADER_MODELS")
+
+    loaded = config.load(require_traders=False)
+
+    assert loaded.traders == []
+    assert [lp.private_key for lp in loaded.lps] == ["0xlp1"]

@@ -790,20 +790,20 @@ agents/lp_agent.py
 test/test_lp_agent.py
 ```
 
-- [ ] Load LP config by `--index`.
-- [ ] Observe pool reserves and prices.
-- [ ] Observe LP balances and accumulated fees.
-- [ ] Observe LP policy state.
-- [ ] Build compact LLM prompt.
-- [ ] Parse `LPDecision`.
-- [ ] Execute `HOLD` as no-op.
-- [ ] Execute `ADD_LIQUIDITY`.
-- [ ] Execute `REMOVE_LIQUIDITY`.
-- [ ] Execute `COLLECT_FEES`.
-- [ ] Verify expected events.
-- [ ] Update portfolio only after confirmation.
-- [ ] Support `--once`.
-- [ ] Support `--interval`.
+- [x] Load LP config by `--index`.
+- [x] Observe pool reserves and prices.
+- [x] Observe LP balances and accumulated fees.
+- [x] Observe LP policy state.
+- [x] Build compact LLM prompt.
+- [x] Parse `LPDecision`.
+- [x] Execute `HOLD` as no-op.
+- [x] Execute `ADD_LIQUIDITY`.
+- [x] Execute `REMOVE_LIQUIDITY`.
+- [x] Execute `COLLECT_FEES`.
+- [x] Verify expected events.
+- [x] Update portfolio only after confirmation.
+- [x] Support `--once`.
+- [x] Support `--interval`.
 
 Verification:
 

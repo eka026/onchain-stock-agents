@@ -32,11 +32,11 @@ class Config:
     openai_api_key: str | None
 
 
-def load() -> Config:
-    trader_keys = _csv("TRADER_PRIVATE_KEYS")
-    trader_models = _csv("TRADER_MODELS")
-    lp_keys = _csv("LP_PRIVATE_KEYS")
-    lp_models = _csv("LP_MODELS")
+def load(*, require_traders: bool = True, require_lps: bool = True) -> Config:
+    trader_keys = _csv("TRADER_PRIVATE_KEYS", required=require_traders)
+    trader_models = _csv("TRADER_MODELS", required=require_traders)
+    lp_keys = _csv("LP_PRIVATE_KEYS", required=require_lps)
+    lp_models = _csv("LP_MODELS", required=require_lps)
 
     if len(trader_keys) != len(trader_models):
         raise RuntimeError(
@@ -66,5 +66,7 @@ def _require(key: str) -> str:
     return value
 
 
-def _csv(key: str) -> list[str]:
+def _csv(key: str, *, required: bool = True) -> list[str]:
+    if not required and key not in os.environ:
+        return []
     return [value.strip() for value in _require(key).split(",") if value.strip()]
