@@ -13,7 +13,7 @@ from agents.chain import (
     ReceiptVerifier,
     ValidationResult,
 )
-from agents.llm import LLMClient, create_llm_client
+from agents.llm import LLMClient, create_llm_client, load_persona
 from agents.news_feed import Scenario
 from agents.portfolio import Portfolio
 from agents.schemas import LPDecision
@@ -40,6 +40,7 @@ class LPAgent:
         verifier: ReceiptVerifier,
         llm_client: LLMClient,
         portfolio: Portfolio | None = None,
+        price_history: dict[str, list[int]] | None = None,
     ):
         self.lp_address = lp_address
         self.private_key = private_key
@@ -50,6 +51,7 @@ class LPAgent:
         self.verifier = verifier
         self.llm_client = llm_client
         self.portfolio = portfolio or Portfolio()
+        self.price_history: dict[str, list[int]] = price_history if price_history is not None else {}
 
     def observe(self) -> dict[str, Any]:
         token_balances = {
@@ -65,6 +67,8 @@ class LPAgent:
             fees_a, fees_b = self.reader.vault_fees(pool.id)
             lp_balance = self.reader.lp_balance(pool.id, self.lp_address)
             lp_total_supply = self.reader.lp_total_supply(pool.id)
+            spot_price = self.reader.spot_price(pool.id)
+            self.price_history.setdefault(pool.base_symbol, []).append(spot_price)
             lp_symbol = _lp_symbol(pool.id)
             lp_balances[lp_symbol] = lp_balance
             accumulated_fees[pool.id] = {
@@ -76,7 +80,7 @@ class LPAgent:
                     **pool.model_dump(),
                     "reserve_a": reserve_a,
                     "reserve_b": reserve_b,
-                    "spot_price": self.reader.spot_price(pool.id),
+                    "spot_price": spot_price,
                     "fees_a": fees_a,
                     "fees_b": fees_b,
                     "lp_balance": lp_balance,
@@ -94,6 +98,7 @@ class LPAgent:
             "tokens": [token.model_dump() for token in self.scenario.tokens],
             "pools": pools,
             "balances": {**token_balances, **lp_balances},
+            "per_token_history": dict(self.price_history),
             "accumulated_fees": accumulated_fees,
             "policy": {
                 "enabled": policy[0],
@@ -232,11 +237,15 @@ def build_agent(index: int, *, llm_override: str | None = None) -> LPAgent:
     reader = ChainReader(registry)
     account = registry.web3.eth.account.from_key(lp_config.private_key)
     model = llm_override or lp_config.model
+    persona = load_persona(lp_config.persona_index)
     llm_client = create_llm_client(
         model,
         openai_api_key=loaded.openai_api_key,
         google_api_key=loaded.google_api_key,
         groq_api_key=loaded.groq_api_key,
+        openrouter_api_key=loaded.openrouter_api_key,
+        deepseek_api_key=loaded.deepseek_api_key,
+        persona_prompt=persona,
     )
     return LPAgent(
         lp_address=account.address,

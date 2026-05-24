@@ -3,12 +3,21 @@ import re
 import time
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Protocol
 
 from pydantic import ValidationError
 
 from agents.news_feed import PoolInfo
 from agents.schemas import LPDecision, TraderDecision, validate_lp_decision, validate_trader_decision
+
+_DEFAULT_PERSONA_PATH = Path(__file__).resolve().parent.parent / "data" / "persona.json"
+
+
+def load_persona(index: int, path: str | Path = _DEFAULT_PERSONA_PATH) -> str:
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    personas = data["personas"]
+    return personas[index % len(personas)]["system_prompt"]
 
 
 class LLMDecisionError(ValueError):
@@ -154,8 +163,14 @@ class MockLLMClient:
 
 
 class ProviderLLMClient:
-    def __init__(self, *, model: str):
+    def __init__(self, *, model: str, persona_prompt: str = ""):
         self.model = model
+        self.persona_prompt = persona_prompt
+
+    def _system_message(self) -> str:
+        if self.persona_prompt:
+            return f"{self.persona_prompt}\n\n{SYSTEM_INSTRUCTIONS}"
+        return SYSTEM_INSTRUCTIONS
 
     def trader_response(self, observation: dict[str, Any]) -> LLMResponse:
         return self._json_response(_build_prompt("trader", observation))
@@ -176,8 +191,8 @@ class ProviderLLMClient:
 
 
 class OpenAILLMClient(ProviderLLMClient):
-    def __init__(self, *, model: str, api_key: str | None, client: Any | None = None):
-        super().__init__(model=model)
+    def __init__(self, *, model: str, api_key: str | None, persona_prompt: str = "", client: Any | None = None):
+        super().__init__(model=model, persona_prompt=persona_prompt)
         if not api_key:
             raise LLMConfigurationError("missing OPENAI_API_KEY for OpenAI model")
         self.client = client or self._create_client(api_key)
@@ -186,7 +201,7 @@ class OpenAILLMClient(ProviderLLMClient):
         started = time.perf_counter()
         response = self.client.responses.create(
             model=self.model,
-            instructions=SYSTEM_INSTRUCTIONS,
+            instructions=self._system_message(),
             input=prompt,
             text={"format": {"type": "json_object"}},
         )
@@ -208,8 +223,8 @@ class OpenAILLMClient(ProviderLLMClient):
 
 
 class GeminiLLMClient(ProviderLLMClient):
-    def __init__(self, *, model: str, api_key: str | None, client: Any | None = None):
-        super().__init__(model=model)
+    def __init__(self, *, model: str, api_key: str | None, persona_prompt: str = "", client: Any | None = None):
+        super().__init__(model=model, persona_prompt=persona_prompt)
         if not api_key:
             raise LLMConfigurationError("missing GOOGLE_API_KEY for Gemini model")
         self.client = client or self._create_client(api_key)
@@ -217,7 +232,7 @@ class GeminiLLMClient(ProviderLLMClient):
     def _json_response(self, prompt: str) -> LLMResponse:
         started = time.perf_counter()
         response = self.client.generate_content(
-            f"{SYSTEM_INSTRUCTIONS}\n\n{prompt}",
+            f"{self._system_message()}\n\n{prompt}",
             generation_config={"response_mime_type": "application/json"},
         )
         latency_ms = int((time.perf_counter() - started) * 1000)
@@ -239,8 +254,9 @@ class GeminiLLMClient(ProviderLLMClient):
 
 
 class GroqLLMClient(ProviderLLMClient):
-    def __init__(self, *, model: str, api_key: str | None, client: Any | None = None):
-        super().__init__(model=model)
+    def __init__(self, *, model: str, api_key: str | None, persona_prompt: str = "", client: Any | None = None):
+        # Strip the "groq/" provider prefix if present (e.g. "groq/compound-mini" → "compound-mini")
+        super().__init__(model=model.split("groq/", 1)[-1] if model.lower().startswith("groq/") else model, persona_prompt=persona_prompt)
         if not api_key:
             raise LLMConfigurationError("missing GROQ_API_KEY for Groq model")
         self.client = client or self._create_client(api_key)
@@ -250,7 +266,7 @@ class GroqLLMClient(ProviderLLMClient):
         completion = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": SYSTEM_INSTRUCTIONS},
+                {"role": "system", "content": self._system_message()},
                 {"role": "user", "content": prompt},
             ],
             response_format={"type": "json_object"},
@@ -273,22 +289,111 @@ class GroqLLMClient(ProviderLLMClient):
         return Groq(api_key=api_key)
 
 
+class OpenRouterLLMClient(ProviderLLMClient):
+    """Routes requests through OpenRouter (openai-compatible API).
+
+    Handles any model served by OpenRouter, e.g. 'meta-llama/llama-3.3-70b-instruct:free'.
+    """
+
+    def __init__(self, *, model: str, api_key: str | None, persona_prompt: str = "", client: Any | None = None):
+        super().__init__(model=model, persona_prompt=persona_prompt)
+        if not api_key:
+            raise LLMConfigurationError("missing OPENROUTER_API_KEY for OpenRouter model")
+        self.client = client or self._create_client(api_key)
+
+    def _json_response(self, prompt: str) -> LLMResponse:
+        started = time.perf_counter()
+        completion = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self._system_message()},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+        )
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        choice = completion.choices[0]
+        return LLMResponse(
+            raw_text=choice.message.content,
+            model=self.model,
+            finish_reason=getattr(choice, "finish_reason", None),
+            usage=_usage_dict(_response_attr(completion, "usage", default=None)),
+            latency_ms=latency_ms,
+        )
+
+    def _create_client(self, api_key: str) -> Any:
+        try:
+            from openai import OpenAI
+        except ModuleNotFoundError as exc:
+            raise LLMConfigurationError("openai package is required for OpenRouter models") from exc
+        return OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+
+
+class DeepSeekLLMClient(ProviderLLMClient):
+    """Calls DeepSeek's OpenAI-compatible API at api.deepseek.com."""
+
+    def __init__(self, *, model: str, api_key: str | None, persona_prompt: str = "", client: Any | None = None):
+        super().__init__(model=model, persona_prompt=persona_prompt)
+        if not api_key:
+            raise LLMConfigurationError("missing DEEPSEEK_API_KEY for DeepSeek model")
+        self.client = client or self._create_client(api_key)
+
+    def _json_response(self, prompt: str) -> LLMResponse:
+        started = time.perf_counter()
+        completion = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self._system_message()},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+        )
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        choice = completion.choices[0]
+        return LLMResponse(
+            raw_text=choice.message.content,
+            model=self.model,
+            finish_reason=getattr(choice, "finish_reason", None),
+            usage=_usage_dict(_response_attr(completion, "usage", default=None)),
+            latency_ms=latency_ms,
+        )
+
+    def _create_client(self, api_key: str) -> Any:
+        try:
+            from openai import OpenAI
+        except ModuleNotFoundError as exc:
+            raise LLMConfigurationError("openai package is required for DeepSeek models") from exc
+        return OpenAI(base_url="https://api.deepseek.com", api_key=api_key)
+
+
 def create_llm_client(
     model: str,
     *,
     openai_api_key: str | None = None,
     google_api_key: str | None = None,
     groq_api_key: str | None = None,
+    openrouter_api_key: str | None = None,
+    deepseek_api_key: str | None = None,
+    persona_prompt: str = "",
 ) -> LLMClient:
     normalized = model.lower()
     if normalized == "mock":
         return MockLLMClient()
+    # Explicit groq/ prefix → Groq API (strips prefix internally)
+    if normalized.startswith("groq/"):
+        return GroqLLMClient(model=model, api_key=groq_api_key, persona_prompt=persona_prompt)
+    # Any slash-qualified model name (e.g. meta-llama/..., deepseek/...) → OpenRouter
+    if "/" in normalized:
+        return OpenRouterLLMClient(model=model, api_key=openrouter_api_key, persona_prompt=persona_prompt)
+    # deepseek-* without slash → DeepSeek direct API
+    if normalized.startswith("deepseek"):
+        return DeepSeekLLMClient(model=model, api_key=deepseek_api_key, persona_prompt=persona_prompt)
     if _is_openai_model(normalized):
-        return OpenAILLMClient(model=model, api_key=openai_api_key)
+        return OpenAILLMClient(model=model, api_key=openai_api_key, persona_prompt=persona_prompt)
     if "gemini" in normalized:
-        return GeminiLLMClient(model=model, api_key=google_api_key)
+        return GeminiLLMClient(model=model, api_key=google_api_key, persona_prompt=persona_prompt)
     if _is_groq_model(normalized):
-        return GroqLLMClient(model=model, api_key=groq_api_key)
+        return GroqLLMClient(model=model, api_key=groq_api_key, persona_prompt=persona_prompt)
     raise LLMConfigurationError(f"unsupported LLM model: {model}")
 
 
@@ -370,11 +475,25 @@ def _build_prompt(agent_type: str, observation: dict[str, Any]) -> str:
     else:
         raise ValueError(f"unsupported agent_type: {agent_type}")
 
+    news_item = observation.get("news") or {}
+    if isinstance(news_item, dict):
+        news_text = f"{news_item.get('headline', '')} {news_item.get('body', '')}".strip()
+    else:
+        news_text = str(news_item)
+
     return json.dumps(
         {
-            "task": f"Choose one {agent_type} decision from the observation.",
+            "portfolio": observation.get("balances", {}),
+            "per_token_history": observation.get("per_token_history", {}),
+            "news": news_text,
+            "prompt": (
+                f"You are acting as a {agent_type} agent on an on-chain AMM. "
+                f"Given your portfolio, token price history, and the latest news, "
+                f"return exactly one JSON decision matching the schema below."
+            ),
             "schema": schema,
-            "observation": observation,
+            "pools": observation.get("pools", []),
+            "policy": observation.get("policy", {}),
         },
         default=_json_default,
         sort_keys=True,

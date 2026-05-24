@@ -12,12 +12,14 @@ load_dotenv()
 class TraderConfig:
     private_key: str
     model: str
+    persona_index: int = 0
 
 
 @dataclass(frozen=True)
 class LPConfig:
     private_key: str
     model: str
+    persona_index: int = 0
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,8 @@ class Config:
     google_api_key: str | None
     groq_api_key: str | None
     openai_api_key: str | None
+    openrouter_api_key: str | None
+    deepseek_api_key: str | None
 
 
 def load(
@@ -60,15 +64,27 @@ def load(
 
     resolved_scenario_path = scenario_path or os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json")
 
+    # Assign personas round-robin by agent index so each agent gets a different persona.
+    traders = [
+        TraderConfig(private_key=k, model=m, persona_index=i)
+        for i, (k, m) in enumerate(zip(trader_keys, trader_models))
+    ]
+    lps = [
+        LPConfig(private_key=k, model=m, persona_index=len(traders) + i)
+        for i, (k, m) in enumerate(zip(lp_keys, lp_models))
+    ]
+
     return Config(
         rpc_url=_first_present("RPC_URL", "SEPOLIA_RPC_URL"),
         scenario_path=resolved_scenario_path,
         scenario=NewsFeed.load_scenario(resolved_scenario_path),
-        traders=[TraderConfig(private_key=k, model=m) for k, m in zip(trader_keys, trader_models)],
-        lps=[LPConfig(private_key=k, model=m) for k, m in zip(lp_keys, lp_models)],
+        traders=traders,
+        lps=lps,
         google_api_key=os.environ.get("GOOGLE_API_KEY"),
         groq_api_key=os.environ.get("GROQ_API_KEY"),
         openai_api_key=os.environ.get("OPENAI_API_KEY"),
+        openrouter_api_key=os.environ.get("OPENROUTER_API_KEY"),
+        deepseek_api_key=os.environ.get("DEEPSEEK_API_KEY"),
     )
 
 

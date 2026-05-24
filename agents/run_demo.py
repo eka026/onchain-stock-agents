@@ -5,7 +5,7 @@ from typing import Any
 
 from agents import config
 from agents.chain import ChainReader, ChainTransactionSubmitter, ContractRegistry, LocalValidator, ReceiptVerifier
-from agents.llm import create_llm_client
+from agents.llm import create_llm_client, load_persona
 from agents.lp_agent import LPAgent, LPRunResult
 from agents.news_feed import NewsFeed, ScheduledNews, Scenario
 from agents.portfolio import Portfolio
@@ -69,6 +69,9 @@ def build_demo_agents(
             openai_api_key=loaded.openai_api_key,
             google_api_key=loaded.google_api_key,
             groq_api_key=loaded.groq_api_key,
+            openrouter_api_key=loaded.openrouter_api_key,
+            deepseek_api_key=loaded.deepseek_api_key,
+            persona_prompt=load_persona(lp_config.persona_index),
         ),
         portfolio=Portfolio(),
     )
@@ -90,6 +93,9 @@ def build_demo_agents(
                     openai_api_key=loaded.openai_api_key,
                     google_api_key=loaded.google_api_key,
                     groq_api_key=loaded.groq_api_key,
+                    openrouter_api_key=loaded.openrouter_api_key,
+                    deepseek_api_key=loaded.deepseek_api_key,
+                    persona_prompt=load_persona(trader_config.persona_index),
                 ),
                 portfolio=Portfolio(),
             )

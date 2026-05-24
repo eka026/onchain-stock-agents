@@ -1,6 +1,6 @@
 import argparse
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from agents import config
@@ -13,7 +13,7 @@ from agents.chain import (
     ReceiptVerifier,
     ValidationResult,
 )
-from agents.llm import LLMClient, create_llm_client
+from agents.llm import LLMClient, create_llm_client, load_persona
 from agents.news_feed import NewsFeed, NewsItem, Scenario
 from agents.portfolio import Portfolio
 from agents.schemas import TraderDecision
@@ -43,6 +43,7 @@ class TraderAgent:
         verifier: ReceiptVerifier,
         llm_client: LLMClient,
         portfolio: Portfolio | None = None,
+        price_history: dict[str, list[int]] | None = None,
     ):
         self.trader_address = trader_address
         self.private_key = private_key
@@ -53,6 +54,7 @@ class TraderAgent:
         self.verifier = verifier
         self.llm_client = llm_client
         self.portfolio = portfolio or Portfolio()
+        self.price_history: dict[str, list[int]] = price_history if price_history is not None else {}
 
     def observe(self, news: NewsItem | dict[str, Any] | None = None) -> dict[str, Any]:
         token_balances = {
@@ -62,12 +64,14 @@ class TraderAgent:
         pools = []
         for pool in self.scenario.pools:
             reserve_a, reserve_b = self.reader.reserves(pool.id)
+            spot_price = self.reader.spot_price(pool.id)
+            self.price_history.setdefault(pool.base_symbol, []).append(spot_price)
             pools.append(
                 {
                     **pool.model_dump(),
                     "reserve_a": reserve_a,
                     "reserve_b": reserve_b,
-                    "spot_price": self.reader.spot_price(pool.id),
+                    "spot_price": spot_price,
                     "fee_bps": self.reader.pool_fee_bps(pool.id),
                     "base_balance": token_balances.get(pool.base_symbol, 0),
                     "quote_balance": token_balances.get(pool.quote_symbol, 0),
@@ -85,6 +89,7 @@ class TraderAgent:
             "tokens": [token.model_dump() for token in self.scenario.tokens],
             "pools": pools,
             "balances": token_balances,
+            "per_token_history": dict(self.price_history),
             "policy": {
                 "enabled": policy[0],
                 "max_swap_amount": policy[1],
@@ -204,11 +209,15 @@ def build_agent(index: int, *, llm_override: str | None = None) -> TraderAgent:
     reader = ChainReader(registry)
     account = registry.web3.eth.account.from_key(trader_config.private_key)
     model = llm_override or trader_config.model
+    persona = load_persona(trader_config.persona_index)
     llm_client = create_llm_client(
         model,
         openai_api_key=loaded.openai_api_key,
         google_api_key=loaded.google_api_key,
         groq_api_key=loaded.groq_api_key,
+        openrouter_api_key=loaded.openrouter_api_key,
+        deepseek_api_key=loaded.deepseek_api_key,
+        persona_prompt=persona,
     )
     return TraderAgent(
         trader_address=account.address,
