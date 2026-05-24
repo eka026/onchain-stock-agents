@@ -61,7 +61,7 @@ def load(
     resolved_scenario_path = scenario_path or os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json")
 
     return Config(
-        rpc_url=_require("SEPOLIA_RPC_URL"),
+        rpc_url=_first_present("RPC_URL", "SEPOLIA_RPC_URL"),
         scenario_path=resolved_scenario_path,
         scenario=NewsFeed.load_scenario(resolved_scenario_path),
         traders=[TraderConfig(private_key=k, model=m) for k, m in zip(trader_keys, trader_models)],
@@ -77,6 +77,15 @@ def _require(key: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required env var: {key}")
     return value
+
+
+def _first_present(*keys: str) -> str:
+    for key in keys:
+        value = os.environ.get(key)
+        if value:
+            return value
+    joined = " or ".join(keys)
+    raise RuntimeError(f"Missing required env var: {joined}")
 
 
 def _csv(key: str, *, required: bool = True) -> list[str]:

@@ -68,6 +68,7 @@ class TraderAgent:
                     "reserve_a": reserve_a,
                     "reserve_b": reserve_b,
                     "spot_price": self.reader.spot_price(pool.id),
+                    "fee_bps": self.reader.pool_fee_bps(pool.id),
                     "base_balance": token_balances.get(pool.base_symbol, 0),
                     "quote_balance": token_balances.get(pool.quote_symbol, 0),
                     "base_approved": self.reader.is_token_approved(pool.base_symbol),
@@ -119,8 +120,6 @@ class TraderAgent:
             min_amount_out=min_amount_out,
         )
         tx_hash = self.submitter.sign_and_submit(transaction, self.private_key)
-        pending_changes = self._planned_swap_changes(decision)
-        self.portfolio.record_pending(tx_hash, "SWAP", pending_changes)
 
         execution = self.verifier.verify_swap(tx_hash, decision.pool_id or "")
         if execution.status == "CONFIRMED":
@@ -129,6 +128,8 @@ class TraderAgent:
             self.portfolio.confirm(tx_hash)
         elif execution.status == "REJECTED":
             self.portfolio.discard(tx_hash)
+        else:
+            self.portfolio.record_pending(tx_hash, "SWAP", self._planned_swap_changes(decision))
 
         return TraderRunResult(
             decision=decision,
@@ -142,11 +143,16 @@ class TraderAgent:
             return 0
 
         pool = self.scenario_pool(decision.pool_id or "")
-        spot_price = self.reader.spot_price(pool.id)
+        reserve_a, reserve_b = self.reader.reserves(pool.id)
+        fee_bps = self.reader.pool_fee_bps(pool.id)
+        amount_in_less_fee = (decision.amount_in or 0) * (10_000 - fee_bps) // 10_000
         if decision.token_in == pool.base_symbol:
-            expected_out = (decision.amount_in or 0) * spot_price // ONE
+            reserve_in = reserve_a
+            reserve_out = reserve_b
         else:
-            expected_out = (decision.amount_in or 0) * ONE // spot_price
+            reserve_in = reserve_b
+            reserve_out = reserve_a
+        expected_out = reserve_out * amount_in_less_fee // (reserve_in + amount_in_less_fee)
         return expected_out * (10_000 - decision.max_slippage_bps) // 10_000
 
     def _planned_swap_changes(self, decision: TraderDecision) -> dict[str, int]:

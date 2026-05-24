@@ -126,7 +126,6 @@ class LPAgent:
 
         transaction = self._build_transaction(decision)
         tx_hash = self.submitter.sign_and_submit(transaction, self.private_key)
-        self.portfolio.record_pending(tx_hash, decision.action, self._planned_changes(decision))
 
         execution = self._verify(tx_hash, decision)
         if execution.status == "CONFIRMED":
@@ -138,6 +137,8 @@ class LPAgent:
             self.portfolio.confirm(tx_hash)
         elif execution.status == "REJECTED":
             self.portfolio.discard(tx_hash)
+        else:
+            self.portfolio.record_pending(tx_hash, decision.action, self._planned_changes(decision))
 
         return LPRunResult(
             decision=decision,

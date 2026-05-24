@@ -64,6 +64,8 @@ contract AgentPolicy is Ownable {
         uint256 windowDuration
     ) external onlyOwner {
         require(trader != address(0), "POLICY_ZERO_TRADER");
+        // Reconfiguration preserves existing windowStart and spentAmount so disabling
+        // and re-enabling cannot reset a trader's rolling window usage.
         TraderPolicy storage tp = traderPolicies[trader];
         tp.enabled = enabled;
         tp.maxSwapAmount = maxSwapAmount;
@@ -82,6 +84,8 @@ contract AgentPolicy is Ownable {
         uint256 windowDuration
     ) external onlyOwner {
         require(lp != address(0), "POLICY_ZERO_LP");
+        // Reconfiguration preserves existing windowStart and withdrawnFees so disabling
+        // and re-enabling cannot reset an LP's rolling fee-withdrawal usage.
         LPPolicy storage lpp = lpPolicies[lp];
         lpp.enabled = enabled;
         lpp.maxLiquidityAdd = maxLiquidityAdd;

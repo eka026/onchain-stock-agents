@@ -138,6 +138,20 @@ class ChainReader:
             vault.functions.totalFeesB().call(),
         )
 
+    def vault_cumulative_fees(self, pool_id: str) -> tuple[int, int]:
+        vault = self.registry.pool_contracts(pool_id).vault
+        return (
+            vault.functions.cumulativeFeesA().call(),
+            vault.functions.cumulativeFeesB().call(),
+        )
+
+    def claimable_fees(self, pool_id: str, lp: str, lp_shares: int) -> tuple[int, int]:
+        vault = self.registry.pool_contracts(pool_id).vault
+        return tuple(vault.functions.claimableFees(lp, lp_shares).call())
+
+    def pool_fee_bps(self, pool_id: str) -> int:
+        return self.registry.pool_contracts(pool_id).pool.functions.feeBps().call()
+
     def is_token_approved(self, symbol: str) -> bool:
         address = self.registry.token_address(symbol)
         return self.registry.policy.functions.isTokenApproved(address).call()
@@ -188,11 +202,6 @@ class LocalValidator:
         if not self.reader.is_token_approved(decision.token_in or ""):
             return ValidationResult(ok=False, reason="token is not approved")
 
-        pool_address = self.registry.pool_contracts(pool.id).info.pool_address
-        allowance = self.reader.token_allowance(decision.token_in or "", trader, pool_address)
-        if allowance < decision.amount_in:
-            return ValidationResult(ok=False, reason="insufficient token allowance")
-
         policy = self.reader.trader_policy(trader)
         enabled, max_swap_amount, spending_limit = policy[:3]
         spent_amount = self.reader.current_spent_amount(trader)
@@ -202,6 +211,11 @@ class LocalValidator:
             return ValidationResult(ok=False, reason="swap exceeds max swap amount")
         if spent_amount + decision.amount_in > spending_limit:
             return ValidationResult(ok=False, reason="swap exceeds spending limit")
+
+        pool_address = self.registry.pool_contracts(pool.id).info.pool_address
+        allowance = self.reader.token_allowance(decision.token_in or "", trader, pool_address)
+        if allowance < decision.amount_in:
+            return ValidationResult(ok=False, reason="insufficient token allowance")
 
         return ValidationResult(ok=True)
 
@@ -245,11 +259,11 @@ class LocalValidator:
         if decision.action == "COLLECT_FEES":
             if decision.lp_shares is None or decision.lp_shares <= 0:
                 return ValidationResult(ok=False, reason="lp_shares must be positive")
-            fees_a, fees_b = self.reader.vault_fees(pool.id)
             total_supply = self.reader.lp_total_supply(pool.id)
             if total_supply <= 0:
                 return ValidationResult(ok=False, reason="LP token supply is zero")
-            fee_amount = decision.lp_shares * (fees_a + fees_b) // total_supply
+            fees_a, fees_b = self.reader.claimable_fees(pool.id, lp, decision.lp_shares)
+            fee_amount = fees_a + fees_b
             if withdrawn_fees + fee_amount > max_fee_withdrawal:
                 return ValidationResult(ok=False, reason="fee withdrawal exceeds policy limit")
 

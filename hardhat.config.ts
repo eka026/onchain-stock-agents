@@ -29,6 +29,7 @@ function loadDotEnv() {
 loadDotEnv();
 
 const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
+const rpcUrl = process.env.RPC_URL ?? process.env.SEPOLIA_RPC_URL ?? "";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -41,7 +42,7 @@ const config: HardhatUserConfig = {
     hardhat: {},
     localhost: { url: "http://127.0.0.1:8545" },
     sepolia: {
-      url: process.env.SEPOLIA_RPC_URL ?? "",
+      url: rpcUrl,
       accounts: deployerPrivateKey ? [deployerPrivateKey] : []
     }
   }

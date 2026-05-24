@@ -14,6 +14,8 @@ from agents.trader_agent import TraderAgent, TraderRunResult
 
 
 ONE = 10**18
+DISABLED_TRADER_ADDRESS = "0x000000000000000000000000000000000000dead"
+DISABLED_LP_ADDRESS = "0x000000000000000000000000000000000000d1ab"
 
 
 @dataclass(frozen=True)
@@ -44,6 +46,7 @@ def build_demo_agents(
         raise RuntimeError("demo requires at least one LP_PRIVATE_KEYS entry")
     if len(loaded.traders) < trader_count:
         raise RuntimeError(f"demo requires at least {trader_count} trader private keys")
+    _validate_deployed_addresses(loaded.scenario)
 
     registry = ContractRegistry.from_rpc(loaded.scenario, loaded.rpc_url)
     reader = ChainReader(registry)
@@ -128,9 +131,9 @@ def run_demo(
                 continue
             result.trader_results.append((scheduled.tick, agent.trader_address, agent.run_once(news)))
 
+    result.negative_results = _run_negative_scenarios(lp_agent, trader_agents[0])
     result.fee_collection = _run_lp_action(lp_agent, "COLLECT_FEES")
     result.liquidity_removal = _run_lp_action(lp_agent, "REMOVE_LIQUIDITY")
-    result.negative_results = _run_negative_scenarios(lp_agent, trader_agents[0])
     result.final_portfolios = _final_portfolios(lp_agent, trader_agents)
     return result
 
@@ -221,24 +224,98 @@ def _run_negative_scenarios(lp_agent: LPAgent, trader_agent: TraderAgent) -> lis
             )
         )
 
-    lp_observation = lp_agent.observe()
-    lp_policy = lp_observation["policy"]
-    excessive_liquidity = int(lp_policy.get("max_liquidity_add", 0)) + 1
+    disabled_trader = _clone_trader_for_address(trader_agent, DISABLED_TRADER_ADDRESS)
     results.append(
         NegativeScenarioResult(
-            "disabled_or_excessive_lp_action",
-            lp_agent.execute(
+            "disabled_trader_swap",
+            disabled_trader.execute(
+                TraderDecision(
+                    action="SWAP",
+                    pool_id=pool.id,
+                    token_in=pool.quote_symbol,
+                    amount_in=1,
+                    reason="Demo negative scenario: use a trader without an enabled policy.",
+                )
+            ),
+        )
+    )
+
+    lp_observation = lp_agent.observe()
+    fee_limit_decision = _fee_limit_decision(lp_observation)
+    if fee_limit_decision is not None:
+        results.append(
+            NegativeScenarioResult(
+                "fee_withdrawal_limit",
+                lp_agent.execute(fee_limit_decision),
+            )
+        )
+
+    disabled_lp = _clone_lp_for_address(lp_agent, DISABLED_LP_ADDRESS)
+    results.append(
+        NegativeScenarioResult(
+            "disabled_lp_action",
+            disabled_lp.execute(
                 LPDecision(
                     action="ADD_LIQUIDITY",
                     pool_id=pool.id,
-                    amount_a=excessive_liquidity,
-                    amount_b=excessive_liquidity,
-                    reason="Demo negative scenario: exceed LP policy limits or hit disabled LP policy.",
+                    amount_a=1,
+                    amount_b=1,
+                    reason="Demo negative scenario: use an LP without an enabled policy.",
                 )
             ),
         )
     )
     return results
+
+
+def _fee_limit_decision(observation: dict[str, Any]) -> LPDecision | None:
+    pools = observation.get("pools", [])
+    if not pools:
+        return None
+
+    pool = pools[0]
+    total_fees = int(pool.get("fees_a", 0)) + int(pool.get("fees_b", 0))
+    total_supply = int(pool.get("lp_total_supply", 0))
+    if total_fees <= 0 or total_supply <= 0:
+        return None
+
+    policy = observation.get("policy", {})
+    remaining = max(int(policy.get("max_fee_withdrawal", 0)) - int(policy.get("withdrawn_fees", 0)), 0)
+    lp_shares = (remaining + 1) * total_supply // total_fees + 1
+    return LPDecision(
+        action="COLLECT_FEES",
+        pool_id=pool["id"],
+        lp_shares=lp_shares,
+        reason="Demo negative scenario: exceed LP fee-withdrawal policy limit.",
+    )
+
+
+def _clone_trader_for_address(agent: TraderAgent, address: str) -> TraderAgent:
+    return TraderAgent(
+        trader_address=address,
+        private_key=agent.private_key,
+        scenario=agent.scenario,
+        reader=agent.reader,
+        validator=agent.validator,
+        submitter=agent.submitter,
+        verifier=agent.verifier,
+        llm_client=agent.llm_client,
+        portfolio=Portfolio(),
+    )
+
+
+def _clone_lp_for_address(agent: LPAgent, address: str) -> LPAgent:
+    return LPAgent(
+        lp_address=address,
+        private_key=agent.private_key,
+        scenario=agent.scenario,
+        reader=agent.reader,
+        validator=agent.validator,
+        submitter=agent.submitter,
+        verifier=agent.verifier,
+        llm_client=agent.llm_client,
+        portfolio=Portfolio(),
+    )
 
 
 def _first_unapproved_pool_symbol(trader_agent: TraderAgent, pool: Any) -> str | None:
@@ -277,6 +354,33 @@ def _resolve_news_path(scenario: Scenario, scenario_path: str) -> str:
     if news_path.is_absolute() or news_path.exists():
         return str(news_path)
     return str((Path(scenario_path).resolve().parent / news_path).resolve())
+
+
+def _validate_deployed_addresses(scenario: Scenario) -> None:
+    placeholder_fields = []
+    if _looks_like_placeholder_address(scenario.policy_address):
+        placeholder_fields.append("policy_address")
+
+    for token in scenario.tokens:
+        if _looks_like_placeholder_address(token.address):
+            placeholder_fields.append(f"tokens.{token.symbol}.address")
+
+    for pool in scenario.pools:
+        for field_name in ("pool_address", "lp_token_address", "vault_address"):
+            if _looks_like_placeholder_address(getattr(pool, field_name)):
+                placeholder_fields.append(f"pools.{pool.id}.{field_name}")
+
+    if placeholder_fields:
+        preview = ", ".join(placeholder_fields[:5])
+        suffix = "" if len(placeholder_fields) <= 5 else f", and {len(placeholder_fields) - 5} more"
+        raise RuntimeError(f"scenario contains placeholder contract addresses: {preview}{suffix}")
+
+
+def _looks_like_placeholder_address(address: str) -> bool:
+    normalized = address.lower()
+    return normalized == "0x0000000000000000000000000000000000000000" or normalized.startswith(
+        "0x0000000000000000000000000000000000000"
+    )
 
 
 def print_demo_result(result: DemoRunResult) -> None:

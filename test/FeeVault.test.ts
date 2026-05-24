@@ -76,6 +76,18 @@ describe("FeeVault", function () {
     expect(await vault.totalFeesB()).to.equal(feeB);
   });
 
+  it("exposes available and cumulative fee totals", async function () {
+    const feeA = ethers.parseEther("10");
+    const feeB = ethers.parseEther("5");
+    await notifyFees(feeA, feeB);
+
+    const totals = await vault.feeTotals();
+    expect(totals[0]).to.equal(feeA);
+    expect(totals[1]).to.equal(feeB);
+    expect(totals[2]).to.equal(feeA);
+    expect(totals[3]).to.equal(feeB);
+  });
+
   it("rejects notifyFee from non-pool", async function () {
     await expect(vault.connect(outsider).notifyFee(await tokenA.getAddress(), 100))
       .to.be.revertedWith("FEEVAULT_NOT_POOL");
@@ -120,15 +132,18 @@ describe("FeeVault", function () {
 
     const balA_before = await tokenA.balanceOf(lp.address);
     const balB_before = await tokenB.balanceOf(lp.address);
+    // lp owns lpHalf / totalLP of fees
+    const expectedA = feeA * lpHalf / totalLP;
+    const expectedB = feeB * lpHalf / totalLP;
+    const claimable = await vault.claimableFees(lp.address, lpHalf);
+    expect(claimable[0]).to.equal(expectedA);
+    expect(claimable[1]).to.equal(expectedB);
 
     await vault.connect(lp).collectFees(lpHalf);
 
     const balA_after = await tokenA.balanceOf(lp.address);
     const balB_after = await tokenB.balanceOf(lp.address);
 
-    // lp owns lpHalf / totalLP of fees
-    const expectedA = feeA * lpHalf / totalLP;
-    const expectedB = feeB * lpHalf / totalLP;
     expect(balA_after - balA_before).to.equal(expectedA);
     expect(balB_after - balB_before).to.equal(expectedB);
   });

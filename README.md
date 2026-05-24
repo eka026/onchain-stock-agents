@@ -83,7 +83,7 @@ MockERC20.approve(<pool address for this pair>, MAX_UINT256)
 Paste runtime settings into `.env`:
 
 ```env
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 DEPLOYER_PRIVATE_KEY=0x...
 SCENARIO_PATH=data/scenarios/demo.json
 
@@ -121,6 +121,6 @@ Paste deployed market addresses into the scenario file, not `.env`:
 npm run deploy:sepolia
 ```
 
-For scripted deployment, `.env` must include `SEPOLIA_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, at least one `TRADER_PRIVATE_KEYS` entry, and at least one `LP_PRIVATE_KEYS` entry. The deployer and setup wallets need Sepolia ETH for gas.
+For scripted deployment, `.env` must include `RPC_URL` (or legacy `SEPOLIA_RPC_URL`), `DEPLOYER_PRIVATE_KEY`, at least one `TRADER_PRIVATE_KEYS` entry, and at least one `LP_PRIVATE_KEYS` entry. The deployer and setup wallets need ETH for gas on the selected network.
 
 The deploy script prints JSON for Python agents to consume. It includes deployed contract addresses, configured actor accounts, and the policy limits used during setup.

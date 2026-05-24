@@ -62,7 +62,9 @@ contract FeeVault is Ownable {
         emit FeeNotified(token, amount);
     }
 
-    // LP claims a proportional share of accumulated fees without burning LP tokens
+    // Prototype accounting: claims are proportional to current LP shares and current
+    // total supply. This intentionally avoids reward-debt accounting, so LP transfers
+    // or supply changes can shift claims for historical fees.
     function collectFees(uint256 lpShares) external {
         require(lpShares > 0, "FEEVAULT_ZERO_SHARES");
         require(lpToken.balanceOf(msg.sender) >= lpShares, "FEEVAULT_INSUFFICIENT_SHARES");
@@ -70,10 +72,7 @@ contract FeeVault is Ownable {
         uint256 totalSupply = lpToken.totalSupply();
         require(totalSupply > 0, "FEEVAULT_ZERO_SUPPLY");
 
-        uint256 entitledA = cumulativeFeesA * lpShares / totalSupply;
-        uint256 entitledB = cumulativeFeesB * lpShares / totalSupply;
-        uint256 feesA = entitledA > claimedFeesA[msg.sender] ? entitledA - claimedFeesA[msg.sender] : 0;
-        uint256 feesB = entitledB > claimedFeesB[msg.sender] ? entitledB - claimedFeesB[msg.sender] : 0;
+        (uint256 feesA, uint256 feesB) = claimableFees(msg.sender, lpShares);
         require(feesA > 0 || feesB > 0, "FEEVAULT_ZERO_FEES");
 
         policy.validateFeeWithdrawal(msg.sender, feesA + feesB);
@@ -88,5 +87,30 @@ contract FeeVault is Ownable {
 
         policy.recordFeeWithdrawal(msg.sender, feesA + feesB);
         emit FeesCollected(msg.sender, feesA, feesB);
+    }
+
+    function feeTotals()
+        external
+        view
+        returns (
+            uint256 availableA,
+            uint256 availableB,
+            uint256 cumulativeA,
+            uint256 cumulativeB
+        )
+    {
+        return (totalFeesA, totalFeesB, cumulativeFeesA, cumulativeFeesB);
+    }
+
+    function claimableFees(address lp, uint256 lpShares) public view returns (uint256 feesA, uint256 feesB) {
+        uint256 totalSupply = lpToken.totalSupply();
+        if (totalSupply == 0 || lpShares == 0) {
+            return (0, 0);
+        }
+
+        uint256 entitledA = cumulativeFeesA * lpShares / totalSupply;
+        uint256 entitledB = cumulativeFeesB * lpShares / totalSupply;
+        feesA = entitledA > claimedFeesA[lp] ? entitledA - claimedFeesA[lp] : 0;
+        feesB = entitledB > claimedFeesB[lp] ? entitledB - claimedFeesB[lp] : 0;
     }
 }

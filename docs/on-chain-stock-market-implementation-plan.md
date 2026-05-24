@@ -821,17 +821,17 @@ agents/run_demo.py
 test/test_run_demo.py
 ```
 
-- [ ] Load scenario and news feed.
-- [ ] Initialize one LP agent and at least two trader agents.
-- [ ] Add initial liquidity.
-- [ ] Broadcast deterministic news events.
-- [ ] Run trader decisions for each broadcast.
-- [ ] Collect fees after swaps.
-- [ ] Remove liquidity.
-- [ ] Trigger negative policy scenarios.
-- [ ] Print final confirmed portfolios.
-- [ ] Support `--llm mock`.
-- [ ] Support `--scenario`.
+- [x] Load scenario and news feed.
+- [x] Initialize one LP agent and at least two trader agents.
+- [x] Add initial liquidity.
+- [x] Broadcast deterministic news events.
+- [x] Run trader decisions for each broadcast.
+- [x] Collect fees after swaps.
+- [x] Remove liquidity.
+- [x] Trigger negative policy scenarios.
+- [x] Print final confirmed portfolios.
+- [x] Support `--llm mock`.
+- [x] Support `--scenario`.
 
 Expected commands:
 

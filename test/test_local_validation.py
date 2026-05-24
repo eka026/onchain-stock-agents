@@ -15,6 +15,7 @@ def validator_with_values(
     tech_allowance=1_000,
     usd_allowance=1_000,
     vault_fees=(7, 11),
+    claimable_fees=None,
 ):
     write_abis(tmp_path)
     registry = ContractRegistry(scenario(), web3=FakeWeb3(), abi_dir=tmp_path)
@@ -40,6 +41,9 @@ def validator_with_values(
         {
             "totalFeesA": vault_fees[0],
             "totalFeesB": vault_fees[1],
+            ("claimableFees", ("0xlp", 1)): claimable_fees or vault_fees,
+            ("claimableFees", ("0xlp", 10)): claimable_fees or vault_fees,
+            ("claimableFees", ("0xlp", 100)): claimable_fees or vault_fees,
         },
     )
     registry.pools["TECH-USD"].lp_token = FakeContract(
@@ -242,6 +246,7 @@ def test_lp_validation_uses_current_fee_withdrawn_not_raw_policy_value(tmp_path)
         current_fee_withdrawn=0,
         lp_total_supply=100,
         vault_fees=(100, 100),
+        claimable_fees=(10, 10),
     )
 
     result = validator.validate_lp_decision(
@@ -259,6 +264,7 @@ def test_lp_validation_uses_proportional_fee_share(tmp_path):
         current_fee_withdrawn=0,
         lp_total_supply=1_000,
         vault_fees=(10_000, 0),
+        claimable_fees=(100, 0),
     )
 
     result = validator.validate_lp_decision(

@@ -18,8 +18,13 @@ class TraderDecision(BaseModel):
 
     @model_validator(mode="after")
     def validate_action_fields(self) -> "TraderDecision":
-        if self.action == "SWAP" and (self.amount_in is None or self.amount_in <= 0):
-            raise ValueError("SWAP amount_in must be positive")
+        if self.action == "SWAP":
+            if not self.pool_id:
+                raise ValueError("SWAP pool_id is required")
+            if not self.token_in:
+                raise ValueError("SWAP token_in is required")
+            if self.amount_in is None or self.amount_in <= 0:
+                raise ValueError("SWAP amount_in must be positive")
         return self
 
 

@@ -34,6 +34,9 @@ class FakeReader:
     def spot_price(self, pool_id):
         return self.spot_prices[pool_id]
 
+    def pool_fee_bps(self, pool_id):
+        return 30
+
     def is_token_approved(self, symbol):
         return True
 
@@ -114,6 +117,7 @@ def test_trader_observes_news_pools_balances_and_policy():
     assert observation["pools"][0]["id"] == "TECH-USD"
     assert observation["pools"][0]["reserve_a"] == 100
     assert observation["pools"][0]["spot_price"] == 2 * 10**18
+    assert observation["pools"][0]["fee_bps"] == 30
 
 
 def test_trader_hold_is_noop_after_validation():
@@ -147,7 +151,7 @@ def test_trader_executes_swap_verifies_event_and_confirms_portfolio():
     result = agent.run_once()
 
     assert result.tx_hash == "0xswap"
-    assert agent.submitter.built[0][2] == 49
+    assert agent.submitter.built[0][2] == 32
     assert agent.verifier.calls == [("0xswap", "TECH-USD")]
     assert agent.portfolio.balances == {"USD": 900, "TECH": 45}
     assert agent.portfolio.pending == {}

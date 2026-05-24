@@ -114,7 +114,7 @@ describe("AMMPool", function () {
     expect(totalShares).to.equal(firstShares * 2n);
   });
 
-  it("reverts subsequent addLiquidity when token amounts do not match reserves", async function () {
+  it("subsequent addLiquidity uses the proportional subset when one side is oversized", async function () {
     await addInitialLiquidity(ethers.parseEther("100"), ethers.parseEther("100"));
     const amountA = ethers.parseEther("10");
     const amountB = ethers.parseEther("20");
@@ -122,7 +122,11 @@ describe("AMMPool", function () {
     await tokenB.connect(lp).approve(await pool.getAddress(), amountB);
 
     await expect(pool.connect(lp).addLiquidity(amountA, amountB, 0))
-      .to.be.revertedWith("POOL_INVALID_LIQUIDITY_RATIO");
+      .to.emit(pool, "LiquidityAdded")
+      .withArgs(lp.address, amountA, amountA, amountA);
+
+    expect(await pool.reserveA()).to.equal(ethers.parseEther("110"));
+    expect(await pool.reserveB()).to.equal(ethers.parseEther("110"));
   });
 
   it("reverts addLiquidity when minted LP shares are below caller minimum", async function () {
@@ -295,8 +299,17 @@ describe("AMMPool", function () {
   // ── setFeeBps ───────────────────────────────────────────────────────────────
 
   it("owner can update feeBps within limit", async function () {
-    await pool.setFeeBps(50);
+    await expect(pool.setFeeBps(50))
+      .to.emit(pool, "FeeBpsUpdated")
+      .withArgs(50);
     expect(await pool.feeBps()).to.equal(50);
+  });
+
+  it("owner can set feeBps to zero and emits FeeBpsUpdated", async function () {
+    await expect(pool.setFeeBps(0))
+      .to.emit(pool, "FeeBpsUpdated")
+      .withArgs(0);
+    expect(await pool.feeBps()).to.equal(0);
   });
 
   it("reverts setFeeBps above 1000", async function () {

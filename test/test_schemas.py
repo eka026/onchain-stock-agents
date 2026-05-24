@@ -91,6 +91,18 @@ def test_swap_decision_rejects_non_positive_amount(amount):
         )
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"action": "SWAP", "token_in": "USD", "amount_in": 1, "reason": "missing pool"},
+        {"action": "SWAP", "pool_id": "AAPL-USD", "amount_in": 1, "reason": "missing token"},
+    ],
+)
+def test_swap_decision_requires_pool_and_token_at_parse_time(payload):
+    with pytest.raises(ValidationError):
+        TraderDecision(**payload)
+
+
 def test_lp_hold_decision_is_valid_without_pool():
     decision = LPDecision(action="HOLD", reason="No liquidity action needed.")
 

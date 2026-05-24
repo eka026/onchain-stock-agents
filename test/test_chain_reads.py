@@ -36,6 +36,7 @@ def registry_with_values(tmp_path):
             "reserveA": 10_000,
             "reserveB": 20_000,
             "spotPrice": 2_000_000_000_000_000_000,
+            "feeBps": 30,
         },
     )
     registry.pools["TECH-USD"].vault = FakeContract(
@@ -44,6 +45,9 @@ def registry_with_values(tmp_path):
         {
             "totalFeesA": 7,
             "totalFeesB": 11,
+            "cumulativeFeesA": 70,
+            "cumulativeFeesB": 110,
+            ("claimableFees", ("0xlp", 50)): (3, 5),
         },
     )
     registry.policy = FakeContract(
@@ -86,6 +90,9 @@ def test_chain_reader_reads_vault_fees(tmp_path):
     reader = ChainReader(registry_with_values(tmp_path))
 
     assert reader.vault_fees("TECH-USD") == (7, 11)
+    assert reader.vault_cumulative_fees("TECH-USD") == (70, 110)
+    assert reader.claimable_fees("TECH-USD", "0xlp", 50) == (3, 5)
+    assert reader.pool_fee_bps("TECH-USD") == 30
 
 
 def test_chain_reader_reads_policy_state(tmp_path):

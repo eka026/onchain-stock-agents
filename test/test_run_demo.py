@@ -44,6 +44,8 @@ class DemoTraderValidator:
     def validate_trader_decision(self, trader, decision):
         if decision.action == "HOLD":
             return ValidationResult(ok=True)
+        if trader.lower().endswith("dead"):
+            return ValidationResult(ok=False, reason="trader policy is disabled")
         if decision.token_in == "TECH":
             return ValidationResult(ok=False, reason="token is not approved")
         if (decision.amount_in or 0) > 500:
@@ -55,6 +57,10 @@ class DemoLPValidator:
     def validate_lp_decision(self, lp, decision):
         if decision.action == "HOLD":
             return ValidationResult(ok=True)
+        if lp != "0xlp":
+            return ValidationResult(ok=False, reason="LP policy is disabled")
+        if decision.action == "COLLECT_FEES" and (decision.lp_shares or 0) > 700:
+            return ValidationResult(ok=False, reason="fee withdrawal exceeds policy limit")
         if decision.action == "ADD_LIQUIDITY" and ((decision.amount_a or 0) > 500 or (decision.amount_b or 0) > 500):
             return ValidationResult(ok=False, reason="liquidity add exceeds policy limit")
         return ValidationResult(ok=True)
@@ -126,9 +132,11 @@ def test_run_demo_orchestrates_liquidity_news_traders_fees_negative_scenarios_an
     assert [negative.name for negative in result.negative_results] == [
         "oversized_swap",
         "unapproved_token_swap",
-        "disabled_or_excessive_lp_action",
+        "disabled_trader_swap",
+        "fee_withdrawal_limit",
+        "disabled_lp_action",
     ]
-    assert [negative.result.validation.ok for negative in result.negative_results] == [False, False, False]
+    assert [negative.result.validation.ok for negative in result.negative_results] == [False, False, False, False, False]
     assert result.final_portfolios["trader:0xtrader"]["USD"] == 900
     assert result.final_portfolios["trader:0xtrader2"]["TECH"] == 45
 
@@ -225,6 +233,28 @@ def test_build_demo_agents_uses_scenario_override_and_mock_llm(monkeypatch):
     assert loaded_scenario == scenario()
     assert lp_agent.lp_address == "addr:0xlp"
     assert [agent.trader_address for agent in trader_agents] == ["addr:0xtrader1", "addr:0xtrader2"]
+
+
+def test_build_demo_agents_rejects_placeholder_scenario_addresses(monkeypatch):
+    placeholder_scenario = scenario().model_copy(
+        update={"policy_address": "0x0000000000000000000000000000000000000100"}
+    )
+    loaded = SimpleNamespace(
+        rpc_url="https://example.invalid",
+        scenario=placeholder_scenario,
+        traders=[
+            SimpleNamespace(private_key="0xtrader1", model="model-a"),
+            SimpleNamespace(private_key="0xtrader2", model="model-b"),
+        ],
+        lps=[SimpleNamespace(private_key="0xlp", model="model-lp")],
+        openai_api_key=None,
+        google_api_key=None,
+        groq_api_key=None,
+    )
+    monkeypatch.setattr("agents.run_demo.config.load", lambda scenario_path=None: loaded)
+
+    with pytest.raises(RuntimeError, match="placeholder contract addresses"):
+        build_demo_agents(scenario_path="data/scenarios/demo.json", llm_override="mock")
 
 
 def test_main_prints_demo_result(monkeypatch, capsys):

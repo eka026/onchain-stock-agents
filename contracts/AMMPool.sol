@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./AgentPolicy.sol";
 import "./LPToken.sol";
 
@@ -54,28 +55,38 @@ contract AMMPool is Ownable {
 
     function addLiquidity(uint256 amountA, uint256 amountB, uint256 minLpShares) external returns (uint256 lpShares) {
         require(amountA > 0 && amountB > 0, "POOL_ZERO_AMOUNT");
-        policy.validateLiquidityAdd(msg.sender, amountA, amountB);
 
         uint256 totalSupply = lpToken.totalSupply();
+        uint256 actualA = amountA;
+        uint256 actualB = amountB;
         if (totalSupply == 0) {
-            lpShares = _sqrt(amountA * amountB);
+            lpShares = _sqrt(actualA * actualB);
         } else {
-            require(amountA * reserveB == amountB * reserveA, "POOL_INVALID_LIQUIDITY_RATIO");
-            uint256 sharesA = amountA * totalSupply / reserveA;
-            uint256 sharesB = amountB * totalSupply / reserveB;
+            uint256 optimalB = Math.mulDiv(amountA, reserveB, reserveA);
+            if (optimalB <= amountB && optimalB > 0) {
+                actualB = optimalB;
+            } else {
+                uint256 optimalA = Math.mulDiv(amountB, reserveA, reserveB);
+                require(optimalA > 0 && optimalA <= amountA, "POOL_INVALID_LIQUIDITY_RATIO");
+                actualA = optimalA;
+            }
+
+            uint256 sharesA = actualA * totalSupply / reserveA;
+            uint256 sharesB = actualB * totalSupply / reserveB;
             lpShares = sharesA < sharesB ? sharesA : sharesB;
         }
         require(lpShares > 0, "POOL_ZERO_SHARES");
         require(lpShares >= minLpShares, "POOL_SLIPPAGE");
+        policy.validateLiquidityAdd(msg.sender, actualA, actualB);
 
-        require(tokenA.transferFrom(msg.sender, address(this), amountA), "POOL_TRANSFER_A_FAILED");
-        require(tokenB.transferFrom(msg.sender, address(this), amountB), "POOL_TRANSFER_B_FAILED");
+        require(tokenA.transferFrom(msg.sender, address(this), actualA), "POOL_TRANSFER_A_FAILED");
+        require(tokenB.transferFrom(msg.sender, address(this), actualB), "POOL_TRANSFER_B_FAILED");
 
-        reserveA += amountA;
-        reserveB += amountB;
+        reserveA += actualA;
+        reserveB += actualB;
         lpToken.mint(msg.sender, lpShares);
 
-        emit LiquidityAdded(msg.sender, amountA, amountB, lpShares);
+        emit LiquidityAdded(msg.sender, actualA, actualB, lpShares);
     }
 
     function removeLiquidity(uint256 lpShares) external returns (uint256 amountA, uint256 amountB) {

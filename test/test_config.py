@@ -75,6 +75,15 @@ def test_load_reads_scenario_and_agent_pairs(monkeypatch, tmp_path):
     assert [lp.private_key for lp in loaded.lps] == ["0xlp1"]
 
 
+def test_load_prefers_generic_rpc_url(monkeypatch, tmp_path):
+    set_required_env(monkeypatch, tmp_path)
+    monkeypatch.setenv("RPC_URL", "http://127.0.0.1:8545")
+
+    loaded = config.load()
+
+    assert loaded.rpc_url == "http://127.0.0.1:8545"
+
+
 def test_load_accepts_scenario_path_override(monkeypatch, tmp_path):
     set_required_env(monkeypatch, tmp_path)
     override_path = write_scenario(tmp_path)
