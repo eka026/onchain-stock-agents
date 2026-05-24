@@ -388,7 +388,7 @@ def _json_default(value: Any) -> Any:
 
 
 def _is_openai_model(normalized_model: str) -> bool:
-    return normalized_model.startswith(("gpt-", "o1", "o3", "o4", "o5", "chatgpt-"))
+    return normalized_model.startswith(("gpt-", "o1", "o2", "o3", "o4", "o5", "chatgpt-"))
 
 
 def _is_groq_model(normalized_model: str) -> bool:
@@ -457,10 +457,14 @@ def _matching_pool(observation: dict[str, Any], pools: list[PoolInfo]) -> PoolIn
 
     for pool in pools:
         keywords = SECTOR_KEYWORDS.get(pool.base_symbol, ())
-        if any(keyword in text for keyword in keywords):
+        if any(_contains_keyword(text, keyword) for keyword in keywords):
             return pool
 
     return None
+
+
+def _contains_keyword(text: str, keyword: str) -> bool:
+    return re.search(r"\b" + re.escape(keyword.lower()) + r"\b", text) is not None
 
 
 def _news_text(observation: dict[str, Any]) -> str:

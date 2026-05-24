@@ -124,10 +124,8 @@ class TraderAgent:
 
         execution = self.verifier.verify_swap(tx_hash, decision.pool_id or "")
         if execution.status == "CONFIRMED":
-            self.portfolio.pending[tx_hash] = self.portfolio.pending[tx_hash].__class__(
-                action="SWAP",
-                balance_changes=self._confirmed_swap_changes(decision, execution.event_data or {}),
-            )
+            confirmed_changes = self._confirmed_swap_changes(decision, execution.event_data or {})
+            self.portfolio.record_pending(tx_hash, "SWAP", confirmed_changes)
             self.portfolio.confirm(tx_hash)
         elif execution.status == "REJECTED":
             self.portfolio.discard(tx_hash)

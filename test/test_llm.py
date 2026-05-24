@@ -89,6 +89,20 @@ def test_symbol_matching_uses_tokens_not_substrings():
     assert decision.action == "HOLD"
 
 
+def test_keyword_matching_uses_word_boundaries_not_substrings():
+    decision = MockLLMClient().decide_trader(
+        {
+            "news": {
+                "headline": "Retailer warns bankruptcy risk is rising",
+                "body": "Consumers pulled back on gasoline purchases near suburban stores.",
+            },
+            "pools": pools(),
+        }
+    )
+
+    assert decision.action == "HOLD"
+
+
 def test_warehouse_keyword_routes_to_reit_when_reit_pool_exists():
     decision = MockLLMClient().decide_trader(
         {
@@ -390,11 +404,13 @@ def test_model_router_selects_provider_without_live_calls(monkeypatch):
 
     assert isinstance(create_llm_client("mock"), MockLLMClient)
     create_llm_client("gpt-4o-mini", openai_api_key="openai-key")
+    create_llm_client("o2-mini", openai_api_key="openai-key")
     create_llm_client("gemini-2.0-flash-lite", google_api_key="google-key")
     create_llm_client("llama-3.1-8b-instant", groq_api_key="groq-key")
 
     assert created == [
         ("openai", {"model": "gpt-4o-mini", "api_key": "openai-key"}),
+        ("openai", {"model": "o2-mini", "api_key": "openai-key"}),
         ("gemini", {"model": "gemini-2.0-flash-lite", "api_key": "google-key"}),
         ("groq", {"model": "llama-3.1-8b-instant", "api_key": "groq-key"}),
     ]
