@@ -409,10 +409,10 @@ def test_model_router_selects_provider_without_live_calls(monkeypatch):
     create_llm_client("llama-3.1-8b-instant", groq_api_key="groq-key")
 
     assert created == [
-        ("openai", {"model": "gpt-4o-mini", "api_key": "openai-key"}),
-        ("openai", {"model": "o2-mini", "api_key": "openai-key"}),
-        ("gemini", {"model": "gemini-2.0-flash-lite", "api_key": "google-key"}),
-        ("groq", {"model": "llama-3.1-8b-instant", "api_key": "groq-key"}),
+        ("openai", {"model": "gpt-4o-mini", "api_key": "openai-key", "persona_prompt": ""}),
+        ("openai", {"model": "o2-mini", "api_key": "openai-key", "persona_prompt": ""}),
+        ("gemini", {"model": "gemini-2.0-flash-lite", "api_key": "google-key", "persona_prompt": ""}),
+        ("groq", {"model": "llama-3.1-8b-instant", "api_key": "groq-key", "persona_prompt": ""}),
     ]
 
 

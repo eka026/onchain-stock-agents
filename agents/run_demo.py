@@ -56,6 +56,7 @@ def build_demo_agents(
 
     lp_config = loaded.lps[0]
     lp_account = registry.web3.eth.account.from_key(lp_config.private_key)
+    lp_persona_index = getattr(lp_config, "persona_index", 0)
     lp_agent = LPAgent(
         lp_address=lp_account.address,
         private_key=lp_config.private_key,
@@ -69,9 +70,9 @@ def build_demo_agents(
             openai_api_key=loaded.openai_api_key,
             google_api_key=loaded.google_api_key,
             groq_api_key=loaded.groq_api_key,
-            openrouter_api_key=loaded.openrouter_api_key,
-            deepseek_api_key=loaded.deepseek_api_key,
-            persona_prompt=load_persona(lp_config.persona_index),
+            openrouter_api_key=getattr(loaded, "openrouter_api_key", None),
+            deepseek_api_key=getattr(loaded, "deepseek_api_key", None),
+            persona_prompt=load_persona(lp_persona_index),
         ),
         portfolio=Portfolio(),
     )
@@ -79,6 +80,7 @@ def build_demo_agents(
     trader_agents = []
     for trader_config in loaded.traders[:trader_count]:
         account = registry.web3.eth.account.from_key(trader_config.private_key)
+        trader_persona_index = getattr(trader_config, "persona_index", 0)
         trader_agents.append(
             TraderAgent(
                 trader_address=account.address,
@@ -93,9 +95,9 @@ def build_demo_agents(
                     openai_api_key=loaded.openai_api_key,
                     google_api_key=loaded.google_api_key,
                     groq_api_key=loaded.groq_api_key,
-                    openrouter_api_key=loaded.openrouter_api_key,
-                    deepseek_api_key=loaded.deepseek_api_key,
-                    persona_prompt=load_persona(trader_config.persona_index),
+                    openrouter_api_key=getattr(loaded, "openrouter_api_key", None),
+                    deepseek_api_key=getattr(loaded, "deepseek_api_key", None),
+                    persona_prompt=load_persona(trader_persona_index),
                 ),
                 portfolio=Portfolio(),
             )
