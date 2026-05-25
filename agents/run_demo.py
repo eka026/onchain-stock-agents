@@ -113,6 +113,7 @@ def run_demo(
     lp_agent: LPAgent | None = None,
     trader_agents: list[TraderAgent] | None = None,
     news_feed: NewsFeed | None = None,
+    low_gas: bool = False,
 ) -> DemoRunResult:
     if lp_agent is None or trader_agents is None:
         lp_agent, trader_agents, scenario = build_demo_agents(
@@ -127,6 +128,11 @@ def run_demo(
 
     feed = news_feed or NewsFeed(NewsFeed.load_news(_resolve_news_path(scenario, scenario_path)), scenario)
     result = DemoRunResult(schedule=feed.schedule())
+
+    if low_gas:
+        _run_first_trader_broadcast(feed, trader_agents, result)
+        result.final_portfolios = _final_portfolios(lp_agent, trader_agents)
+        return result
 
     result.initial_liquidity = _run_lp_action(lp_agent, "ADD_LIQUIDITY")
 
@@ -144,6 +150,22 @@ def run_demo(
     result.liquidity_removal = _run_lp_action(lp_agent, "REMOVE_LIQUIDITY")
     result.final_portfolios = _final_portfolios(lp_agent, trader_agents)
     return result
+
+
+def _run_first_trader_broadcast(
+    feed: NewsFeed,
+    trader_agents: list[TraderAgent],
+    result: DemoRunResult,
+) -> None:
+    trader_ids = [agent.trader_address for agent in trader_agents]
+    for scheduled in result.schedule:
+        broadcasts = feed.broadcast_at(scheduled.tick, trader_ids)
+        for agent in trader_agents:
+            news = broadcasts.get(agent.trader_address)
+            if news is None:
+                continue
+            result.trader_results.append((scheduled.tick, agent.trader_address, agent.run_once(news)))
+            return
 
 
 def _run_lp_action(lp_agent: LPAgent, action: str) -> LPRunResult:
@@ -425,9 +447,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scenario", default="data/scenarios/demo.json")
     parser.add_argument("--llm", default=None)
+    parser.add_argument("--low-gas", action="store_true")
     args = parser.parse_args(argv)
 
-    result = run_demo(scenario_path=args.scenario, llm_override=args.llm)
+    result = run_demo(scenario_path=args.scenario, llm_override=args.llm, low_gas=args.low_gas)
     print_demo_result(result)
     return 0
 

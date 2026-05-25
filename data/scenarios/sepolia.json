@@ -1,0 +1,137 @@
+{
+  "seed": 438,
+  "news_file": "data/news.json",
+  "policy_address": "0xA29D3C234170f63B0809BeD7efD8a6b36b7f540f",
+  "min_interval_ticks": 2,
+  "max_interval_ticks": 5,
+  "max_events": 4,
+  "broadcast_to_all_traders": true,
+  "tokens": [
+    {
+      "symbol": "USD",
+      "address": "0xbfA6B9a333A2EB9E445cbdfe7C5695Bd60e32576"
+    },
+    {
+      "symbol": "TECH",
+      "address": "0xe93a0B0d4AB0B1Cef64D69850Bdeb9D9FdD8ee6C"
+    },
+    {
+      "symbol": "FIN",
+      "address": "0x5Ddb2138CB051E51F975B95b1f415DcC345145E1"
+    },
+    {
+      "symbol": "HLTH",
+      "address": "0xF7934aF3eA41bC8e36Ea52C0743869C2cfFE401D"
+    },
+    {
+      "symbol": "CSMR",
+      "address": "0x02679ab2bf321fb4e9272e6bEA6B3B30408F1A79"
+    },
+    {
+      "symbol": "MLTRY",
+      "address": "0xC1D6cb98768598fB5242Dc8d7AA4002aBBCa1136"
+    },
+    {
+      "symbol": "INDS",
+      "address": "0x3D6720E3bBFcF748BcE2ad240996515130C58503"
+    },
+    {
+      "symbol": "ENRG",
+      "address": "0x604c5f86B67D12Bd4fA4811bbD470c8662ca51D6"
+    },
+    {
+      "symbol": "MATL",
+      "address": "0xcE765c9590fE166764641c82522eF659Fa6a2efa"
+    },
+    {
+      "symbol": "COMM",
+      "address": "0x6084F883eF4d37A8D2560855a8AF1Bbe2f1B370F"
+    },
+    {
+      "symbol": "REIT",
+      "address": "0x4eDaEF66d351459c26E213a91C83f7076D023664"
+    }
+  ],
+  "pools": [
+    {
+      "id": "TECH-USD",
+      "base_symbol": "TECH",
+      "quote_symbol": "USD",
+      "pool_address": "0x4e82F48fdb8A2794F02EDFd2eC59145F487E480f",
+      "lp_token_address": "0xA34E85D33a68653D5086bb9ef4151c157F837878",
+      "vault_address": "0x1e7a8d2d04954029334DB8502ac5b70A49cb8f9e"
+    },
+    {
+      "id": "FIN-USD",
+      "base_symbol": "FIN",
+      "quote_symbol": "USD",
+      "pool_address": "0x23a4241E2084a475B9e6BD7CCBbEd0b47FA8304D",
+      "lp_token_address": "0x5D6d8457375579a89BB9ce43d800434bD76425D1",
+      "vault_address": "0xEcC93b2b026039B74a9abE4ce3Dc086E7AcD1cF2"
+    },
+    {
+      "id": "HLTH-USD",
+      "base_symbol": "HLTH",
+      "quote_symbol": "USD",
+      "pool_address": "0xE50c3e66910169200f5E6DDe3De8cf0cB37A38d3",
+      "lp_token_address": "0xBBFd93F0F678D0b5db39a5547cBCC849bfDa229A",
+      "vault_address": "0x764480909B8BEEB18f6CbE1c4364546a226E19CE"
+    },
+    {
+      "id": "CSMR-USD",
+      "base_symbol": "CSMR",
+      "quote_symbol": "USD",
+      "pool_address": "0xA6A5533C32662d35719C959cA0dDE6D56974c3dA",
+      "lp_token_address": "0xAd4C021bb3a3A314F018c1AbDf8C7D062a9a01C3",
+      "vault_address": "0x0Fb8a00E7Ac8AC8cf07E883248873a010b37cb5D"
+    },
+    {
+      "id": "MLTRY-USD",
+      "base_symbol": "MLTRY",
+      "quote_symbol": "USD",
+      "pool_address": "0x6bEBC8fC959f7823d046722B3bc563f0Ba618479",
+      "lp_token_address": "0x5504ac6063BfD0BC48a841E918f2a8D20a6357dF",
+      "vault_address": "0x71039beA3d49226f476d4fF9DBb1fb62624366Bc"
+    },
+    {
+      "id": "INDS-USD",
+      "base_symbol": "INDS",
+      "quote_symbol": "USD",
+      "pool_address": "0xA062F94023826d9A9C787C982B18c33a140a0981",
+      "lp_token_address": "0x10b3d1046C14a29cb2F63594D87193F2aEb69DBe",
+      "vault_address": "0x02d2b63856ddC1ef5DFD49C0f7B44bD3c178E2C0"
+    },
+    {
+      "id": "ENRG-USD",
+      "base_symbol": "ENRG",
+      "quote_symbol": "USD",
+      "pool_address": "0xeED9531C4a1888903Fe95a0cbF21C1746848CeFa",
+      "lp_token_address": "0x3DcE8952498Ff9b9527bAC797dAD349cd47b8b46",
+      "vault_address": "0xa33f59D193a10221C7ccd2053578B5f60ed7713E"
+    },
+    {
+      "id": "MATL-USD",
+      "base_symbol": "MATL",
+      "quote_symbol": "USD",
+      "pool_address": "0x7D5f8F7FF5FB5fbE9D0b4eF72ec2485d4016D379",
+      "lp_token_address": "0x7Db1aFd8fddE31e836D39d00512Ef590fE5BC611",
+      "vault_address": "0x912377906AC292c7C8ccB9a7Af8b0d19CFdaB1B2"
+    },
+    {
+      "id": "COMM-USD",
+      "base_symbol": "COMM",
+      "quote_symbol": "USD",
+      "pool_address": "0x97ef66b7bbB19F76aca9a65794B4736Cd9D37E23",
+      "lp_token_address": "0xbc1d8df129703DD0bFe3d9Fec215b020F0fdd954",
+      "vault_address": "0x474d078231891FEd5759b463f0CC207Bb41be082"
+    },
+    {
+      "id": "REIT-USD",
+      "base_symbol": "REIT",
+      "quote_symbol": "USD",
+      "pool_address": "0xF6efA1B845787BcFC26BA6a1B96fc99390cEa2b7",
+      "lp_token_address": "0x36448b85B9Dd198DCBFcd582B354a21272cE386C",
+      "vault_address": "0x3f16B3BB8d6BB7A9f4ee9B8854f1ccd982E8063B"
+    }
+  ]
+}

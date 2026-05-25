@@ -72,7 +72,9 @@ Use `.env` for wallet/model/provider configuration:
 ```text
 SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 DEPLOYER_PRIVATE_KEY=0x...
-SCENARIO_PATH=data/scenarios/demo.json
+DEPLOY_SCENARIO_TEMPLATE=data/scenarios/demo.json
+DEPLOY_OUTPUT_SCENARIO=data/scenarios/sepolia.json
+SCENARIO_PATH=data/scenarios/sepolia.json
 
 TRADER_PRIVATE_KEYS=0x...,0x...
 TRADER_MODELS=gemini-2.0-flash-lite,gpt-4o-mini
@@ -89,9 +91,10 @@ Use scenario files for market metadata:
 
 ```text
 data/scenarios/demo.json
+data/scenarios/sepolia.json
 ```
 
-Scenario files define available tokens, deployed policy address, pool addresses, LP token addresses, vault addresses, news schedule settings, and the raw news file. They must not label news with sentiment, impact, or recommended trades.
+`data/scenarios/demo.json` is the deployment template. The Hardhat deploy script writes `data/scenarios/sepolia.json` or the path in `DEPLOY_OUTPUT_SCENARIO` with real deployed addresses. Scenario files define available tokens, deployed policy address, pool addresses, LP token addresses, vault addresses, news schedule settings, and the raw news file. They must not label news with sentiment, impact, or recommended trades.
 
 ## Agent Service Loop
 
@@ -240,6 +243,7 @@ Expected service commands:
 python -m agents.trader_agent --index 0 --once
 python -m agents.trader_agent --index 1 --interval 15
 python -m agents.lp_agent --index 0 --once
+python -m agents.run_demo --scenario data/scenarios/sepolia.json --llm mock --low-gas
 python -m agents.run_demo --scenario data/scenarios/demo.json --llm mock
 ```
 

@@ -32,9 +32,9 @@ News records are raw and unlabeled. Scenario files define available tokens and p
 
 ## Testnet contract deployment
 
-The contracts are intended to run against a public test network such as Sepolia. Hardhat is used for compilation, tests, ABI export, and optional scripted deployment. Runtime agents should point at a testnet RPC URL.
+The contracts are intended to run against a public test network such as Sepolia. Hardhat is used for compilation, tests, ABI export, and scripted deployment. Runtime agents should point at a testnet RPC URL and a scenario file containing deployed addresses.
 
-`scripts/deploy.ts` currently deploys one token pair as a smoke-test market. For the full news-driven demo, repeat the same LPToken/FeeVault/AMMPool pattern once per stock/USD pair and record those pool addresses in the scenario file.
+`scripts/deploy.ts` is scenario-driven. It reads `data/scenarios/demo.json`, deploys the shared policy, all mock tokens, and one `LPToken`/`FeeVault`/`AMMPool` set per stock/USD pair, configures policies and approvals for every configured agent wallet, seeds initial pool liquidity, and writes a runtime scenario file such as `data/scenarios/sepolia.json`.
 
 ### Option A: Deploy with Remix IDE
 
@@ -85,7 +85,9 @@ Paste runtime settings into `.env`:
 ```env
 RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 DEPLOYER_PRIVATE_KEY=0x...
-SCENARIO_PATH=data/scenarios/demo.json
+DEPLOY_SCENARIO_TEMPLATE=data/scenarios/demo.json
+DEPLOY_OUTPUT_SCENARIO=data/scenarios/sepolia.json
+SCENARIO_PATH=data/scenarios/sepolia.json
 
 TRADER_PRIVATE_KEYS=0x...,0x...
 TRADER_MODELS=gemini-2.0-flash-lite,gpt-4o-mini
@@ -118,9 +120,18 @@ Paste deployed market addresses into the scenario file, not `.env`:
 ### Option B: Deploy with Hardhat
 
 ```powershell
+npm run compile
 npm run deploy:sepolia
 ```
 
-For scripted deployment, `.env` must include `RPC_URL` (or legacy `SEPOLIA_RPC_URL`), `DEPLOYER_PRIVATE_KEY`, at least one `TRADER_PRIVATE_KEYS` entry, and at least one `LP_PRIVATE_KEYS` entry. The deployer and setup wallets need ETH for gas on the selected network.
+For scripted deployment, `.env` must include `RPC_URL` (or legacy `SEPOLIA_RPC_URL`), `DEPLOYER_PRIVATE_KEY`, at least two `TRADER_PRIVATE_KEYS` entries, and at least one `LP_PRIVATE_KEYS` entry. The deployer and setup wallets need Sepolia ETH for gas because deployment, ERC20 approvals, and initial liquidity all send transactions.
 
-The deploy script prints JSON for Python agents to consume. It includes deployed contract addresses, configured actor accounts, and the policy limits used during setup.
+The deploy script writes the runtime scenario path from `DEPLOY_OUTPUT_SCENARIO` and prints JSON for Python agents to consume. It includes deployed contract addresses, configured actor accounts, and the policy limits used during setup.
+
+After Sepolia deployment, run the deterministic mock demo first:
+
+```powershell
+python -m agents.run_demo --scenario data/scenarios/sepolia.json --llm mock --low-gas
+```
+
+`--low-gas` skips the LP lifecycle and policy-negative scenarios and submits only the first trader broadcast transaction. Use the full command without `--low-gas` only when you intentionally want the complete demo flow and have enough Sepolia ETH for extra transactions.

@@ -167,6 +167,27 @@ def test_demo_lp_lifecycle_does_not_depend_on_mock_lp_action():
     assert spy_llm.calls == 0
 
 
+def test_run_demo_low_gas_skips_lp_lifecycle_and_runs_one_trader_transaction():
+    lp_agent = make_lp_agent()
+    traders = [make_trader_agent("0xtrader"), make_trader_agent("0xtrader2")]
+
+    result = run_demo(
+        scenario_path="data/scenarios/demo.json",
+        llm_override="mock",
+        lp_agent=lp_agent,
+        trader_agents=traders,
+        news_feed=FakeFeed(),
+        low_gas=True,
+    )
+
+    assert result.initial_liquidity is None
+    assert [(tick, trader) for tick, trader, _ in result.trader_results] == [(2, "0xtrader")]
+    assert result.trader_results[0][2].tx_hash == "0xswap"
+    assert result.negative_results == []
+    assert result.fee_collection is None
+    assert result.liquidity_removal is None
+
+
 def test_first_unapproved_pool_symbol_continues_after_reader_exception():
     class Reader:
         def is_token_approved(self, symbol):
@@ -260,12 +281,13 @@ def test_build_demo_agents_rejects_placeholder_scenario_addresses(monkeypatch):
 def test_main_prints_demo_result(monkeypatch, capsys):
     monkeypatch.setattr(
         "agents.run_demo.run_demo",
-        lambda scenario_path, llm_override=None: run_demo(
+        lambda scenario_path, llm_override=None, low_gas=False: run_demo(
             scenario_path=scenario_path,
             llm_override=llm_override,
             lp_agent=make_lp_agent(),
             trader_agents=[make_trader_agent("0xtrader"), make_trader_agent("0xtrader2")],
             news_feed=FakeFeed(),
+            low_gas=low_gas,
         ),
     )
 
