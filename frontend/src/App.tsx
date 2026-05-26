@@ -24,7 +24,7 @@ export default function App() {
     void refreshSessions();
   }, []);
 
-  const visibleEvents = useMemo(() => filterEvents(session?.events ?? [], filters), [filters, session]);
+  const visibleEvents = useMemo(() => filterEvents(session?.events ?? [], filters).reverse(), [filters, session]);
   const selectedEvent = visibleEvents.find((event) => event.id === selectedEventId) ?? visibleEvents[0] ?? null;
 
   async function refreshSessions() {
