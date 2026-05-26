@@ -31,6 +31,7 @@ class PoolSnapshot(DashboardModel):
     reserve_a: str | None = Field(default=None, alias="reserveA")
     reserve_b: str | None = Field(default=None, alias="reserveB")
     fee_bps: int | None = Field(default=None, alias="feeBps")
+    price_history: list[str] | None = Field(default=None, alias="priceHistory")
 
 
 class TimelineEvent(DashboardModel):

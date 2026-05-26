@@ -1,13 +1,15 @@
-import { Activity, AlertTriangle, CheckCircle2, Download, RefreshCw, Timer, WalletCards } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Download, RefreshCw, Timer, TrendingUp, Wifi, WalletCards } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { getSession, importDemoSession, listSessions } from "./api";
+import { getSession, importDemoSession, importLiveSession, listSessions } from "./api";
 import { filterEvents, formatAmount, shortenAddress } from "./format";
 import type { AgentSnapshot, EventFilters, EventKind, EventStatus, PoolSnapshot, Session, SessionListItem, TimelineEvent } from "./types";
 
 const ALL = "all";
 const EVENT_KIND_OPTIONS: Array<EventKind | typeof ALL> = [ALL, "news", "agent_decision", "validation", "transaction", "portfolio_update"];
 const STATUS_OPTIONS: Array<EventStatus | typeof ALL> = [ALL, "ok", "confirmed", "pending", "rejected"];
+
+type ActiveTab = "overview" | "charts";
 
 export default function App() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
@@ -16,6 +18,7 @@ export default function App() {
   const [filters, setFilters] = useState<EventFilters>({ kind: ALL, status: ALL, poolId: ALL, agentId: ALL });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
 
   useEffect(() => {
     void refreshSessions();
@@ -66,6 +69,30 @@ export default function App() {
     }
   }
 
+  async function loadLiveSession() {
+    setLoading(true);
+    setError(null);
+    try {
+      const imported = await importLiveSession();
+      setSession(imported);
+      setSessions([
+        {
+          id: imported.id,
+          name: imported.name,
+          source: imported.source,
+          createdAt: imported.createdAt,
+          updatedAt: imported.updatedAt,
+          summary: imported.summary,
+        },
+      ]);
+      setSelectedEventId(imported.events[0]?.id ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to import live session");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function updateFilter<Key extends keyof EventFilters>(key: Key, value: EventFilters[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
     setSelectedEventId(null);
@@ -73,6 +100,7 @@ export default function App() {
 
   return (
     <main className="shell">
+      {session ? <NewsTicker events={session.events} /> : null}
       <header className="topbar">
         <div>
           <p className="eyebrow">On-chain stock agents</p>
@@ -82,10 +110,14 @@ export default function App() {
           </p>
         </div>
         <div className="toolbar">
+          <button type="button" onClick={loadLiveSession} disabled={loading} title="Read current state from the deployed contracts">
+            <Wifi size={16} aria-hidden="true" />
+            Import Live
+          </button>
           {session ? (
             <button type="button" onClick={loadSampleSession} disabled={loading}>
               <Download size={16} aria-hidden="true" />
-              Load sample session
+              Sample session
             </button>
           ) : null}
           <button type="button" onClick={refreshSessions} disabled={loading}>
@@ -100,27 +132,54 @@ export default function App() {
       {session ? (
         <>
           <Metrics session={session} />
-          <section className="dashboard-grid">
-            <div className="main-column">
-              <PoolOverview pools={session.pools} />
-              <Filters filters={filters} session={session} onChange={updateFilter} />
-              <Timeline events={visibleEvents} selectedEventId={selectedEvent?.id} onSelect={setSelectedEventId} />
-            </div>
-            <aside className="side-column">
-              <EventDetails event={selectedEvent} />
-              <AgentPortfolios agents={session.agents} />
-            </aside>
-          </section>
+          <nav className="tab-nav" aria-label="Dashboard tabs">
+            <button
+              type="button"
+              className={`tab-btn${activeTab === "overview" ? " active" : ""}`}
+              onClick={() => setActiveTab("overview")}
+            >
+              Overview
+            </button>
+            <button
+              type="button"
+              className={`tab-btn${activeTab === "charts" ? " active" : ""}`}
+              onClick={() => setActiveTab("charts")}
+            >
+              <TrendingUp size={15} aria-hidden="true" />
+              Token Charts
+            </button>
+          </nav>
+          {activeTab === "overview" ? (
+            <section className="dashboard-grid">
+              <div className="main-column">
+                <PoolOverview pools={session.pools} />
+                <Filters filters={filters} session={session} onChange={updateFilter} />
+                <Timeline events={visibleEvents} selectedEventId={selectedEvent?.id} onSelect={setSelectedEventId} />
+              </div>
+              <aside className="side-column">
+                <EventDetails event={selectedEvent} />
+                <AgentPortfolios agents={session.agents} />
+              </aside>
+            </section>
+          ) : (
+            <TokenCharts pools={session.pools} />
+          )}
         </>
       ) : (
         <section className="empty-state">
           <Activity size={32} aria-hidden="true" />
           <h2>No sessions loaded</h2>
-          <p>Import a sample run to inspect agent actions, pool state, and final portfolios.</p>
-          <button type="button" onClick={loadSampleSession} disabled={loading}>
-            <Download size={16} aria-hidden="true" />
-            Load sample session
-          </button>
+          <p>Connect to a running Hardhat or Sepolia node to read live contract state, or load a sample run.</p>
+          <div className="toolbar" style={{ justifyContent: "center" }}>
+            <button type="button" onClick={loadLiveSession} disabled={loading}>
+              <Wifi size={16} aria-hidden="true" />
+              Import Live
+            </button>
+            <button type="button" onClick={loadSampleSession} disabled={loading}>
+              <Download size={16} aria-hidden="true" />
+              Sample session
+            </button>
+          </div>
         </section>
       )}
     </main>
@@ -369,6 +428,141 @@ function AgentPortfolios({ agents }: { agents: AgentSnapshot[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function NewsTicker({ events }: { events: TimelineEvent[] }) {
+  const latest = [...events].reverse().find((e) => e.kind === "news");
+  if (!latest) return null;
+  return (
+    <div className="news-ticker" role="marquee" aria-label="Latest news">
+      <span className="ticker-badge">NEWS</span>
+      <div className="ticker-track">
+        <span className="ticker-text">{latest.summary}</span>
+      </div>
+    </div>
+  );
+}
+
+function TokenCharts({ pools }: { pools: PoolSnapshot[] }) {
+  const [selectedPoolId, setSelectedPoolId] = useState(pools[0]?.id ?? "");
+  const pool = pools.find((p) => p.id === selectedPoolId) ?? pools[0] ?? null;
+
+  return (
+    <section className="token-charts-tab">
+      <div className="section-heading">
+        <h2>Token Price Charts</h2>
+        <select
+          value={selectedPoolId}
+          onChange={(e) => setSelectedPoolId(e.target.value)}
+          className="chart-token-select"
+          aria-label="Select token pair"
+        >
+          {pools.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.baseSymbol} / {p.quoteSymbol}
+            </option>
+          ))}
+        </select>
+      </div>
+      {pool ? <PriceChart pool={pool} /> : <p className="muted">No pool selected.</p>}
+    </section>
+  );
+}
+
+function PriceChart({ pool }: { pool: PoolSnapshot }) {
+  const history = pool.priceHistory;
+
+  if (!history || history.length < 2) {
+    return (
+      <div className="chart-empty">
+        <p className="muted">No price history available for this token.</p>
+      </div>
+    );
+  }
+
+  const prices = history.map((p) => {
+    try {
+      return Number(BigInt(p)) / 1e18;
+    } catch {
+      return 0;
+    }
+  });
+
+  const W = 600;
+  const H = 200;
+  const pad = { top: 20, right: 20, bottom: 32, left: 64 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+  const range = maxP - minP || maxP * 0.01 || 1;
+
+  const toX = (i: number) => pad.left + (i / (prices.length - 1)) * chartW;
+  const toY = (p: number) => pad.top + (1 - (p - minP) / range) * chartH;
+
+  const polylinePoints = prices.map((p, i) => `${toX(i).toFixed(1)},${toY(p).toFixed(1)}`).join(" ");
+
+  const yTicks = [minP, (minP + maxP) / 2, maxP];
+  const xStep = Math.max(1, Math.ceil(prices.length / 6));
+  const xTicks = prices.map((_, i) => i).filter((i) => i % xStep === 0 || i === prices.length - 1);
+
+  const lastPrice = prices[prices.length - 1];
+  const firstPrice = prices[0];
+  const isUp = lastPrice >= firstPrice;
+
+  return (
+    <div className="chart-card">
+      <p className="chart-title">
+        {pool.baseSymbol} / {pool.quoteSymbol} — Spot Price History
+      </p>
+      <svg viewBox={`0 0 ${W} ${H}`} className="price-chart" aria-label={`Price chart for ${pool.baseSymbol}`}>
+        {yTicks.map((tick, i) => {
+          const y = toY(tick);
+          return (
+            <g key={i}>
+              <line x1={pad.left} y1={y} x2={W - pad.right} y2={y} stroke="#e2e8eb" strokeWidth="1" />
+              <text x={pad.left - 6} y={y} textAnchor="end" dominantBaseline="middle" className="chart-label">
+                {tick.toFixed(4)}
+              </text>
+            </g>
+          );
+        })}
+        {xTicks.map((i) => (
+          <text key={i} x={toX(i)} y={H - pad.bottom + 18} textAnchor="middle" className="chart-label">
+            T{i + 1}
+          </text>
+        ))}
+        <polyline
+          points={polylinePoints}
+          fill="none"
+          stroke={isUp ? "#246643" : "#8f2418"}
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <circle cx={toX(prices.length - 1)} cy={toY(lastPrice)} r="4" fill={isUp ? "#246643" : "#8f2418"} />
+      </svg>
+      <div className="chart-stats">
+        <span>
+          Current <strong>{lastPrice.toFixed(4)}</strong>
+        </span>
+        <span>
+          High <strong>{maxP.toFixed(4)}</strong>
+        </span>
+        <span>
+          Low <strong>{minP.toFixed(4)}</strong>
+        </span>
+        <span className={isUp ? "chart-stat-up" : "chart-stat-down"}>
+          Change{" "}
+          <strong>
+            {isUp ? "+" : ""}
+            {((lastPrice / firstPrice - 1) * 100).toFixed(2)}%
+          </strong>
+        </span>
+      </div>
+    </div>
   );
 }
 

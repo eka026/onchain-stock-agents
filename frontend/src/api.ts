@@ -21,3 +21,7 @@ export function getSession(id: string): Promise<Session> {
 export function importDemoSession(): Promise<Session> {
   return request<Session>("/api/sessions/import-demo", { method: "POST" });
 }
+
+export function importLiveSession(): Promise<Session> {
+  return request<Session>("/api/sessions/import-live", { method: "POST" });
+}

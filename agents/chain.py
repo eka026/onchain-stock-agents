@@ -168,6 +168,55 @@ class ChainReader:
     def current_fee_withdrawn(self, lp: str) -> int:
         return self.registry.policy.functions.currentFeeWithdrawn(lp).call()
 
+    def spot_price_history(self, pool_id: str) -> list[int]:
+        """
+        Returns spotPrice() sampled at the block of every Swap event, preceded by
+        the price at the first LiquidityAdded block so the chart starts from pool
+        inception rather than the first trade.  Falls back to [current_price] if
+        the node doesn't support historical calls or has no events.
+        """
+        pool = self.registry.pool_contracts(pool_id).pool
+        blocks: list[int] = []
+
+        # Anchor the start at the first liquidity provision so the chart begins
+        # at the initial price, not the first swap.
+        try:
+            liq_logs = pool.events.LiquidityAdded.get_logs(fromBlock=0)
+            if liq_logs:
+                blocks.append(min(log["blockNumber"] for log in liq_logs))
+        except Exception:
+            pass
+
+        from_block = blocks[0] if blocks else 0
+
+        try:
+            swap_logs = pool.events.Swap.get_logs(fromBlock=from_block)
+            for log in swap_logs:
+                blocks.append(log["blockNumber"])
+        except Exception:
+            pass
+
+        if not blocks:
+            return [self.spot_price(pool_id)]
+
+        prices: list[int] = []
+        seen: set[int] = set()
+        for bn in sorted(blocks):
+            if bn in seen:
+                continue
+            seen.add(bn)
+            try:
+                price = pool.functions.spotPrice().call(block_identifier=bn)
+                prices.append(price)
+            except Exception:
+                continue
+
+        current = self.spot_price(pool_id)
+        if not prices or prices[-1] != current:
+            prices.append(current)
+
+        return prices if prices else [current]
+
     def token_allowance(self, symbol: str, owner: str, spender: str) -> int:
         return self.registry.token_contract(symbol).functions.allowance(owner, spender).call()
 

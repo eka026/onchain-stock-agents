@@ -26,6 +26,7 @@ export type PoolSnapshot = {
   reserveA?: string;
   reserveB?: string;
   feeBps?: number;
+  priceHistory?: string[];
 };
 
 export type TimelineEvent = {

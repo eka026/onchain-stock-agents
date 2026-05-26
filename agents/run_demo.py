@@ -448,10 +448,39 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scenario", default="data/scenarios/demo.json")
     parser.add_argument("--llm", default=None)
     parser.add_argument("--low-gas", action="store_true")
+    parser.add_argument("--save-session", action="store_true", help="Save a dashboard session after the run")
+    parser.add_argument("--network", default="local", help="Network label for the saved session")
     args = parser.parse_args(argv)
 
-    result = run_demo(scenario_path=args.scenario, llm_override=args.llm, low_gas=args.low_gas)
-    print_demo_result(result)
+    if args.save_session:
+        lp_agent, trader_agents, _ = build_demo_agents(
+            scenario_path=args.scenario,
+            llm_override=args.llm,
+        )
+        result = run_demo(
+            scenario_path=args.scenario,
+            llm_override=args.llm,
+            lp_agent=lp_agent,
+            trader_agents=trader_agents,
+            low_gas=args.low_gas,
+        )
+        print_demo_result(result)
+        from agents.session_export import build_session_from_demo
+        from api.session_store import SessionStore
+
+        session = build_session_from_demo(
+            result,
+            lp_agent,
+            trader_agents,
+            scenario_path=args.scenario,
+            network=args.network,
+        )
+        SessionStore().save_session(session)
+        print({"step": "session_saved", "session_id": session.id, "name": session.name})
+    else:
+        result = run_demo(scenario_path=args.scenario, llm_override=args.llm, low_gas=args.low_gas)
+        print_demo_result(result)
+
     return 0
 
 
