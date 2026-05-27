@@ -324,7 +324,7 @@ function Timeline({
             key={event.id}
             onClick={() => onSelect(event.id)}
           >
-            <span className="tick">{event.tick !== undefined ? `T${event.tick}` : "--"}</span>
+            <span className="tick">{event.tick != null ? `T${event.tick}` : "--"}</span>
             <span className={`status ${event.status ?? "none"}`}>{event.status ?? "none"}</span>
             <span className="event-main">
               <strong>{event.summary}</strong>

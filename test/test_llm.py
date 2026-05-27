@@ -280,6 +280,15 @@ def test_parse_validates_decision_schema_and_pool_metadata():
         )
 
 
+def test_trader_prompt_declares_exact_action_enum_and_rejects_buy_sell_language():
+    prompt = llm._build_prompt("trader", {"pools": [pool.model_dump() for pool in pools()]})
+    payload = llm.json.loads(prompt)
+
+    assert payload["schema"]["action"] == ["SWAP", "HOLD"]
+    assert "Do not return BUY or SELL" in payload["rules"]
+    assert payload["schema"]["reason"] == "one short sentence, no hidden reasoning"
+
+
 def test_openai_client_parses_trader_response_from_injected_client():
     class FakeResponses:
         def create(self, **kwargs):

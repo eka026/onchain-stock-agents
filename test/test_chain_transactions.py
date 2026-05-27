@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+from agents import chain
 from agents.chain import ChainTransactionSubmitter, ContractRegistry
 from agents.schemas import LPDecision, TraderDecision
 from test.test_chain_contracts import FakeContract, scenario, write_abis
@@ -85,7 +86,8 @@ def transaction_submitter(tmp_path):
     return ChainTransactionSubmitter(registry), registry.web3
 
 
-def test_builds_swap_transaction(tmp_path):
+def test_builds_swap_transaction(tmp_path, monkeypatch):
+    monkeypatch.setattr(chain.time, "time", lambda: 900)
     submitter, _ = transaction_submitter(tmp_path)
 
     tx = submitter.build_swap_transaction(
@@ -108,6 +110,26 @@ def test_builds_swap_transaction(tmp_path):
     assert tx["chainId"] == 31337
     assert tx["gas"] == 500_000
     assert tx["gasPrice"] == 2
+
+
+def test_swap_deadline_uses_wall_clock_when_chain_timestamp_is_stale(tmp_path, monkeypatch):
+    monkeypatch.setattr(chain.time, "time", lambda: 5_000)
+    submitter, _ = transaction_submitter(tmp_path)
+
+    tx = submitter.build_swap_transaction(
+        "0xtrader",
+        TraderDecision(
+            action="SWAP",
+            pool_id="TECH-USD",
+            token_in="USD",
+            amount_in=100,
+            deadline_seconds=30,
+            reason="buy",
+        ),
+        min_amount_out=95,
+    )
+
+    assert tx["args"] == ("0xusd", 100, 95, 5_030)
 
 
 def test_build_swap_requires_computed_min_amount_out_when_decision_has_slippage(tmp_path):

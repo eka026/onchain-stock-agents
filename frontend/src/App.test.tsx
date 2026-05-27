@@ -112,6 +112,17 @@ const sampleSession: Session = {
       summary: "Swap rejected by local policy validation.",
       validationReason: "swap exceeds spending limit",
     },
+    {
+      id: "event-live",
+      tick: null,
+      kind: "transaction",
+      agentId: "trader:0x1111111111111111111111111111111111111111",
+      agentType: "trader",
+      poolId: "TECH-USD",
+      action: "SWAP",
+      status: "confirmed",
+      summary: "Live swap imported from chain.",
+    } as TimelineEvent,
   ],
 };
 
@@ -169,5 +180,16 @@ describe("dashboard app", () => {
     fireEvent.click(screen.getAllByText("Swap rejected by local policy validation.")[0]);
 
     expect(screen.getByText("swap exceeds spending limit")).toBeInTheDocument();
+  });
+
+  it("renders live imported events without a null tick label", async () => {
+    mockFetchSequence(sampleSession);
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /sample session/i }));
+
+    expect(await screen.findByText("Live swap imported from chain.")).toBeInTheDocument();
+    expect(screen.queryByText("Tnull")).not.toBeInTheDocument();
+    expect(screen.getByText("--")).toBeInTheDocument();
   });
 });

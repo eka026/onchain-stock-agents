@@ -476,11 +476,13 @@ class ChainTransactionSubmitter:
 
     def _deadline(self, deadline_seconds: int | None) -> int:
         seconds = deadline_seconds or self.default_deadline_seconds
+        wall_clock_timestamp = int(time.time())
         try:
             latest_block = self.web3.eth.get_block("latest")
-            timestamp = latest_block["timestamp"] if isinstance(latest_block, dict) else latest_block.timestamp
+            chain_timestamp = latest_block["timestamp"] if isinstance(latest_block, dict) else latest_block.timestamp
         except Exception:
-            timestamp = int(time.time())
+            chain_timestamp = wall_clock_timestamp
+        timestamp = max(int(chain_timestamp), wall_clock_timestamp)
         return int(timestamp) + seconds
 
     def _hex(self, value: Any) -> str:

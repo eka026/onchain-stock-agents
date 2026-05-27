@@ -13,7 +13,7 @@ from agents.chain import (
     ReceiptVerifier,
     ValidationResult,
 )
-from agents.llm import LLMClient, create_llm_client, load_persona
+from agents.llm import LLMClient, LLMDecisionError, create_llm_client, load_persona
 from agents.news_feed import NewsFeed, NewsItem, Scenario
 from agents.portfolio import Portfolio
 from agents.schemas import TraderDecision
@@ -105,7 +105,15 @@ class TraderAgent:
 
     def run_once(self, news: NewsItem | dict[str, Any] | None = None) -> TraderRunResult:
         observation = self.observe(news)
-        decision = self.decide(observation)
+        try:
+            decision = self.decide(observation)
+        except LLMDecisionError as exc:
+            return TraderRunResult(
+                decision=TraderDecision(action="HOLD", reason=str(exc)),
+                tx_hash=None,
+                execution=None,
+                validation=ValidationResult(ok=False, reason=str(exc)),
+            )
         return self.execute(decision)
 
     def execute(self, decision: TraderDecision) -> TraderRunResult:

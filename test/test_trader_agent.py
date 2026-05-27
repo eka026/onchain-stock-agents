@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 from agents.chain import ExecutionResult, ValidationResult
-from agents.llm import MockLLMClient
+from agents.llm import LLMDecisionError, MockLLMClient
 from agents.news_feed import NewsItem
 from agents.portfolio import Portfolio
 from agents.schemas import TraderDecision
@@ -262,6 +262,23 @@ def test_trader_local_validation_failure_does_not_submit():
     assert result.validation.ok is False
     assert result.validation.reason == "insufficient token allowance"
     assert result.tx_hash is None
+    assert agent.submitter.built == []
+
+
+def test_trader_llm_decision_error_is_rejected_without_crashing():
+    class BadLLM:
+        def decide_trader(self, observation):
+            raise LLMDecisionError("invalid trader decision: token_in must be one of TECH, USD")
+
+    agent = make_agent(llm_client=BadLLM())
+
+    result = agent.run_once()
+
+    assert result.decision.action == "HOLD"
+    assert result.validation.ok is False
+    assert result.validation.reason == "invalid trader decision: token_in must be one of TECH, USD"
+    assert result.tx_hash is None
+    assert result.execution is None
     assert agent.submitter.built == []
 
 

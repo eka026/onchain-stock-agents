@@ -47,7 +47,8 @@ class LLMClient(Protocol):
 
 SYSTEM_INSTRUCTIONS = (
     "You are an off-chain AMM simulation agent. Return only one JSON object that matches the requested "
-    "decision schema. Do not include markdown, comments, or extra text."
+    "decision schema. Use only the exact enum values shown in the schema. Do not include markdown, "
+    "comments, hidden reasoning, or extra text."
 )
 
 
@@ -454,24 +455,26 @@ def _pool_info_fields(pool: dict[str, Any]) -> dict[str, Any]:
 def _build_prompt(agent_type: str, observation: dict[str, Any]) -> str:
     if agent_type == "trader":
         schema = {
-            "action": "SWAP or HOLD",
+            "action": ["SWAP", "HOLD"],
             "pool_id": "pool id for SWAP",
             "token_in": "input token symbol for SWAP",
             "amount_in": "positive integer for SWAP",
             "max_slippage_bps": "optional integer",
             "deadline_seconds": "optional positive integer",
-            "reason": "short explanation",
+            "reason": "one short sentence, no hidden reasoning",
         }
+        rules = "Do not return BUY or SELL. To buy or sell, use SWAP with token_in set to the token being sold."
     elif agent_type == "lp":
         schema = {
-            "action": "ADD_LIQUIDITY, REMOVE_LIQUIDITY, COLLECT_FEES, or HOLD",
+            "action": ["ADD_LIQUIDITY", "REMOVE_LIQUIDITY", "COLLECT_FEES", "HOLD"],
             "pool_id": "pool id for non-HOLD actions",
             "amount_a": "positive integer for ADD_LIQUIDITY",
             "amount_b": "positive integer for ADD_LIQUIDITY",
             "lp_shares": "positive integer for REMOVE_LIQUIDITY or COLLECT_FEES",
             "min_lp_shares": "optional integer for ADD_LIQUIDITY",
-            "reason": "short explanation",
+            "reason": "one short sentence, no hidden reasoning",
         }
+        rules = "Use only the action enum values. Do not invent deposit, withdraw, or claim action names."
     else:
         raise ValueError(f"unsupported agent_type: {agent_type}")
 
@@ -491,6 +494,7 @@ def _build_prompt(agent_type: str, observation: dict[str, Any]) -> str:
                 f"Given your portfolio, token price history, and the latest news, "
                 f"return exactly one JSON decision matching the schema below."
             ),
+            "rules": rules,
             "schema": schema,
             "pools": observation.get("pools", []),
             "policy": observation.get("policy", {}),

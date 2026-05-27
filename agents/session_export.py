@@ -2,6 +2,10 @@
 
 import uuid
 from datetime import UTC, datetime
+import os
+from typing import Any
+
+from eth_account import Account
 
 from agents.lp_agent import LPAgent, LPRunResult
 from agents.run_demo import DemoRunResult
@@ -163,6 +167,11 @@ def build_session_from_chain(
             price_history=[str(p) for p in history],
         ))
 
+    events = _chain_events_from_logs(registry, scenario)
+    agent_snaps = _agent_snapshots_from_env(reader, scenario)
+    confirmed = sum(1 for event in events if event.status == "confirmed")
+    rejected = sum(1 for event in events if event.status == "rejected")
+
     return Session(
         id=f"live-{now.strftime('%Y%m%d-%H%M%S')}",
         name=f"Live Snapshot — {now.strftime('%Y-%m-%d %H:%M:%S')}",
@@ -172,15 +181,208 @@ def build_session_from_chain(
         created_at=now,
         updated_at=now,
         summary=SessionSummary(
-            agent_count=0,
-            event_count=0,
-            confirmed_tx_count=0,
-            rejected_count=0,
+            agent_count=len(agent_snaps),
+            event_count=len(events),
+            confirmed_tx_count=confirmed,
+            rejected_count=rejected,
         ),
-        agents=[],
+        agents=agent_snaps,
         pools=pools,
-        events=[],
+        events=events,
     )
+
+
+def _agent_snapshots_from_env(reader, scenario) -> list[AgentSnapshot]:
+    agents: list[AgentSnapshot] = []
+    for i, private_key in enumerate(_csv_env("TRADER_PRIVATE_KEYS")):
+        address = Account.from_key(private_key).address
+        balances = {token.symbol: str(reader.token_balance(token.symbol, address)) for token in scenario.tokens}
+        agents.append(AgentSnapshot(
+            id=f"trader:{address}",
+            type="trader",
+            label=f"Trader {i}",
+            address=address,
+            balances=balances,
+        ))
+
+    for i, private_key in enumerate(_csv_env("LP_PRIVATE_KEYS")):
+        address = Account.from_key(private_key).address
+        balances = {token.symbol: str(reader.token_balance(token.symbol, address)) for token in scenario.tokens}
+        for pool in scenario.pools:
+            balances[f"{pool.id}-LP"] = str(reader.lp_balance(pool.id, address))
+        agents.append(AgentSnapshot(
+            id=f"lp:{address}",
+            type="lp",
+            label=f"LP {i}",
+            address=address,
+            balances=balances,
+        ))
+    return agents
+
+
+def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
+    events: list[tuple[int, int, TimelineEvent]] = []
+    counter = 0
+
+    def eid(prefix: str) -> str:
+        nonlocal counter
+        counter += 1
+        return f"chain-{prefix}-{counter}"
+
+    for pool in scenario.pools:
+        contracts = registry.pool_contracts(pool.id)
+        for log in _safe_get_logs(contracts.pool.events.LiquidityAdded):
+            args = _log_args(log)
+            provider = str(_event_value(args, "provider", default=""))
+            events.append((
+                _block_number(log),
+                _log_index(log),
+                TimelineEvent(
+                    id=eid("liquidity-added"),
+                    kind="transaction",
+                    agent_id=f"lp:{provider}" if provider else None,
+                    agent_type="lp",
+                    pool_id=pool.id,
+                    action="ADD_LIQUIDITY",
+                    status="confirmed",
+                    summary=f"Liquidity added to {pool.id}.",
+                    tx_hash=_tx_hash(log),
+                    portfolio_delta={
+                        pool.base_symbol: f"-{int(_event_value(args, 'amountA', default=0))}",
+                        pool.quote_symbol: f"-{int(_event_value(args, 'amountB', default=0))}",
+                        f"{pool.id}-LP": str(_event_value(args, "lpShares", default=0)),
+                    },
+                ),
+            ))
+
+        for log in _safe_get_logs(contracts.pool.events.Swap):
+            args = _log_args(log)
+            trader = str(_event_value(args, "trader", default=""))
+            token_in_address = str(_event_value(args, "tokenIn", "token_in", default=""))
+            token_in_symbol = _symbol_for_address(scenario, token_in_address)
+            token_out_symbol = pool.quote_symbol if token_in_symbol == pool.base_symbol else pool.base_symbol
+            events.append((
+                _block_number(log),
+                _log_index(log),
+                TimelineEvent(
+                    id=eid("swap"),
+                    kind="transaction",
+                    agent_id=f"trader:{trader}" if trader else None,
+                    agent_type="trader",
+                    pool_id=pool.id,
+                    action="SWAP",
+                    status="confirmed",
+                    summary=f"Swap confirmed on {pool.id}.",
+                    tx_hash=_tx_hash(log),
+                    portfolio_delta={
+                        token_in_symbol: f"-{int(_event_value(args, 'amountIn', 'amount_in', default=0))}",
+                        token_out_symbol: str(_event_value(args, "amountOut", "amount_out", default=0)),
+                    },
+                ),
+            ))
+
+        for log in _safe_get_logs(contracts.pool.events.LiquidityRemoved):
+            args = _log_args(log)
+            provider = str(_event_value(args, "provider", default=""))
+            events.append((
+                _block_number(log),
+                _log_index(log),
+                TimelineEvent(
+                    id=eid("liquidity-removed"),
+                    kind="transaction",
+                    agent_id=f"lp:{provider}" if provider else None,
+                    agent_type="lp",
+                    pool_id=pool.id,
+                    action="REMOVE_LIQUIDITY",
+                    status="confirmed",
+                    summary=f"Liquidity removed from {pool.id}.",
+                    tx_hash=_tx_hash(log),
+                ),
+            ))
+
+        for log in _safe_get_logs(contracts.vault.events.FeesCollected):
+            args = _log_args(log)
+            lp_address = str(_event_value(args, "lp", default=""))
+            events.append((
+                _block_number(log),
+                _log_index(log),
+                TimelineEvent(
+                    id=eid("fees-collected"),
+                    kind="transaction",
+                    agent_id=f"lp:{lp_address}" if lp_address else None,
+                    agent_type="lp",
+                    pool_id=pool.id,
+                    action="COLLECT_FEES",
+                    status="confirmed",
+                    summary=f"Fees collected from {pool.id}.",
+                    tx_hash=_tx_hash(log),
+                    portfolio_delta={
+                        pool.base_symbol: str(_event_value(args, "feesA", default=0)),
+                        pool.quote_symbol: str(_event_value(args, "feesB", default=0)),
+                    },
+                ),
+            ))
+
+    return [event for _block, _index, event in sorted(events, key=lambda item: (item[0], item[1], item[2].id))]
+
+
+def _safe_get_logs(event: Any) -> list[Any]:
+    try:
+        return list(event.get_logs(fromBlock=0))
+    except Exception:
+        return []
+
+
+def _log_args(log: Any) -> dict[str, Any]:
+    if isinstance(log, dict):
+        return dict(log.get("args", {}))
+    return dict(getattr(log, "args", {}) or {})
+
+
+def _event_value(args: dict[str, Any], *names: str, default: Any = None) -> Any:
+    for name in names:
+        if name in args:
+            return args[name]
+    return default
+
+
+def _block_number(log: Any) -> int:
+    return int(_log_field(log, "blockNumber", 0) or 0)
+
+
+def _log_index(log: Any) -> int:
+    return int(_log_field(log, "logIndex", 0) or 0)
+
+
+def _tx_hash(log: Any) -> str | None:
+    value = _log_field(log, "transactionHash", None)
+    if value is None:
+        return None
+    if isinstance(value, bytes):
+        return "0x" + value.hex()
+    if hasattr(value, "hex"):
+        text = value.hex()
+        return text if text.startswith("0x") else "0x" + text
+    return str(value)
+
+
+def _log_field(log: Any, name: str, default: Any) -> Any:
+    if isinstance(log, dict):
+        return log.get(name, default)
+    return getattr(log, name, default)
+
+
+def _symbol_for_address(scenario, address: str) -> str:
+    normalized = address.lower()
+    for token in scenario.tokens:
+        if token.address.lower() == normalized:
+            return token.symbol
+    return address
+
+
+def _csv_env(name: str) -> list[str]:
+    value = os.environ.get(name, "")
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def _trader_events(eid, *, tick, address: str, r: TraderRunResult) -> list[TimelineEvent]:
