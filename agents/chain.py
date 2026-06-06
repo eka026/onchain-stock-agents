@@ -112,6 +112,22 @@ class ContractRegistry:
 class ChainReader:
     def __init__(self, registry: ContractRegistry):
         self.registry = registry
+        self._cache: dict[tuple[Any, ...], Any] = {}
+        self._cache_enabled = False
+
+    def enable_cache(self) -> None:
+        self._cache_enabled = True
+
+    def reset_cache(self) -> None:
+        self._cache = {}
+        self._cache_enabled = False
+
+    def _cached(self, key: tuple[Any, ...], loader: Any) -> Any:
+        if not self._cache_enabled:
+            return loader()
+        if key not in self._cache:
+            self._cache[key] = loader()
+        return self._cache[key]
 
     def token_balance(self, symbol: str, account: str) -> int:
         log({"type": "rpc_request", "method": "balanceOf", "symbol": symbol, "account": account})
@@ -126,46 +142,67 @@ class ChainReader:
         return self.registry.pool_contracts(pool_id).lp_token.functions.totalSupply().call()
 
     def reserves(self, pool_id: str) -> tuple[int, int]:
-        log({"type": "rpc_request", "method": "reserves", "pool_id": pool_id})
-        pool = self.registry.pool_contracts(pool_id).pool
-        return (
-            pool.functions.reserveA().call(),
-            pool.functions.reserveB().call(),
-        )
+        def load() -> tuple[int, int]:
+            log({"type": "rpc_request", "method": "reserves", "pool_id": pool_id})
+            pool = self.registry.pool_contracts(pool_id).pool
+            return (
+                pool.functions.reserveA().call(),
+                pool.functions.reserveB().call(),
+            )
+
+        return self._cached(("reserves", pool_id), load)
 
     def spot_price(self, pool_id: str) -> int:
-        log({"type": "rpc_request", "method": "spotPrice", "pool_id": pool_id})
-        return self.registry.pool_contracts(pool_id).pool.functions.spotPrice().call()
+        def load() -> int:
+            log({"type": "rpc_request", "method": "spotPrice", "pool_id": pool_id})
+            return self.registry.pool_contracts(pool_id).pool.functions.spotPrice().call()
+
+        return self._cached(("spot_price", pool_id), load)
 
     def vault_fees(self, pool_id: str) -> tuple[int, int]:
-        log({"type": "rpc_request", "method": "vault_fees", "pool_id": pool_id})
-        vault = self.registry.pool_contracts(pool_id).vault
-        return (
-            vault.functions.totalFeesA().call(),
-            vault.functions.totalFeesB().call(),
-        )
+        def load() -> tuple[int, int]:
+            log({"type": "rpc_request", "method": "vault_fees", "pool_id": pool_id})
+            vault = self.registry.pool_contracts(pool_id).vault
+            return (
+                vault.functions.totalFeesA().call(),
+                vault.functions.totalFeesB().call(),
+            )
+
+        return self._cached(("vault_fees", pool_id), load)
 
     def vault_cumulative_fees(self, pool_id: str) -> tuple[int, int]:
-        log({"type": "rpc_request", "method": "vault_cumulative_fees", "pool_id": pool_id})
-        vault = self.registry.pool_contracts(pool_id).vault
-        return (
-            vault.functions.cumulativeFeesA().call(),
-            vault.functions.cumulativeFeesB().call(),
-        )
+        def load() -> tuple[int, int]:
+            log({"type": "rpc_request", "method": "vault_cumulative_fees", "pool_id": pool_id})
+            vault = self.registry.pool_contracts(pool_id).vault
+            return (
+                vault.functions.cumulativeFeesA().call(),
+                vault.functions.cumulativeFeesB().call(),
+            )
+
+        return self._cached(("vault_cumulative_fees", pool_id), load)
 
     def claimable_fees(self, pool_id: str, lp: str, lp_shares: int) -> tuple[int, int]:
-        log({"type": "rpc_request", "method": "claimableFees", "pool_id": pool_id, "lp": lp, "lp_shares": lp_shares})
-        vault = self.registry.pool_contracts(pool_id).vault
-        return tuple(vault.functions.claimableFees(lp, lp_shares).call())
+        def load() -> tuple[int, int]:
+            log({"type": "rpc_request", "method": "claimableFees", "pool_id": pool_id, "lp": lp, "lp_shares": lp_shares})
+            vault = self.registry.pool_contracts(pool_id).vault
+            return tuple(vault.functions.claimableFees(lp, lp_shares).call())
+
+        return self._cached(("claimable_fees", pool_id, lp, lp_shares), load)
 
     def pool_fee_bps(self, pool_id: str) -> int:
-        log({"type": "rpc_request", "method": "feeBps", "pool_id": pool_id})
-        return self.registry.pool_contracts(pool_id).pool.functions.feeBps().call()
+        def load() -> int:
+            log({"type": "rpc_request", "method": "feeBps", "pool_id": pool_id})
+            return self.registry.pool_contracts(pool_id).pool.functions.feeBps().call()
+
+        return self._cached(("pool_fee_bps", pool_id), load)
 
     def is_token_approved(self, symbol: str) -> bool:
-        log({"type": "rpc_request", "method": "isTokenApproved", "symbol": symbol})
-        address = self.registry.token_address(symbol)
-        return self.registry.policy.functions.isTokenApproved(address).call()
+        def load() -> bool:
+            log({"type": "rpc_request", "method": "isTokenApproved", "symbol": symbol})
+            address = self.registry.token_address(symbol)
+            return self.registry.policy.functions.isTokenApproved(address).call()
+
+        return self._cached(("is_token_approved", symbol), load)
 
     def trader_policy(self, trader: str) -> Any:
         log({"type": "rpc_request", "method": "traderPolicies", "trader": trader})

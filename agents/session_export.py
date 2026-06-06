@@ -138,9 +138,12 @@ def build_session_from_chain(
     network: str = "local",
 ) -> Session:
     """
-    Reads current contract state and reconstructs price history from on-chain events.
-    For each pool, fetches spotPrice() at the block of every Swap event (plus the
-    initial LiquidityAdded block) so the chart reflects the full history.
+    Reads current contract state and recent on-chain events.
+
+    The dashboard import is intentionally a fast snapshot by default. Full-chain
+    log scans and historical spotPrice calls are slow on public RPC providers, so
+    callers can widen the log range with LIVE_IMPORT_FROM_BLOCK or
+    LIVE_IMPORT_MAX_BLOCKS when they need older history.
     """
     from agents.chain import ChainReader, ContractRegistry
     from agents.news_feed import NewsFeed
@@ -148,14 +151,18 @@ def build_session_from_chain(
     scenario = NewsFeed.load_scenario(scenario_path)
     registry = ContractRegistry.from_rpc(scenario, rpc_url)
     reader = ChainReader(registry)
+    _reset_reader_cache(reader)
+    _enable_reader_cache(reader)
 
     now = datetime.now(UTC)
+    from_block, to_block = _live_import_block_range(registry)
+    include_price_history = _truthy_env("LIVE_IMPORT_PRICE_HISTORY")
     pools: list[PoolSnapshot] = []
     for pool in scenario.pools:
         reserve_a, reserve_b = reader.reserves(pool.id)
         spot = reader.spot_price(pool.id)
         fee_bps = reader.pool_fee_bps(pool.id)
-        history = reader.spot_price_history(pool.id)
+        history = reader.spot_price_history(pool.id) if include_price_history else [spot]
         pools.append(PoolSnapshot(
             id=pool.id,
             base_symbol=pool.base_symbol,
@@ -167,10 +174,11 @@ def build_session_from_chain(
             price_history=[str(p) for p in history],
         ))
 
-    events = _chain_events_from_logs(registry, scenario)
-    agent_snaps = _agent_snapshots_from_env(reader, scenario)
+    events = _chain_events_from_logs(registry, scenario, from_block=from_block, to_block=to_block)
+    agent_snaps = _agent_snapshots_from_env(reader, scenario, events)
     confirmed = sum(1 for event in events if event.status == "confirmed")
     rejected = sum(1 for event in events if event.status == "rejected")
+    _reset_reader_cache(reader)
 
     return Session(
         id=f"live-{now.strftime('%Y%m%d-%H%M%S')}",
@@ -192,11 +200,13 @@ def build_session_from_chain(
     )
 
 
-def _agent_snapshots_from_env(reader, scenario) -> list[AgentSnapshot]:
+def _agent_snapshots_from_env(reader, scenario, events: list[TimelineEvent] | None = None) -> list[AgentSnapshot]:
     agents: list[AgentSnapshot] = []
+    seen: set[str] = set()
     for i, private_key in enumerate(_csv_env("TRADER_PRIVATE_KEYS")):
         address = Account.from_key(private_key).address
         balances = {token.symbol: str(reader.token_balance(token.symbol, address)) for token in scenario.tokens}
+        seen.add(f"trader:{address}".lower())
         agents.append(AgentSnapshot(
             id=f"trader:{address}",
             type="trader",
@@ -210,6 +220,7 @@ def _agent_snapshots_from_env(reader, scenario) -> list[AgentSnapshot]:
         balances = {token.symbol: str(reader.token_balance(token.symbol, address)) for token in scenario.tokens}
         for pool in scenario.pools:
             balances[f"{pool.id}-LP"] = str(reader.lp_balance(pool.id, address))
+        seen.add(f"lp:{address}".lower())
         agents.append(AgentSnapshot(
             id=f"lp:{address}",
             type="lp",
@@ -217,10 +228,32 @@ def _agent_snapshots_from_env(reader, scenario) -> list[AgentSnapshot]:
             address=address,
             balances=balances,
         ))
+
+    for event in events or []:
+        if not event.agent_id or not event.agent_type:
+            continue
+        if event.agent_id.lower() in seen:
+            continue
+        _prefix, _separator, address = event.agent_id.partition(":")
+        if not address:
+            continue
+        balances = {token.symbol: str(reader.token_balance(token.symbol, address)) for token in scenario.tokens}
+        if event.agent_type == "lp":
+            for pool in scenario.pools:
+                balances[f"{pool.id}-LP"] = str(reader.lp_balance(pool.id, address))
+        label_index = sum(1 for agent in agents if agent.type == event.agent_type)
+        seen.add(event.agent_id.lower())
+        agents.append(AgentSnapshot(
+            id=event.agent_id,
+            type=event.agent_type,
+            label=f"{event.agent_type.upper()} {label_index}",
+            address=address,
+            balances=balances,
+        ))
     return agents
 
 
-def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
+def _chain_events_from_logs(registry, scenario, *, from_block: int = 0, to_block: int | str | None = None) -> list[TimelineEvent]:
     events: list[tuple[int, int, TimelineEvent]] = []
     counter = 0
 
@@ -231,7 +264,7 @@ def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
 
     for pool in scenario.pools:
         contracts = registry.pool_contracts(pool.id)
-        for log in _safe_get_logs(contracts.pool.events.LiquidityAdded):
+        for log in _safe_get_logs(contracts.pool.events.LiquidityAdded, from_block=from_block, to_block=to_block):
             args = _log_args(log)
             provider = str(_event_value(args, "provider", default=""))
             events.append((
@@ -255,7 +288,7 @@ def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
                 ),
             ))
 
-        for log in _safe_get_logs(contracts.pool.events.Swap):
+        for log in _safe_get_logs(contracts.pool.events.Swap, from_block=from_block, to_block=to_block):
             args = _log_args(log)
             trader = str(_event_value(args, "trader", default=""))
             token_in_address = str(_event_value(args, "tokenIn", "token_in", default=""))
@@ -281,7 +314,7 @@ def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
                 ),
             ))
 
-        for log in _safe_get_logs(contracts.pool.events.LiquidityRemoved):
+        for log in _safe_get_logs(contracts.pool.events.LiquidityRemoved, from_block=from_block, to_block=to_block):
             args = _log_args(log)
             provider = str(_event_value(args, "provider", default=""))
             events.append((
@@ -300,7 +333,7 @@ def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
                 ),
             ))
 
-        for log in _safe_get_logs(contracts.vault.events.FeesCollected):
+        for log in _safe_get_logs(contracts.vault.events.FeesCollected, from_block=from_block, to_block=to_block):
             args = _log_args(log)
             lp_address = str(_event_value(args, "lp", default=""))
             events.append((
@@ -326,11 +359,62 @@ def _chain_events_from_logs(registry, scenario) -> list[TimelineEvent]:
     return [event for _block, _index, event in sorted(events, key=lambda item: (item[0], item[1], item[2].id))]
 
 
-def _safe_get_logs(event: Any) -> list[Any]:
+def _safe_get_logs(event: Any, *, from_block: int = 0, to_block: int | str | None = None) -> list[Any]:
     try:
-        return list(event.get_logs(fromBlock=0))
+        if to_block is None:
+            return list(event.get_logs(fromBlock=from_block))
+        return list(event.get_logs(fromBlock=from_block, toBlock=to_block))
+    except TypeError:
+        try:
+            return list(event.get_logs(fromBlock=from_block))
+        except Exception:
+            return []
     except Exception:
         return []
+
+
+def _enable_reader_cache(reader: Any) -> None:
+    enable_cache = getattr(reader, "enable_cache", None)
+    if callable(enable_cache):
+        enable_cache()
+
+
+def _reset_reader_cache(reader: Any) -> None:
+    reset_cache = getattr(reader, "reset_cache", None)
+    if callable(reset_cache):
+        reset_cache()
+
+
+def _live_import_block_range(registry: Any) -> tuple[int, int | str | None]:
+    explicit_from = os.environ.get("LIVE_IMPORT_FROM_BLOCK")
+    if explicit_from:
+        return max(0, int(explicit_from)), _to_block_env()
+
+    latest_block = _latest_block(registry)
+    max_blocks = int(os.environ.get("LIVE_IMPORT_MAX_BLOCKS", "10000"))
+    if latest_block is None:
+        return 0, _to_block_env()
+    return max(0, latest_block - max_blocks), _to_block_env() or latest_block
+
+
+def _latest_block(registry: Any) -> int | None:
+    try:
+        return int(registry.web3.eth.block_number)
+    except Exception:
+        return None
+
+
+def _to_block_env() -> int | str | None:
+    value = os.environ.get("LIVE_IMPORT_TO_BLOCK")
+    if not value:
+        return None
+    if value.lower() == "latest":
+        return "latest"
+    return int(value)
+
+
+def _truthy_env(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _log_args(log: Any) -> dict[str, Any]:

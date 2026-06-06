@@ -117,3 +117,104 @@ def test_chain_reader_reads_token_allowance(tmp_path):
     )
 
     assert reader.token_allowance("USD", "0xalice", "0xpool") == 123
+
+
+class CountingCall:
+    def __init__(self, value, counter, name):
+        self.value = value
+        self.counter = counter
+        self.name = name
+
+    def call(self):
+        self.counter[self.name] = self.counter.get(self.name, 0) + 1
+        return self.value
+
+
+class CountingFunctions:
+    def __init__(self, values, counter):
+        self.values = values
+        self.counter = counter
+
+    def __getattr__(self, name):
+        def method(*args):
+            key = (name, args)
+            if key not in self.values:
+                key = name
+            return CountingCall(self.values[key], self.counter, name)
+
+        return method
+
+
+class CountingContract:
+    def __init__(self, address, values, counter):
+        self.address = address
+        self.functions = CountingFunctions(values, counter)
+
+
+def test_chain_reader_cache_reuses_shared_reads_and_resets(tmp_path):
+    registry = registry_with_values(tmp_path)
+    counter = {}
+    registry.pools["TECH-USD"].pool = CountingContract(
+        "0xtechpool",
+        {
+            "reserveA": 10_000,
+            "reserveB": 20_000,
+            "spotPrice": 2_000_000_000_000_000_000,
+            "feeBps": 30,
+        },
+        counter,
+    )
+    registry.pools["TECH-USD"].vault = CountingContract(
+        "0xtechvault",
+        {
+            "totalFeesA": 7,
+            "totalFeesB": 11,
+            "cumulativeFeesA": 70,
+            "cumulativeFeesB": 110,
+            ("claimableFees", ("0xlp", 50)): (3, 5),
+        },
+        counter,
+    )
+    registry.policy = CountingContract(
+        "0xpolicy",
+        {
+            ("isTokenApproved", ("0xtech",)): True,
+        },
+        counter,
+    )
+    reader = ChainReader(registry)
+
+    reader.enable_cache()
+    assert reader.reserves("TECH-USD") == (10_000, 20_000)
+    assert reader.reserves("TECH-USD") == (10_000, 20_000)
+    assert reader.spot_price("TECH-USD") == 2_000_000_000_000_000_000
+    assert reader.spot_price("TECH-USD") == 2_000_000_000_000_000_000
+    assert reader.vault_fees("TECH-USD") == (7, 11)
+    assert reader.vault_fees("TECH-USD") == (7, 11)
+    assert reader.vault_cumulative_fees("TECH-USD") == (70, 110)
+    assert reader.vault_cumulative_fees("TECH-USD") == (70, 110)
+    assert reader.claimable_fees("TECH-USD", "0xlp", 50) == (3, 5)
+    assert reader.claimable_fees("TECH-USD", "0xlp", 50) == (3, 5)
+    assert reader.pool_fee_bps("TECH-USD") == 30
+    assert reader.pool_fee_bps("TECH-USD") == 30
+    assert reader.is_token_approved("TECH") is True
+    assert reader.is_token_approved("TECH") is True
+
+    assert counter == {
+        "reserveA": 1,
+        "reserveB": 1,
+        "spotPrice": 1,
+        "totalFeesA": 1,
+        "totalFeesB": 1,
+        "cumulativeFeesA": 1,
+        "cumulativeFeesB": 1,
+        "claimableFees": 1,
+        "feeBps": 1,
+        "isTokenApproved": 1,
+    }
+
+    reader.reset_cache()
+    assert reader.spot_price("TECH-USD") == 2_000_000_000_000_000_000
+    assert reader.spot_price("TECH-USD") == 2_000_000_000_000_000_000
+
+    assert counter["spotPrice"] == 3
