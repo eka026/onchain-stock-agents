@@ -105,6 +105,7 @@ class TraderAgent:
         return self.llm_client.decide_trader(observation)
 
     def run_once(self, news: NewsItem | dict[str, Any] | None = None) -> TraderRunResult:
+        log({"type": "news_event", "agent": "trader", "trader_address": self.trader_address, "news": _serialize_news(news)})
         observation = self.observe(news)
         log({"type": "observation", "agent": "trader", "trader_address": self.trader_address, "pools": [p.get("id") for p in observation.get("pools", [])]})
         try:
