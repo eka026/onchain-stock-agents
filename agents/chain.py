@@ -21,6 +21,7 @@ except ModuleNotFoundError:
 
 from agents.news_feed import PoolInfo, Scenario
 from agents.schemas import LPDecision, TraderDecision
+from utils.logger import log
 
 
 DEFAULT_ABI_DIR = Path(__file__).resolve().parent / "abis"
@@ -113,15 +114,19 @@ class ChainReader:
         self.registry = registry
 
     def token_balance(self, symbol: str, account: str) -> int:
+        log({"type": "rpc_request", "method": "balanceOf", "symbol": symbol, "account": account})
         return self.registry.token_contract(symbol).functions.balanceOf(account).call()
 
     def lp_balance(self, pool_id: str, account: str) -> int:
+        log({"type": "rpc_request", "method": "lp_balanceOf", "pool_id": pool_id, "account": account})
         return self.registry.pool_contracts(pool_id).lp_token.functions.balanceOf(account).call()
 
     def lp_total_supply(self, pool_id: str) -> int:
+        log({"type": "rpc_request", "method": "totalSupply", "pool_id": pool_id})
         return self.registry.pool_contracts(pool_id).lp_token.functions.totalSupply().call()
 
     def reserves(self, pool_id: str) -> tuple[int, int]:
+        log({"type": "rpc_request", "method": "reserves", "pool_id": pool_id})
         pool = self.registry.pool_contracts(pool_id).pool
         return (
             pool.functions.reserveA().call(),
@@ -129,9 +134,11 @@ class ChainReader:
         )
 
     def spot_price(self, pool_id: str) -> int:
+        log({"type": "rpc_request", "method": "spotPrice", "pool_id": pool_id})
         return self.registry.pool_contracts(pool_id).pool.functions.spotPrice().call()
 
     def vault_fees(self, pool_id: str) -> tuple[int, int]:
+        log({"type": "rpc_request", "method": "vault_fees", "pool_id": pool_id})
         vault = self.registry.pool_contracts(pool_id).vault
         return (
             vault.functions.totalFeesA().call(),
@@ -139,6 +146,7 @@ class ChainReader:
         )
 
     def vault_cumulative_fees(self, pool_id: str) -> tuple[int, int]:
+        log({"type": "rpc_request", "method": "vault_cumulative_fees", "pool_id": pool_id})
         vault = self.registry.pool_contracts(pool_id).vault
         return (
             vault.functions.cumulativeFeesA().call(),
@@ -146,26 +154,33 @@ class ChainReader:
         )
 
     def claimable_fees(self, pool_id: str, lp: str, lp_shares: int) -> tuple[int, int]:
+        log({"type": "rpc_request", "method": "claimableFees", "pool_id": pool_id, "lp": lp, "lp_shares": lp_shares})
         vault = self.registry.pool_contracts(pool_id).vault
         return tuple(vault.functions.claimableFees(lp, lp_shares).call())
 
     def pool_fee_bps(self, pool_id: str) -> int:
+        log({"type": "rpc_request", "method": "feeBps", "pool_id": pool_id})
         return self.registry.pool_contracts(pool_id).pool.functions.feeBps().call()
 
     def is_token_approved(self, symbol: str) -> bool:
+        log({"type": "rpc_request", "method": "isTokenApproved", "symbol": symbol})
         address = self.registry.token_address(symbol)
         return self.registry.policy.functions.isTokenApproved(address).call()
 
     def trader_policy(self, trader: str) -> Any:
+        log({"type": "rpc_request", "method": "traderPolicies", "trader": trader})
         return self.registry.policy.functions.traderPolicies(trader).call()
 
     def lp_policy(self, lp: str) -> Any:
+        log({"type": "rpc_request", "method": "lpPolicies", "lp": lp})
         return self.registry.policy.functions.lpPolicies(lp).call()
 
     def current_spent_amount(self, trader: str) -> int:
+        log({"type": "rpc_request", "method": "currentSpentAmount", "trader": trader})
         return self.registry.policy.functions.currentSpentAmount(trader).call()
 
     def current_fee_withdrawn(self, lp: str) -> int:
+        log({"type": "rpc_request", "method": "currentFeeWithdrawn", "lp": lp})
         return self.registry.policy.functions.currentFeeWithdrawn(lp).call()
 
     def spot_price_history(self, pool_id: str) -> list[int]:
@@ -218,6 +233,7 @@ class ChainReader:
         return prices if prices else [current]
 
     def token_allowance(self, symbol: str, owner: str, spender: str) -> int:
+        log({"type": "rpc_request", "method": "allowance", "symbol": symbol, "owner": owner, "spender": spender})
         return self.registry.token_contract(symbol).functions.allowance(owner, spender).call()
 
 
@@ -367,6 +383,7 @@ class ChainTransactionSubmitter:
         deadline: int | None = None,
         tx_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        log({"type": "rpc_request", "method": "build_swap", "trader": trader, "pool_id": decision.pool_id, "token_in": decision.token_in, "amount_in": decision.amount_in, "min_amount_out": min_amount_out})
         if decision.action != "SWAP":
             raise ValueError("build_swap_transaction requires a SWAP decision")
         if decision.max_slippage_bps is not None and min_amount_out is None:
@@ -389,6 +406,7 @@ class ChainTransactionSubmitter:
         *,
         tx_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        log({"type": "rpc_request", "method": "build_add_liquidity", "lp": lp, "pool_id": decision.pool_id, "amount_a": decision.amount_a, "amount_b": decision.amount_b})
         if decision.action != "ADD_LIQUIDITY":
             raise ValueError("build_add_liquidity_transaction requires an ADD_LIQUIDITY decision")
         pool = self.registry.pool_contracts(decision.pool_id or "")
@@ -406,6 +424,7 @@ class ChainTransactionSubmitter:
         *,
         tx_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        log({"type": "rpc_request", "method": "build_remove_liquidity", "lp": lp, "pool_id": decision.pool_id, "lp_shares": decision.lp_shares})
         if decision.action != "REMOVE_LIQUIDITY":
             raise ValueError("build_remove_liquidity_transaction requires a REMOVE_LIQUIDITY decision")
         pool = self.registry.pool_contracts(decision.pool_id or "")
@@ -419,6 +438,7 @@ class ChainTransactionSubmitter:
         *,
         tx_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        log({"type": "rpc_request", "method": "build_collect_fees", "lp": lp, "pool_id": decision.pool_id, "lp_shares": decision.lp_shares})
         if decision.action != "COLLECT_FEES":
             raise ValueError("build_collect_fees_transaction requires a COLLECT_FEES decision")
         vault = self.registry.pool_contracts(decision.pool_id or "").vault
@@ -433,6 +453,7 @@ class ChainTransactionSubmitter:
         if raw_transaction is None:
             raw_transaction = getattr(signed_transaction, "raw_transaction")
         tx_hash = self.web3.eth.send_raw_transaction(raw_transaction)
+        log({"type": "rpc_response", "method": "send_raw_transaction", "tx_hash": self._hex(tx_hash)})
         return self._hex(tx_hash)
 
     def sign_and_submit(self, transaction: dict[str, Any], private_key: str) -> str:
@@ -517,7 +538,9 @@ class ReceiptVerifier:
         poll_latency: int = 2,
     ) -> ExecutionResult:
         receipt = self._receipt(tx_hash, timeout=timeout, poll_latency=poll_latency)
+        log({"type": "rpc_response", "method": "wait_for_receipt", "tx_hash": tx_hash, "status": self._receipt_status(receipt) if receipt is not None else None})
         if receipt is None:
+            log({"type": "execution_result", "status": "PENDING", "tx_hash": tx_hash, "action": action, "reason": "receipt unavailable"})
             return ExecutionResult(
                 status="PENDING",
                 tx_hash=tx_hash,
@@ -529,6 +552,7 @@ class ReceiptVerifier:
 
         receipt_status = self._receipt_status(receipt)
         if receipt_status is None:
+            log({"type": "execution_result", "status": "REJECTED", "tx_hash": tx_hash, "action": action, "reason": "receipt missing status"})
             return ExecutionResult(
                 status="REJECTED",
                 tx_hash=tx_hash,
@@ -540,6 +564,7 @@ class ReceiptVerifier:
             )
 
         if receipt_status == 0:
+            log({"type": "execution_result", "status": "REJECTED", "tx_hash": tx_hash, "action": action, "reason": "transaction reverted"})
             return ExecutionResult(
                 status="REJECTED",
                 tx_hash=tx_hash,
@@ -552,6 +577,7 @@ class ReceiptVerifier:
 
         event_data = self._extract_event(pool_id, expected_event, receipt)
         if event_data is None:
+            log({"type": "execution_result", "status": "REJECTED", "tx_hash": tx_hash, "action": action, "reason": f"missing expected event: {expected_event}"})
             return ExecutionResult(
                 status="REJECTED",
                 tx_hash=tx_hash,
@@ -562,6 +588,7 @@ class ReceiptVerifier:
                 reason=f"missing expected event: {expected_event}",
             )
 
+        log({"type": "execution_result", "status": "CONFIRMED", "tx_hash": tx_hash, "action": action, "pool_id": pool_id, "event_name": expected_event, "event_data": event_data})
         return ExecutionResult(
             status="CONFIRMED",
             tx_hash=tx_hash,

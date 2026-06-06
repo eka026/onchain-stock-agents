@@ -14,6 +14,7 @@ from agents.chain import (
     ValidationResult,
 )
 from agents.llm import LLMClient, create_llm_client, load_persona
+from utils.logger import log
 from agents.news_feed import Scenario
 from agents.portfolio import Portfolio
 from agents.schemas import LPDecision
@@ -116,12 +117,16 @@ class LPAgent:
 
     def run_once(self) -> LPRunResult:
         observation = self.observe()
+        log({"type": "observation", "agent": "lp", "lp_address": self.lp_address, "pools": [p.get("id") for p in observation.get("pools", [])]})
         decision = self.decide(observation)
+        log({"type": "decision", "agent": "lp", "action": decision.action, "pool_id": decision.pool_id, "reason": decision.reason})
         return self.execute(decision)
 
     def execute(self, decision: LPDecision) -> LPRunResult:
         validation = self.validator.validate_lp_decision(self.lp_address, decision)
+        log({"type": "validation", "agent": "lp", "action": decision.action, "ok": validation.ok, "reason": validation.reason})
         if not validation.ok or decision.action == "HOLD":
+            log({"type": "action", "action": decision.action, "lp": self.lp_address, "pool_id": decision.pool_id, "validation_ok": validation.ok, "reason": decision.reason or validation.reason})
             return LPRunResult(
                 decision=decision,
                 tx_hash=None,
@@ -131,8 +136,10 @@ class LPAgent:
 
         transaction = self._build_transaction(decision)
         tx_hash = self.submitter.sign_and_submit(transaction, self.private_key)
+        log({"type": "action", "action": decision.action, "lp": self.lp_address, "pool_id": decision.pool_id, "tx_hash": tx_hash})
 
         execution = self._verify(tx_hash, decision)
+        log({"type": "execution_result", "action": decision.action, "lp": self.lp_address, "tx_hash": tx_hash, "status": execution.status, "event_data": execution.event_data, "reason": execution.reason})
         if execution.status == "CONFIRMED":
             self.portfolio.record_pending(
                 tx_hash,

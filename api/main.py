@@ -7,6 +7,7 @@ load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.models import Session, SessionListItem
+from utils.logger import log
 from api.sample_data import build_sample_session
 from api.session_store import SessionStore
 
@@ -35,8 +36,10 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
 
     @app.get("/api/sessions/{session_id}", response_model=Session)
     def get_session(session_id: str) -> Session:
+        log({"type": "api_request", "endpoint": "get_session", "session_id": session_id})
         session = session_store.get_session(session_id)
         if session is None:
+            log({"type": "error", "endpoint": "get_session", "session_id": session_id, "error": "session not found"})
             raise HTTPException(status_code=404, detail="session not found")
         return session
 
@@ -49,8 +52,10 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
         scenario_path = os.environ.get("SCENARIO_PATH", "data/scenarios/demo.json")
         rpc_url = os.environ.get("RPC_URL") or os.environ.get("SEPOLIA_RPC_URL")
         if not rpc_url:
+            log({"type": "error", "endpoint": "import_live_session", "error": "RPC_URL env var not set"})
             raise HTTPException(status_code=503, detail="RPC_URL env var not set")
         network = "sepolia" if "sepolia" in rpc_url.lower() else "local"
+        log({"type": "api_request", "endpoint": "import_live_session", "scenario_path": scenario_path, "network": network})
         try:
             from agents.session_export import build_session_from_chain
 
@@ -59,7 +64,9 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
                 rpc_url=rpc_url,
                 network=network,
             )
+            log({"type": "api_response", "endpoint": "import_live_session", "session_id": live_session.id})
         except Exception as exc:
+            log({"type": "error", "endpoint": "import_live_session", "error": str(exc)})
             raise HTTPException(status_code=503, detail=f"Chain read failed: {exc}") from exc
         return session_store.save_session(live_session)
 

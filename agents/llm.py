@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from agents.news_feed import PoolInfo
 from agents.schemas import LPDecision, TraderDecision, validate_lp_decision, validate_trader_decision
+from utils.logger import log
 
 _DEFAULT_PERSONA_PATH = Path(__file__).resolve().parent.parent / "data" / "persona.json"
 
@@ -199,6 +200,7 @@ class OpenAILLMClient(ProviderLLMClient):
         self.client = client or self._create_client(api_key)
 
     def _json_response(self, prompt: str) -> LLMResponse:
+        log({"type": "llm_request", "provider": "openai", "model": self.model, "prompt_length": len(prompt)})
         started = time.perf_counter()
         response = self.client.responses.create(
             model=self.model,
@@ -207,6 +209,7 @@ class OpenAILLMClient(ProviderLLMClient):
             text={"format": {"type": "json_object"}},
         )
         latency_ms = int((time.perf_counter() - started) * 1000)
+        log({"type": "llm_response", "provider": "openai", "model": self.model, "latency_ms": latency_ms})
         return LLMResponse(
             raw_text=_response_attr(response, "output_text"),
             model=self.model,
@@ -231,12 +234,14 @@ class GeminiLLMClient(ProviderLLMClient):
         self.client = client or self._create_client(api_key)
 
     def _json_response(self, prompt: str) -> LLMResponse:
+        log({"type": "llm_request", "provider": "gemini", "model": self.model, "prompt_length": len(prompt)})
         started = time.perf_counter()
         response = self.client.generate_content(
             f"{self._system_message()}\n\n{prompt}",
             generation_config={"response_mime_type": "application/json"},
         )
         latency_ms = int((time.perf_counter() - started) * 1000)
+        log({"type": "llm_response", "provider": "gemini", "model": self.model, "latency_ms": latency_ms})
         return LLMResponse(
             raw_text=_response_text(response),
             model=self.model,
@@ -263,6 +268,7 @@ class GroqLLMClient(ProviderLLMClient):
         self.client = client or self._create_client(api_key)
 
     def _json_response(self, prompt: str) -> LLMResponse:
+        log({"type": "llm_request", "provider": "groq", "model": self.model, "prompt_length": len(prompt)})
         started = time.perf_counter()
         completion = self.client.chat.completions.create(
             model=self.model,
@@ -273,6 +279,7 @@ class GroqLLMClient(ProviderLLMClient):
             response_format={"type": "json_object"},
         )
         latency_ms = int((time.perf_counter() - started) * 1000)
+        log({"type": "llm_response", "provider": "groq", "model": self.model, "latency_ms": latency_ms})
         choice = completion.choices[0]
         return LLMResponse(
             raw_text=choice.message.content,
@@ -303,6 +310,7 @@ class OpenRouterLLMClient(ProviderLLMClient):
         self.client = client or self._create_client(api_key)
 
     def _json_response(self, prompt: str) -> LLMResponse:
+        log({"type": "llm_request", "provider": "openrouter", "model": self.model, "prompt_length": len(prompt)})
         started = time.perf_counter()
         completion = self.client.chat.completions.create(
             model=self.model,
@@ -313,6 +321,7 @@ class OpenRouterLLMClient(ProviderLLMClient):
             response_format={"type": "json_object"},
         )
         latency_ms = int((time.perf_counter() - started) * 1000)
+        log({"type": "llm_response", "provider": "openrouter", "model": self.model, "latency_ms": latency_ms})
         choice = completion.choices[0]
         return LLMResponse(
             raw_text=choice.message.content,
@@ -340,6 +349,7 @@ class DeepSeekLLMClient(ProviderLLMClient):
         self.client = client or self._create_client(api_key)
 
     def _json_response(self, prompt: str) -> LLMResponse:
+        log({"type": "llm_request", "provider": "deepseek", "model": self.model, "prompt_length": len(prompt)})
         started = time.perf_counter()
         completion = self.client.chat.completions.create(
             model=self.model,
@@ -350,6 +360,7 @@ class DeepSeekLLMClient(ProviderLLMClient):
             response_format={"type": "json_object"},
         )
         latency_ms = int((time.perf_counter() - started) * 1000)
+        log({"type": "llm_response", "provider": "deepseek", "model": self.model, "latency_ms": latency_ms})
         choice = completion.choices[0]
         return LLMResponse(
             raw_text=choice.message.content,
@@ -406,6 +417,7 @@ def parse_trader_decision(raw_text: str, *, pools: list[PoolInfo] | None = None)
             return validate_trader_decision(decision, pools)
         return decision
     except (ValidationError, ValueError) as exc:
+        log({"type": "error", "method": "parse_trader_decision", "error": str(exc)})
         raise LLMDecisionError(f"invalid trader decision: {exc}") from exc
 
 
@@ -417,6 +429,7 @@ def parse_lp_decision(raw_text: str, *, pools: list[PoolInfo] | None = None) -> 
             return validate_lp_decision(decision, pools)
         return decision
     except (ValidationError, ValueError) as exc:
+        log({"type": "error", "method": "parse_lp_decision", "error": str(exc)})
         raise LLMDecisionError(f"invalid LP decision: {exc}") from exc
 
 
@@ -424,8 +437,10 @@ def _parse_json_object(raw_text: str) -> dict[str, Any]:
     try:
         payload = json.loads(raw_text)
     except json.JSONDecodeError as exc:
+        log({"type": "error", "method": "_parse_json_object", "error": f"LLM response is not valid JSON: {exc.msg}"})
         raise LLMDecisionError(f"LLM response is not valid JSON: {exc.msg}") from exc
     if not isinstance(payload, dict):
+        log({"type": "error", "method": "_parse_json_object", "error": "LLM response must be a JSON object"})
         raise LLMDecisionError("LLM response must be a JSON object")
     return payload
 

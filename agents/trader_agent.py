@@ -14,6 +14,7 @@ from agents.chain import (
     ValidationResult,
 )
 from agents.llm import LLMClient, LLMDecisionError, create_llm_client, load_persona
+from utils.logger import log
 from agents.news_feed import NewsFeed, NewsItem, Scenario
 from agents.portfolio import Portfolio
 from agents.schemas import TraderDecision
@@ -105,9 +106,12 @@ class TraderAgent:
 
     def run_once(self, news: NewsItem | dict[str, Any] | None = None) -> TraderRunResult:
         observation = self.observe(news)
+        log({"type": "observation", "agent": "trader", "trader_address": self.trader_address, "pools": [p.get("id") for p in observation.get("pools", [])]})
         try:
             decision = self.decide(observation)
+            log({"type": "decision", "agent": "trader", "action": decision.action, "pool_id": decision.pool_id, "token_in": decision.token_in, "amount_in": decision.amount_in, "reason": decision.reason})
         except LLMDecisionError as exc:
+            log({"type": "error", "method": "decide_trader", "trader_address": self.trader_address, "error": str(exc)})
             return TraderRunResult(
                 decision=TraderDecision(action="HOLD", reason=str(exc)),
                 tx_hash=None,
@@ -118,7 +122,9 @@ class TraderAgent:
 
     def execute(self, decision: TraderDecision) -> TraderRunResult:
         validation = self.validator.validate_trader_decision(self.trader_address, decision)
+        log({"type": "validation", "agent": "trader", "action": decision.action, "ok": validation.ok, "reason": validation.reason})
         if not validation.ok or decision.action == "HOLD":
+            log({"type": "action", "action": decision.action, "trader": self.trader_address, "pool_id": decision.pool_id, "validation_ok": validation.ok, "reason": decision.reason or validation.reason})
             return TraderRunResult(
                 decision=decision,
                 tx_hash=None,
@@ -133,8 +139,10 @@ class TraderAgent:
             min_amount_out=min_amount_out,
         )
         tx_hash = self.submitter.sign_and_submit(transaction, self.private_key)
+        log({"type": "action", "action": "SWAP", "trader": self.trader_address, "pool_id": decision.pool_id, "token_in": decision.token_in, "amount_in": decision.amount_in, "tx_hash": tx_hash})
 
         execution = self.verifier.verify_swap(tx_hash, decision.pool_id or "")
+        log({"type": "execution_result", "action": "SWAP", "trader": self.trader_address, "tx_hash": tx_hash, "status": execution.status, "event_data": execution.event_data, "reason": execution.reason})
         if execution.status == "CONFIRMED":
             confirmed_changes = self._confirmed_swap_changes(decision, execution.event_data or {})
             self.portfolio.record_pending(tx_hash, "SWAP", confirmed_changes)
