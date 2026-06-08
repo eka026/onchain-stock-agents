@@ -1,13 +1,17 @@
 import json
 import time
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
 try:
     from web3 import Web3
-    from web3.exceptions import TimeExhausted, TransactionNotFound
+    from web3.exceptions import ContractLogicError, TimeExhausted, TransactionNotFound
 except ModuleNotFoundError:
+    class ContractLogicError(Exception):
+        pass
+
     class TimeExhausted(Exception):
         pass
 
@@ -25,6 +29,32 @@ from utils.logger import log
 
 
 DEFAULT_ABI_DIR = Path(__file__).resolve().parent / "abis"
+
+
+def _is_pool_no_liquidity_error(exc: Exception) -> bool:
+    return "POOL_NO_LIQUIDITY" in str(exc)
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    text = str(exc)
+    return "429" in text or "Too Many Requests" in text
+
+
+def _rpc_with_retry(method: str, loader: Any, *, attempts: int = 3, base_delay: float = 1.0) -> Any:
+    last_error: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            return loader()
+        except Exception as exc:
+            last_error = exc
+            if not _is_rate_limit_error(exc) or attempt == attempts - 1:
+                raise
+            delay = base_delay * (2 ** attempt)
+            log({"type": "rpc_retry", "method": method, "attempt": attempt + 1, "delay_seconds": delay, "reason": str(exc)})
+            time.sleep(delay)
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"RPC retry failed without an error: {method}")
 
 
 @dataclass
@@ -131,23 +161,26 @@ class ChainReader:
 
     def token_balance(self, symbol: str, account: str) -> int:
         log({"type": "rpc_request", "method": "balanceOf", "symbol": symbol, "account": account})
-        return self.registry.token_contract(symbol).functions.balanceOf(account).call()
+        return _rpc_with_retry("balanceOf", lambda: self.registry.token_contract(symbol).functions.balanceOf(account).call())
 
     def lp_balance(self, pool_id: str, account: str) -> int:
         log({"type": "rpc_request", "method": "lp_balanceOf", "pool_id": pool_id, "account": account})
-        return self.registry.pool_contracts(pool_id).lp_token.functions.balanceOf(account).call()
+        return _rpc_with_retry("lp_balanceOf", lambda: self.registry.pool_contracts(pool_id).lp_token.functions.balanceOf(account).call())
 
     def lp_total_supply(self, pool_id: str) -> int:
         log({"type": "rpc_request", "method": "totalSupply", "pool_id": pool_id})
-        return self.registry.pool_contracts(pool_id).lp_token.functions.totalSupply().call()
+        return _rpc_with_retry("totalSupply", lambda: self.registry.pool_contracts(pool_id).lp_token.functions.totalSupply().call())
 
     def reserves(self, pool_id: str) -> tuple[int, int]:
         def load() -> tuple[int, int]:
             log({"type": "rpc_request", "method": "reserves", "pool_id": pool_id})
             pool = self.registry.pool_contracts(pool_id).pool
-            return (
-                pool.functions.reserveA().call(),
-                pool.functions.reserveB().call(),
+            return _rpc_with_retry(
+                "reserves",
+                lambda: (
+                    pool.functions.reserveA().call(),
+                    pool.functions.reserveB().call(),
+                ),
             )
 
         return self._cached(("reserves", pool_id), load)
@@ -155,7 +188,13 @@ class ChainReader:
     def spot_price(self, pool_id: str) -> int:
         def load() -> int:
             log({"type": "rpc_request", "method": "spotPrice", "pool_id": pool_id})
-            return self.registry.pool_contracts(pool_id).pool.functions.spotPrice().call()
+            try:
+                return _rpc_with_retry("spotPrice", lambda: self.registry.pool_contracts(pool_id).pool.functions.spotPrice().call())
+            except ContractLogicError as exc:
+                if _is_pool_no_liquidity_error(exc):
+                    log({"type": "rpc_response", "method": "spotPrice", "pool_id": pool_id, "status": "POOL_NO_LIQUIDITY"})
+                    return 0
+                raise
 
         return self._cached(("spot_price", pool_id), load)
 
@@ -163,9 +202,12 @@ class ChainReader:
         def load() -> tuple[int, int]:
             log({"type": "rpc_request", "method": "vault_fees", "pool_id": pool_id})
             vault = self.registry.pool_contracts(pool_id).vault
-            return (
-                vault.functions.totalFeesA().call(),
-                vault.functions.totalFeesB().call(),
+            return _rpc_with_retry(
+                "vault_fees",
+                lambda: (
+                    vault.functions.totalFeesA().call(),
+                    vault.functions.totalFeesB().call(),
+                ),
             )
 
         return self._cached(("vault_fees", pool_id), load)
@@ -174,9 +216,12 @@ class ChainReader:
         def load() -> tuple[int, int]:
             log({"type": "rpc_request", "method": "vault_cumulative_fees", "pool_id": pool_id})
             vault = self.registry.pool_contracts(pool_id).vault
-            return (
-                vault.functions.cumulativeFeesA().call(),
-                vault.functions.cumulativeFeesB().call(),
+            return _rpc_with_retry(
+                "vault_cumulative_fees",
+                lambda: (
+                    vault.functions.cumulativeFeesA().call(),
+                    vault.functions.cumulativeFeesB().call(),
+                ),
             )
 
         return self._cached(("vault_cumulative_fees", pool_id), load)
@@ -185,14 +230,14 @@ class ChainReader:
         def load() -> tuple[int, int]:
             log({"type": "rpc_request", "method": "claimableFees", "pool_id": pool_id, "lp": lp, "lp_shares": lp_shares})
             vault = self.registry.pool_contracts(pool_id).vault
-            return tuple(vault.functions.claimableFees(lp, lp_shares).call())
+            return _rpc_with_retry("claimableFees", lambda: tuple(vault.functions.claimableFees(lp, lp_shares).call()))
 
         return self._cached(("claimable_fees", pool_id, lp, lp_shares), load)
 
     def pool_fee_bps(self, pool_id: str) -> int:
         def load() -> int:
             log({"type": "rpc_request", "method": "feeBps", "pool_id": pool_id})
-            return self.registry.pool_contracts(pool_id).pool.functions.feeBps().call()
+            return _rpc_with_retry("feeBps", lambda: self.registry.pool_contracts(pool_id).pool.functions.feeBps().call())
 
         return self._cached(("pool_fee_bps", pool_id), load)
 
@@ -200,25 +245,25 @@ class ChainReader:
         def load() -> bool:
             log({"type": "rpc_request", "method": "isTokenApproved", "symbol": symbol})
             address = self.registry.token_address(symbol)
-            return self.registry.policy.functions.isTokenApproved(address).call()
+            return _rpc_with_retry("isTokenApproved", lambda: self.registry.policy.functions.isTokenApproved(address).call())
 
         return self._cached(("is_token_approved", symbol), load)
 
     def trader_policy(self, trader: str) -> Any:
         log({"type": "rpc_request", "method": "traderPolicies", "trader": trader})
-        return self.registry.policy.functions.traderPolicies(trader).call()
+        return _rpc_with_retry("traderPolicies", lambda: self.registry.policy.functions.traderPolicies(trader).call())
 
     def lp_policy(self, lp: str) -> Any:
         log({"type": "rpc_request", "method": "lpPolicies", "lp": lp})
-        return self.registry.policy.functions.lpPolicies(lp).call()
+        return _rpc_with_retry("lpPolicies", lambda: self.registry.policy.functions.lpPolicies(lp).call())
 
     def current_spent_amount(self, trader: str) -> int:
         log({"type": "rpc_request", "method": "currentSpentAmount", "trader": trader})
-        return self.registry.policy.functions.currentSpentAmount(trader).call()
+        return _rpc_with_retry("currentSpentAmount", lambda: self.registry.policy.functions.currentSpentAmount(trader).call())
 
     def current_fee_withdrawn(self, lp: str) -> int:
         log({"type": "rpc_request", "method": "currentFeeWithdrawn", "lp": lp})
-        return self.registry.policy.functions.currentFeeWithdrawn(lp).call()
+        return _rpc_with_retry("currentFeeWithdrawn", lambda: self.registry.policy.functions.currentFeeWithdrawn(lp).call())
 
     def spot_price_history(self, pool_id: str) -> list[int]:
         """
@@ -271,7 +316,7 @@ class ChainReader:
 
     def token_allowance(self, symbol: str, owner: str, spender: str) -> int:
         log({"type": "rpc_request", "method": "allowance", "symbol": symbol, "owner": owner, "spender": spender})
-        return self.registry.token_contract(symbol).functions.allowance(owner, spender).call()
+        return _rpc_with_retry("allowance", lambda: self.registry.token_contract(symbol).functions.allowance(owner, spender).call())
 
 
 @dataclass(frozen=True)
@@ -300,6 +345,13 @@ class LocalValidator:
 
         if decision.amount_in is None or decision.amount_in <= 0:
             return ValidationResult(ok=False, reason="amount_in must be positive")
+
+        try:
+            reserve_a, reserve_b = self.reader.reserves(pool.id)
+            if reserve_a <= 0 or reserve_b <= 0:
+                return ValidationResult(ok=False, reason="pool has no liquidity")
+        except Exception:
+            pass
 
         if not self.reader.is_token_approved(decision.token_in or ""):
             return ValidationResult(ok=False, reason="token is not approved")
@@ -489,7 +541,7 @@ class ChainTransactionSubmitter:
         raw_transaction = getattr(signed_transaction, "rawTransaction", None)
         if raw_transaction is None:
             raw_transaction = getattr(signed_transaction, "raw_transaction")
-        tx_hash = self.web3.eth.send_raw_transaction(raw_transaction)
+        tx_hash = _rpc_with_retry("send_raw_transaction", lambda: self.web3.eth.send_raw_transaction(raw_transaction))
         log({"type": "rpc_response", "method": "send_raw_transaction", "tx_hash": self._hex(tx_hash)})
         return self._hex(tx_hash)
 
@@ -517,15 +569,15 @@ class ChainTransactionSubmitter:
     def _tx_params(self, sender: str, tx_options: dict[str, Any] | None = None) -> dict[str, Any]:
         params = {
             "from": sender,
-            "nonce": self.web3.eth.get_transaction_count(sender),
+            "nonce": _rpc_with_retry("get_transaction_count", lambda: self.web3.eth.get_transaction_count(sender)),
             "gas": self.default_gas,
         }
-        chain_id = getattr(self.web3.eth, "chain_id", None)
+        chain_id = _rpc_with_retry("chain_id", lambda: getattr(self.web3.eth, "chain_id", None))
         if chain_id is not None:
             params["chainId"] = chain_id
         gas_price = self.default_gas_price
         if gas_price is None and hasattr(self.web3.eth, "gas_price"):
-            gas_price = self.web3.eth.gas_price
+            gas_price = _rpc_with_retry("gas_price", lambda: self.web3.eth.gas_price)
         if gas_price is not None:
             params["gasPrice"] = gas_price
         if tx_options:
@@ -536,7 +588,7 @@ class ChainTransactionSubmitter:
         seconds = deadline_seconds or self.default_deadline_seconds
         wall_clock_timestamp = int(time.time())
         try:
-            latest_block = self.web3.eth.get_block("latest")
+            latest_block = _rpc_with_retry("get_block", lambda: self.web3.eth.get_block("latest"))
             chain_timestamp = latest_block["timestamp"] if isinstance(latest_block, dict) else latest_block.timestamp
         except Exception:
             chain_timestamp = wall_clock_timestamp
@@ -668,10 +720,13 @@ class ReceiptVerifier:
 
     def _receipt(self, tx_hash: str, *, timeout: int, poll_latency: int) -> Any | None:
         try:
-            return self.web3.eth.wait_for_transaction_receipt(
-                tx_hash,
-                timeout=timeout,
-                poll_latency=poll_latency,
+            return _rpc_with_retry(
+                "wait_for_transaction_receipt",
+                lambda: self.web3.eth.wait_for_transaction_receipt(
+                    tx_hash,
+                    timeout=timeout,
+                    poll_latency=poll_latency,
+                ),
             )
         except (TimeExhausted, TransactionNotFound):
             return None
@@ -688,7 +743,14 @@ class ReceiptVerifier:
             raise ValueError(f"unsupported expected event: {event_name}")
         contract = getattr(pool_contracts, contract_name)
         event = getattr(contract.events, event_name)()
-        logs = event.process_receipt(receipt)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r".*MismatchedABI.*",
+                category=UserWarning,
+                module=r"web3\.contract\.base_contract",
+            )
+            logs = event.process_receipt(receipt)
         if not logs:
             return None
         # Contract methods used here emit one action event; take the first matching log.

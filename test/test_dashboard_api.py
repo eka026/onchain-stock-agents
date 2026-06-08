@@ -200,6 +200,7 @@ def test_live_chain_import_reconstructs_agents_and_transaction_events(monkeypatc
         "LP_PRIVATE_KEYS",
         "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
     )
+    monkeypatch.setenv("LIVE_IMPORT_EVENT_SOURCE", "chain")
 
     session = session_export.build_session_from_chain(
         scenario_path="data/scenarios/sepolia.json",
@@ -215,6 +216,91 @@ def test_live_chain_import_reconstructs_agents_and_transaction_events(monkeypatc
     assert session.events[1].tx_hash == "0x1234"
     assert session.agents[0].balances["USD"] == "100"
     assert session.agents[1].balances["TECH-USD-LP"] == "50"
+
+
+def test_live_import_uses_local_event_log_by_default(monkeypatch, tmp_path) -> None:
+    from agents import chain
+    from agents import session_export
+    from agents.news_feed import NewsFeed
+
+    log_path = tmp_path / "events.json"
+    log_path.write_text(
+        "\n".join([
+            '{"timestamp":"2026-06-06T15:00:00+00:00","event":{"type":"decision","agent":"trader","address":"0xabc","action":"SWAP","pool_id":"TECH-USD","reason":"buy tech","token_in":"USD","amount_in":100}}',
+            '{"timestamp":"2026-06-06T15:00:01+00:00","event":{"type":"action","action":"SWAP","trader":"0xabc","pool_id":"TECH-USD","token_in":"USD","amount_in":100,"tx_hash":"0xaaa"}}',
+            '{"timestamp":"2026-06-06T15:00:02+00:00","event":{"type":"execution_result","action":"SWAP","trader":"0xabc","tx_hash":"0xaaa","status":"CONFIRMED","event_data":{"trader":"0xabc","tokenIn":"0xusd","amountIn":100,"amountOut":45},"reason":null}}',
+        ])
+        + "\n",
+        encoding="utf-8",
+    )
+
+    class RaisingEvent:
+        def get_logs(self, **_kwargs):
+            raise AssertionError("chain log scan should not run in local import mode")
+
+    class FakeContract:
+        events = type(
+            "Events",
+            (),
+            {
+                "Swap": RaisingEvent(),
+                "LiquidityAdded": RaisingEvent(),
+                "LiquidityRemoved": RaisingEvent(),
+                "FeesCollected": RaisingEvent(),
+            },
+        )()
+
+    class FakeRegistry:
+        scenario = scenario()
+
+        def __init__(self):
+            self.pools = {
+                pool.id: type("PoolContracts", (), {"pool": FakeContract(), "vault": FakeContract()})()
+                for pool in self.scenario.pools
+            }
+
+        def pool_contracts(self, pool_id):
+            return self.pools[pool_id]
+
+    class FakeReader:
+        def __init__(self, registry):
+            self.registry = registry
+
+        def reserves(self, pool_id):
+            return (1_000, 2_000)
+
+        def spot_price(self, pool_id):
+            return 2 * 10**18
+
+        def pool_fee_bps(self, pool_id):
+            return 30
+
+        def token_balance(self, symbol, account):
+            return 100 if symbol == "USD" else 0
+
+        def lp_balance(self, pool_id, account):
+            return 50
+
+    monkeypatch.setattr(NewsFeed, "load_scenario", lambda path: scenario())
+    monkeypatch.setattr(chain.ContractRegistry, "from_rpc", lambda loaded_scenario, rpc_url: FakeRegistry())
+    monkeypatch.setattr(chain, "ChainReader", FakeReader)
+    monkeypatch.setenv("LIVE_IMPORT_LOG_PATH", str(log_path))
+    monkeypatch.delenv("LIVE_IMPORT_EVENT_SOURCE", raising=False)
+    monkeypatch.setenv(
+        "TRADER_PRIVATE_KEYS",
+        "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+    )
+    monkeypatch.setenv("LP_PRIVATE_KEYS", "")
+
+    session = session_export.build_session_from_chain(
+        scenario_path="data/scenarios/sepolia.json",
+        rpc_url="https://sepolia.example",
+        network="sepolia",
+    )
+
+    assert session.summary.event_count == 2
+    assert [event.kind for event in session.events] == ["agent_decision", "transaction"]
+    assert session.events[1].tx_hash == "0xaaa"
 
 
 def test_session_store_saves_and_loads_sessions(tmp_path) -> None:

@@ -21,9 +21,20 @@ def build_coordinator(
     min_cycle_seconds: float = 60.0,
     shuffle_execution: bool = True,
     shuffle_seed: int | None = None,
+    news_count: int | None = None,
+    news_every_cycle: bool = False,
+    repeat_news: bool = False,
 ) -> CycleCoordinator:
     loaded = config.load(scenario_path=scenario_path)
-    registry = ContractRegistry.from_rpc(loaded.scenario, loaded.rpc_url)
+    scenario = loaded.scenario
+    if news_count is not None:
+        if news_count <= 0:
+            raise ValueError("--news-count must be positive")
+        scenario = scenario.model_copy(update={"max_events": news_count})
+    if news_every_cycle:
+        scenario = scenario.model_copy(update={"min_interval_ticks": 1, "max_interval_ticks": 1})
+
+    registry = ContractRegistry.from_rpc(scenario, loaded.rpc_url)
     reader = ChainReader(registry)
     validator = LocalValidator(reader)
     submitter = ChainTransactionSubmitter(registry)
@@ -36,7 +47,7 @@ def build_coordinator(
             TraderAgent(
                 trader_address=account.address,
                 private_key=trader_config.private_key,
-                scenario=loaded.scenario,
+                scenario=scenario,
                 reader=reader,
                 validator=validator,
                 submitter=submitter,
@@ -61,7 +72,7 @@ def build_coordinator(
             LPAgent(
                 lp_address=account.address,
                 private_key=lp_config.private_key,
-                scenario=loaded.scenario,
+                scenario=scenario,
                 reader=reader,
                 validator=validator,
                 submitter=submitter,
@@ -79,7 +90,7 @@ def build_coordinator(
             )
         )
 
-    news_feed = NewsFeed(NewsFeed.load_news(_resolve_news_path(loaded.scenario, scenario_path)), loaded.scenario)
+    news_feed = NewsFeed(NewsFeed.load_news(_resolve_news_path(scenario, scenario_path)), scenario, repeat_news=repeat_news)
     return CycleCoordinator(
         traders=traders,
         lp_agents=lp_agents,
@@ -99,6 +110,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--no-shuffle-execution", action="store_true")
     parser.add_argument("--shuffle-seed", type=int, default=None)
+    parser.add_argument("--news-count", type=int, default=None)
+    parser.add_argument("--news-every-cycle", action="store_true")
+    parser.add_argument("--repeat-news", action="store_true")
+    parser.add_argument("--max-cycles", type=int, default=None)
     args = parser.parse_args(argv)
 
     coordinator = build_coordinator(
@@ -107,16 +122,24 @@ def main(argv: list[str] | None = None) -> int:
         min_cycle_seconds=args.interval,
         shuffle_execution=not args.no_shuffle_execution,
         shuffle_seed=args.shuffle_seed,
+        news_count=args.news_count,
+        news_every_cycle=args.news_every_cycle,
+        repeat_news=args.repeat_news,
     )
 
     if args.once:
         print(json.dumps(_cycle_result_payload(coordinator.run_cycle(0)), sort_keys=True))
         return 0
 
+    stop_after_tick = _last_news_tick(coordinator) if args.news_count is not None else None
     tick = 0
     while True:
         cycle_start = time.time()
         print(json.dumps(_cycle_result_payload(coordinator.run_cycle(tick)), sort_keys=True))
+        if stop_after_tick is not None and tick >= stop_after_tick:
+            return 0
+        if args.max_cycles is not None and tick + 1 >= args.max_cycles:
+            return 0
         elapsed = time.time() - cycle_start
         time.sleep(max(0, args.interval - elapsed))
         tick += 1
@@ -134,6 +157,15 @@ def _cycle_result_payload(result: CycleResult) -> dict[str, Any]:
         "tick": result.tick,
         "agents": [_agent_result_payload(agent_result) for agent_result in result.agents],
     }
+
+
+def _last_news_tick(coordinator: CycleCoordinator) -> int:
+    if coordinator.news_feed is None:
+        return 0
+    schedule = coordinator.news_feed.schedule()
+    if not schedule:
+        return 0
+    return max(item.tick for item in schedule)
 
 
 def _agent_result_payload(agent_result: AgentCycleResult) -> dict[str, Any]:

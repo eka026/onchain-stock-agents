@@ -124,3 +124,40 @@ def test_broadcast_delivers_same_news_to_all_traders_at_tick():
     assert set(delivered) == {"trader-0", "trader-1", "trader-2"}
     assert {item.id for item in delivered.values()} == {event.news.id}
 
+
+def test_repeat_news_can_schedule_more_events_than_source_items():
+    news = [
+        NewsItem(id=1, headline="First headline", body="First body"),
+        NewsItem(id=2, headline="Second headline", body="Second body"),
+        NewsItem(id=3, headline="Third headline", body="Third body"),
+    ]
+    scenario = Scenario(
+        seed=438,
+        news_file="data/news.json",
+        policy_address="0xpolicy",
+        min_interval_ticks=1,
+        max_interval_ticks=1,
+        max_events=8,
+        broadcast_to_all_traders=True,
+        tokens=[
+            {"symbol": "USD", "address": "0xusd"},
+            {"symbol": "NVDA", "address": "0xnvda"},
+        ],
+        pools=[
+            {
+                "id": "NVDA-USD",
+                "base_symbol": "NVDA",
+                "quote_symbol": "USD",
+                "pool_address": "0xpool",
+                "lp_token_address": "0xlp",
+                "vault_address": "0xvault",
+            }
+        ],
+    )
+
+    scheduled = NewsFeed(news, scenario, repeat_news=True).schedule()
+
+    assert len(scheduled) == 8
+    assert [event.tick for event in scheduled] == list(range(1, 9))
+    assert {event.news.id for event in scheduled} == {1, 2, 3}
+

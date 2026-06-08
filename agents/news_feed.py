@@ -70,9 +70,10 @@ class ScheduledNews:
 
 
 class NewsFeed:
-    def __init__(self, news: Iterable[NewsItem], scenario: Scenario):
+    def __init__(self, news: Iterable[NewsItem], scenario: Scenario, *, repeat_news: bool = False):
         self.news = list(news)
         self.scenario = scenario
+        self.repeat_news = repeat_news
         self._schedule: list[ScheduledNews] | None = None
 
     @staticmethod
@@ -90,9 +91,7 @@ class NewsFeed:
             return list(self._schedule)
 
         rng = random.Random(self.scenario.seed)
-        selected = list(self.news)
-        rng.shuffle(selected)
-        selected = selected[: min(self.scenario.max_events, len(selected))]
+        selected = self._selected_news(rng)
 
         tick = 0
         events: list[ScheduledNews] = []
@@ -102,6 +101,19 @@ class NewsFeed:
 
         self._schedule = events
         return list(events)
+
+    def _selected_news(self, rng: random.Random) -> list[NewsItem]:
+        if not self.repeat_news:
+            selected = list(self.news)
+            rng.shuffle(selected)
+            return selected[: min(self.scenario.max_events, len(selected))]
+
+        selected: list[NewsItem] = []
+        while len(selected) < self.scenario.max_events and self.news:
+            batch = list(self.news)
+            rng.shuffle(batch)
+            selected.extend(batch)
+        return selected[: self.scenario.max_events]
 
     def broadcast_at(self, tick: int, trader_ids: Iterable[str]) -> dict[str, NewsItem]:
         event = next((scheduled for scheduled in self.schedule() if scheduled.tick == tick), None)

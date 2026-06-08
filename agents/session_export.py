@@ -2,7 +2,9 @@
 
 import uuid
 from datetime import UTC, datetime
+import json
 import os
+from pathlib import Path
 from typing import Any
 
 from eth_account import Account
@@ -174,7 +176,11 @@ def build_session_from_chain(
             price_history=[str(p) for p in history],
         ))
 
-    events = _chain_events_from_logs(registry, scenario, from_block=from_block, to_block=to_block)
+    event_source = os.environ.get("LIVE_IMPORT_EVENT_SOURCE", "local").strip().lower()
+    if event_source == "chain":
+        events = _chain_events_from_logs(registry, scenario, from_block=from_block, to_block=to_block)
+    else:
+        events = _chain_events_from_local_log(scenario)
     agent_snaps = _agent_snapshots_from_env(reader, scenario, events)
     confirmed = sum(1 for event in events if event.status == "confirmed")
     rejected = sum(1 for event in events if event.status == "rejected")
@@ -357,6 +363,158 @@ def _chain_events_from_logs(registry, scenario, *, from_block: int = 0, to_block
             ))
 
     return [event for _block, _index, event in sorted(events, key=lambda item: (item[0], item[1], item[2].id))]
+
+
+def _chain_events_from_local_log(scenario) -> list[TimelineEvent]:
+    log_path = Path(os.environ.get("LIVE_IMPORT_LOG_PATH", "logs/events.json"))
+    if not log_path.exists():
+        return []
+
+    max_entries = int(os.environ.get("LIVE_IMPORT_LOCAL_EVENT_LIMIT", "500"))
+    entries = _read_recent_event_log_entries(log_path, max_entries=max_entries)
+    action_by_tx = {
+        str(event.get("tx_hash")): event
+        for _timestamp, event in entries
+        if event.get("type") == "action" and event.get("tx_hash")
+    }
+
+    events: list[TimelineEvent] = []
+    seen_transactions: set[str] = set()
+    counter = 0
+
+    def eid(prefix: str) -> str:
+        nonlocal counter
+        counter += 1
+        return f"local-{prefix}-{counter}"
+
+    for timestamp, event in entries:
+        event_type = event.get("type")
+        if event_type == "decision":
+            address = str(event.get("address") or "")
+            agent_type = _local_agent_type(event)
+            events.append(TimelineEvent(
+                id=eid("decision"),
+                timestamp=timestamp,
+                kind="agent_decision",
+                agent_id=f"{agent_type}:{address}" if address and agent_type else None,
+                agent_type=agent_type,
+                pool_id=event.get("pool_id"),
+                action=event.get("action"),
+                status="ok",
+                summary=str(event.get("reason") or event.get("action") or "Agent decision."),
+            ))
+            continue
+
+        if event_type != "execution_result":
+            continue
+
+        tx_hash = event.get("tx_hash")
+        if not tx_hash or tx_hash in seen_transactions:
+            continue
+        seen_transactions.add(str(tx_hash))
+
+        action_event = action_by_tx.get(str(tx_hash), {})
+        agent_type = _local_agent_type(event, action_event)
+        address = _local_agent_address(event, action_event)
+        status = "confirmed" if str(event.get("status", "")).upper() == "CONFIRMED" else "rejected"
+        pool_id = event.get("pool_id") or action_event.get("pool_id")
+        action = event.get("action") or action_event.get("action")
+        reason = event.get("reason")
+
+        events.append(TimelineEvent(
+            id=eid("tx"),
+            timestamp=timestamp,
+            kind="transaction",
+            agent_id=f"{agent_type}:{address}" if address and agent_type else None,
+            agent_type=agent_type,
+            pool_id=pool_id,
+            action=action,
+            status=status,
+            summary=_local_transaction_summary(action, status, pool_id, reason),
+            tx_hash=str(tx_hash),
+            portfolio_delta=_local_portfolio_delta(scenario, pool_id, event, action_event),
+        ))
+
+    return events
+
+
+def _read_recent_event_log_entries(log_path: Path, *, max_entries: int) -> list[tuple[datetime | None, dict[str, Any]]]:
+    entries: list[tuple[datetime | None, dict[str, Any]]] = []
+    with log_path.open("r", encoding="utf-8") as handle:
+        lines = handle.readlines()
+
+    for line in lines[-max_entries:]:
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        event = payload.get("event")
+        if not isinstance(event, dict):
+            continue
+        entries.append((_parse_event_timestamp(payload.get("timestamp")), event))
+    return entries
+
+
+def _parse_event_timestamp(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _local_agent_type(*events: dict[str, Any]) -> str | None:
+    for event in events:
+        if event.get("agent") in {"trader", "lp"}:
+            return str(event["agent"])
+        if event.get("trader"):
+            return "trader"
+        if event.get("lp"):
+            return "lp"
+    return None
+
+
+def _local_agent_address(*events: dict[str, Any]) -> str:
+    for event in events:
+        for key in ("trader", "lp", "address"):
+            value = event.get(key)
+            if value:
+                return str(value)
+    return ""
+
+
+def _local_transaction_summary(action: Any, status: str, pool_id: Any, reason: Any) -> str:
+    if reason and status == "rejected":
+        return str(reason)
+    label = str(action or "Transaction").replace("_", " ").title()
+    if pool_id:
+        return f"{label} {status} on {pool_id}."
+    return f"{label} {status}."
+
+
+def _local_portfolio_delta(scenario, pool_id: Any, event: dict[str, Any], action_event: dict[str, Any]) -> dict[str, str] | None:
+    if not pool_id or str(event.get("status", "")).upper() != "CONFIRMED":
+        return None
+    event_data = event.get("event_data")
+    if not isinstance(event_data, dict):
+        return None
+
+    pool = next((item for item in scenario.pools if item.id == pool_id), None)
+    if pool is None:
+        return None
+
+    amount_in = event_data.get("amountIn")
+    amount_out = event_data.get("amountOut")
+    if amount_in is None or amount_out is None:
+        return None
+
+    token_in_symbol = _symbol_for_address(scenario, str(event_data.get("tokenIn") or action_event.get("token_in") or ""))
+    token_out_symbol = pool.quote_symbol if token_in_symbol == pool.base_symbol else pool.base_symbol
+    return {
+        token_in_symbol: f"-{int(amount_in)}",
+        token_out_symbol: str(amount_out),
+    }
 
 
 def _safe_get_logs(event: Any, *, from_block: int = 0, to_block: int | str | None = None) -> list[Any]:
