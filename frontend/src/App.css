@@ -241,7 +241,7 @@ dd {
   border: 1px solid #d6dee2;
   display: grid;
   gap: 10px;
-  grid-template-columns: 52px 90px minmax(0, 1fr) auto;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
   min-height: 64px;
   padding: 10px;
   text-align: left;
@@ -250,11 +250,6 @@ dd {
 .timeline-row.selected,
 .timeline-row:hover {
   border-color: #4f7f8a;
-}
-
-.tick {
-  color: #65757c;
-  font-variant-numeric: tabular-nums;
 }
 
 .status.confirmed,

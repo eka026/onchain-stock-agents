@@ -126,22 +126,62 @@ const sampleSession: Session = {
   ],
 };
 
+const liveOnlySession: Session = {
+  ...sampleSession,
+  id: "live-session",
+  name: "Live Snapshot",
+  source: "imported",
+  summary: {
+    ...sampleSession.summary,
+    eventCount: 2,
+    confirmedTxCount: 2,
+    rejectedCount: 0,
+  },
+  events: [
+    {
+      id: "event-live",
+      tick: null,
+      timestamp: "2026-06-09T18:00:00Z",
+      kind: "transaction",
+      agentId: "trader:0x1111111111111111111111111111111111111111",
+      agentType: "trader",
+      poolId: "TECH-USD",
+      action: "SWAP",
+      status: "confirmed",
+      summary: "Live swap imported from chain.",
+    } as TimelineEvent,
+    {
+      id: "event-live-same-time",
+      tick: null,
+      timestamp: "2026-06-09T18:00:00Z",
+      kind: "transaction",
+      agentId: "trader:0x1111111111111111111111111111111111111111",
+      agentType: "trader",
+      poolId: "FIN-USD",
+      action: "SWAP",
+      status: "confirmed",
+      summary: "Second live swap imported from chain.",
+    } as TimelineEvent,
+  ],
+};
+
 function mockFetchSequence(session: Session | null) {
-  const responses = session
-    ? [
-        [],
-        session,
-        [{ id: session.id, name: session.name, source: session.source, createdAt: session.createdAt, updatedAt: session.updatedAt, summary: session.summary }],
-        session,
-      ]
-    : [[]];
-  let index = 0;
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => ({
-      ok: true,
-      json: async () => responses[Math.min(index++, responses.length - 1)],
-    })),
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const sessionList = session
+        ? [{ id: session.id, name: session.name, source: session.source, createdAt: session.createdAt, updatedAt: session.updatedAt, summary: session.summary }]
+        : [];
+      const payload =
+        session && (url.includes("/api/sessions/import-demo") || url.includes(`/api/sessions/${encodeURIComponent(session.id)}`))
+          ? session
+          : sessionList;
+      return {
+        ok: true,
+        json: async () => payload,
+      };
+    }),
   );
 }
 
@@ -156,14 +196,14 @@ describe("dashboard app", () => {
     render(<App />);
 
     expect(await screen.findByText("No sessions loaded")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /load sample session/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sample session/i })).toBeInTheDocument();
   });
 
   it("imports a sample session and displays timeline details", async () => {
     mockFetchSequence(sampleSession);
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: /load sample session/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /sample session/i }));
 
     expect(await screen.findAllByText("Trader 0 swaps USD into TECH.")).not.toHaveLength(0);
     expect(screen.getAllByText("TECH-USD")).not.toHaveLength(0);
@@ -182,14 +222,19 @@ describe("dashboard app", () => {
     expect(screen.getByText("swap exceeds spending limit")).toBeInTheDocument();
   });
 
-  it("renders live imported events without a null tick label", async () => {
-    mockFetchSequence(sampleSession);
+  it("renders imported events without tick labels under Transactions", async () => {
+    mockFetchSequence(liveOnlySession);
 
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /sample session/i }));
 
-    expect(await screen.findByText("Live swap imported from chain.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Transactions" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Timeline" })).not.toBeInTheDocument();
+    expect(await screen.findAllByText("Live swap imported from chain.")).not.toHaveLength(0);
+    expect(screen.getByText("Second live swap imported from chain.")).toBeInTheDocument();
     expect(screen.queryByText("Tnull")).not.toBeInTheDocument();
-    expect(screen.getByText("--")).toBeInTheDocument();
+    expect(screen.queryByText("--")).not.toBeInTheDocument();
+    expect(screen.queryByText("T1")).not.toBeInTheDocument();
+    expect(screen.queryByText("T2")).not.toBeInTheDocument();
   });
 });

@@ -312,7 +312,7 @@ function Timeline({
   return (
     <section>
       <div className="section-heading">
-        <h2>Timeline</h2>
+        <h2>Transactions</h2>
         <span>{events.length} shown</span>
       </div>
       <div className="timeline">
@@ -324,7 +324,6 @@ function Timeline({
             key={event.id}
             onClick={() => onSelect(event.id)}
           >
-            <span className="tick">{event.tick != null ? `T${event.tick}` : "--"}</span>
             <span className={`status ${event.status ?? "none"}`}>{event.status ?? "none"}</span>
             <span className="event-main">
               <strong>{event.summary}</strong>
